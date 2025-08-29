@@ -8,7 +8,27 @@ Handles queen-worker coordination patterns with truly dynamic worker selection.
 import json
 from datetime import datetime
 from typing import Dict, Any, List, Optional
-from .protocol_loader import BaseProtocol, ProtocolConfig
+
+try:
+    from .protocol_loader import BaseProtocol, ProtocolConfig
+    from .session_management import SessionManagement
+except ImportError:
+    # Fallback for direct script execution
+    class BaseProtocol:
+        def __init__(self, config):
+            self.config = config
+        
+        def log_execution(self, method, data):
+            pass
+    
+    class ProtocolConfig:
+        pass
+    
+    # Import session management even in fallback
+    try:
+        from session_management import SessionManagement
+    except ImportError:
+        pass
 
 class CoordinationProtocol(BaseProtocol):
     """Manages coordination between queen and workers with scope-based selection"""
@@ -65,7 +85,219 @@ class CoordinationProtocol(BaseProtocol):
         4: {"timeout": 120, "escalation": 2}      # 2min timeout, 2s escalation
     }
     
-    def plan_workers(self, task: str, complexity_level: int) -> Dict[str, Any]:
+    def generate_session_id(self, task: str) -> str:
+        """Generate session ID in YYYY-MM-DD-HH-mm-TASKSLUG format"""
+        from datetime import datetime
+        import re
+        
+        # Get current date and time
+        date_str = datetime.now().strftime("%Y-%m-%d-%H-%M")
+        
+        # Create task slug - increased length for better descriptiveness
+        # Remove special characters but keep spaces for conversion to hyphens
+        task_slug = re.sub(r'[^a-zA-Z0-9\s]', '', task.lower())
+        task_slug = re.sub(r'\s+', '-', task_slug.strip())
+        
+        # Increase character limit to 40 for more descriptive slugs
+        # But ensure minimum 15 characters unless task is very short
+        if len(task_slug) < 15 and len(task_slug) < len(task.lower()):
+            # Try to capture more meaningful content
+            task_slug = task_slug[:40]
+        else:
+            task_slug = task_slug[:40]
+        
+        # Clean up trailing hyphens and ensure no truncation mid-word
+        task_slug = task_slug.rstrip('-')
+        
+        # If slug ends with incomplete word, try to complete it
+        if len(task_slug) >= 40 and task_slug[-1] != '-':
+            # Find last complete word boundary
+            last_hyphen = task_slug.rfind('-')
+            if last_hyphen > 15:  # Ensure we keep at least 15 chars
+                task_slug = task_slug[:last_hyphen]
+        
+        return f"{date_str}-{task_slug}"
+    
+    def create_session_structure(self, session_id: str) -> str:
+        """Create complete session directory structure at project root"""
+        import os
+        
+        # Use unified project root detection
+        project_root = SessionManagement.detect_project_root()
+        
+        # Session should be created at project root Docs/hive-mind/sessions/
+        session_path = os.path.join(project_root, 'Docs', 'hive-mind', 'sessions', session_id)
+        
+        # Create all required directories
+        directories = [
+            session_path,
+            os.path.join(session_path, 'workers'),
+            os.path.join(session_path, 'workers', 'json'),
+            os.path.join(session_path, 'workers', 'prompts'),
+            os.path.join(session_path, 'workers', 'decisions')
+        ]
+        
+        for directory in directories:
+            os.makedirs(directory, exist_ok=True)
+            
+        # Return relative path for consistency
+        return f"Docs/hive-mind/sessions/{session_id}"
+    
+    def initialize_session_files(self, session_id: str, task: str, complexity_level: int) -> Dict[str, Any]:
+        """Initialize all session files with proper structure"""
+        import json
+        import os
+        from datetime import datetime
+        
+        # First ensure the session structure exists
+        session_path = self.create_session_structure(session_id)
+        
+        # Use unified session path
+        absolute_session_path = SessionManagement.get_session_path(session_id)
+        
+        # Create STATE.json using unified write (first time only)
+        initial_state = {
+            "session_id": session_id,
+            "task_description": task,
+            "complexity_level": complexity_level,
+            "created_at": datetime.now().isoformat(),
+            "status": "initializing",
+            "worker_configs": {},
+            "coordination_status": {
+                "phase": "planning",
+                "workers_spawned": [],
+                "workers_completed": [],
+                "synthesis_ready": False
+            },
+            "update_count": 0
+        }
+        
+        # Initial write (only time we write instead of update)
+        with open(os.path.join(absolute_session_path, 'STATE.json'), 'w') as f:
+            json.dump(initial_state, f, indent=2)
+        
+        # Create SESSION.md
+        session_md = f"""# {task} - Session {session_id}
+
+## Session Overview
+- **Task**: {task}
+- **Complexity Level**: {complexity_level}
+- **Created**: {datetime.now().strftime("%Y-%m-%d %H:%M:%S")}
+- **Status**: Initializing
+
+## Coordination Log
+[Worker assignments and progress will be logged here]
+
+## Results Summary
+[Final synthesis results will be documented here]
+"""
+        
+        with open(os.path.join(absolute_session_path, 'SESSION.md'), 'w') as f:
+            f.write(session_md)
+        
+        # Initialize EVENTS.jsonl (only first write is 'w', all others append)
+        initial_event = {
+            "timestamp": datetime.now().isoformat(),
+            "type": "session_created",
+            "agent": "queen-orchestrator",
+            "details": f"Session {session_id} initialized for task: {task}"
+        }
+        
+        # Only initial creation uses write mode
+        with open(os.path.join(absolute_session_path, 'EVENTS.jsonl'), 'w') as f:
+            f.write(json.dumps(initial_event) + "\n")
+        
+        # Create DEBUG.jsonl file for debug information (only first write is 'w')
+        debug_event = {
+            "timestamp": datetime.now().isoformat(),
+            "type": "debug_initialized",
+            "agent": "queen-orchestrator",
+            "details": "DEBUG.jsonl file created for session debugging"
+        }
+        
+        # Only initial creation uses write mode
+        with open(os.path.join(absolute_session_path, 'DEBUG.jsonl'), 'w') as f:
+            f.write(json.dumps(debug_event) + "\n")
+        
+        # Validate that all required files and directories were created
+        validation_results = self.validate_session_structure(session_id)
+        if not validation_results['valid']:
+            raise ValueError(f"Session structure validation failed: {validation_results['errors']}")
+        
+        return initial_state
+    
+    def log_queen_spawn(self, session_id: str, task: str, complexity_level: int) -> None:
+        """Log queen activation event to EVENTS.jsonl"""
+        from datetime import datetime
+        
+        # Log queen spawn event using append-safe method
+        spawn_event = {
+            "timestamp": datetime.now().isoformat(),
+            "type": "queen_spawned",
+            "agent": "queen-orchestrator",
+            "details": {
+                "message": "Queen Orchestrator activated for task coordination",
+                "task": task,
+                "complexity_level": complexity_level,
+                "session_id": session_id
+            }
+        }
+        
+        # Use append-safe method
+        SessionManagement.append_to_events(session_id, spawn_event)
+    
+    def log_worker_selection(self, session_id: str, selected_workers: List[Dict], 
+                           task_analysis: Dict[str, Any], coordination_plan: Dict[str, Any]) -> None:
+        """Log worker selection decisions to EVENTS.jsonl"""
+        from datetime import datetime
+        
+        # Log worker selection event
+        selection_event = {
+            "timestamp": datetime.now().isoformat(),
+            "type": "worker_selection_completed",
+            "agent": "queen-orchestrator",
+            "details": {
+                "message": "Worker selection process completed",
+                "workers_selected": [w["type"] for w in selected_workers],
+                "worker_count": len(selected_workers),
+                "task_analysis": task_analysis,
+                "coordination_mode": coordination_plan.get("coordination_mode"),
+                "synthesis_strategy": coordination_plan.get("synthesis_strategy"),
+                "worker_details": [
+                    {
+                        "type": w["type"],
+                        "reason": w.get("reason", "Domain expertise required"),
+                        "focus_areas": w.get("focus_areas", []),
+                        "priority": w.get("priority", 5)
+                    } for w in selected_workers
+                ]
+            }
+        }
+        
+        # Use append-safe method
+        SessionManagement.append_to_events(session_id, selection_event)
+        
+        # Also log each worker assignment individually
+        for worker in selected_workers:
+            worker_config = coordination_plan["worker_configs"].get(worker["type"], {})
+            assignment_event = {
+                "timestamp": datetime.now().isoformat(),
+                "type": "task_assigned",
+                "agent": "queen-orchestrator",
+                "worker": worker["type"],
+                "details": {
+                    "task_description": worker_config.get("task_description", "Task assigned"),
+                    "focus_areas": worker_config.get("specific_focus", []),
+                    "selection_reason": worker_config.get("selection_reason", "Required for task"),
+                    "timeout": worker_config.get("timeout", 300),
+                    "dependencies": worker_config.get("dependencies", [])
+                }
+            }
+            
+            # Use append-safe method for each assignment
+            SessionManagement.append_to_events(session_id, assignment_event)
+    
+    def plan_workers(self, task: str, complexity_level: int, session_id: str = None) -> Dict[str, Any]:
         """
         Plan worker deployment dynamically based on task scope analysis.
         Worker count is determined by what's mentioned in the task, NOT complexity.
@@ -111,6 +343,10 @@ class CoordinationProtocol(BaseProtocol):
             "verification_loops": self.generate_verification_loops(selected_workers),
             "task_analysis": task_analysis  # Include for transparency
         }
+        
+        # Log worker selection if session_id provided
+        if session_id:
+            self.log_worker_selection(session_id, selected_workers, task_analysis, coordination_plan)
         
         self.log_execution("plan_workers", coordination_plan)
         return coordination_plan
@@ -403,6 +639,47 @@ class CoordinationProtocol(BaseProtocol):
             4: "deep_integration_synthesis"
         }
         return strategies.get(complexity, "cross_reference_analysis")
+    
+    def validate_session_structure(self, session_id: str) -> Dict[str, Any]:
+        """Validate that all required session files and directories exist"""
+        import os
+        
+        # Use unified session path
+        session_path = SessionManagement.get_session_path(session_id)
+        
+        errors = []
+        required_items = {
+            'directories': [
+                session_path,
+                os.path.join(session_path, 'workers'),
+                os.path.join(session_path, 'workers', 'json'),
+                os.path.join(session_path, 'workers', 'prompts'),
+                os.path.join(session_path, 'workers', 'decisions')
+            ],
+            'files': [
+                os.path.join(session_path, 'STATE.json'),
+                os.path.join(session_path, 'SESSION.md'),
+                os.path.join(session_path, 'EVENTS.jsonl'),
+                os.path.join(session_path, 'DEBUG.jsonl')
+            ]
+        }
+        
+        # Check directories
+        for directory in required_items['directories']:
+            if not os.path.isdir(directory):
+                errors.append(f"Missing directory: {directory}")
+        
+        # Check files
+        for file_path in required_items['files']:
+            if not os.path.isfile(file_path):
+                errors.append(f"Missing file: {file_path}")
+        
+        return {
+            'valid': len(errors) == 0,
+            'errors': errors,
+            'session_path': session_path,
+            'session_id': session_id
+        }
     
     def generate_verification_loops(self, workers: List[Dict]) -> Dict[str, Any]:
         """Generate verification checkpoints"""

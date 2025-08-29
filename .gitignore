@@ -4,3 +4,5 @@ settings.local.json
 hooks
 scripts
 workflows
+
+__pycache__

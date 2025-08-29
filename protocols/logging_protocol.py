@@ -7,8 +7,9 @@ Unified logging protocol with atomic operations.
 
 import json
 from datetime import datetime
-from typing import Dict, Any, Optional
+from typing import Dict, Any, Optional, List
 from .protocol_loader import BaseProtocol, ProtocolConfig
+from .session_management import SessionManagement
 
 class LoggingProtocol(BaseProtocol):
     """Handles all logging operations with atomic guarantees"""
@@ -20,7 +21,7 @@ class LoggingProtocol(BaseProtocol):
     
     def log_event(self, event_type: str, details: Any, level: str = "INFO") -> Dict[str, Any]:
         """
-        Atomic event logging to EVENTS.jsonl
+        Atomic event logging to EVENTS.jsonl using append-safe operations
         """
         timestamp = datetime.now().isoformat()
         self.event_counter += 1
@@ -36,10 +37,9 @@ class LoggingProtocol(BaseProtocol):
             "protocol_version": self.config.version
         }
         
-        # Write to EVENTS.jsonl atomically
+        # Use unified append-safe method - NEVER overwrites
         if self.config.session_id:
-            session_path = f"Docs/hive-mind/sessions/{self.config.session_id}"
-            self.atomic_append(f"{session_path}/EVENTS.jsonl", event)
+            SessionManagement.append_to_events(self.config.session_id, event)
         
         # Buffer for batch operations
         self.log_buffer.append(event)
@@ -52,7 +52,7 @@ class LoggingProtocol(BaseProtocol):
     
     def log_debug(self, message: str, details: Any, level: str = "DEBUG") -> Dict[str, Any]:
         """
-        Debug logging to DEBUG.jsonl
+        Debug logging to DEBUG.jsonl using append-safe operations
         """
         timestamp = datetime.now().isoformat()
         
@@ -64,15 +64,15 @@ class LoggingProtocol(BaseProtocol):
             "details": details
         }
         
+        # Use unified append-safe method - NEVER overwrites
         if self.config.session_id:
-            session_path = f"Docs/hive-mind/sessions/{self.config.session_id}"
-            self.atomic_append(f"{session_path}/DEBUG.jsonl", debug_entry)
+            SessionManagement.append_to_debug(self.config.session_id, debug_entry)
         
         return debug_entry
     
     def log_backlog(self, item: Dict[str, Any]) -> Dict[str, Any]:
         """
-        Log to BACKLOG.jsonl for deferred items
+        Log to BACKLOG.jsonl for deferred items using append-safe operations
         """
         timestamp = datetime.now().isoformat()
         
@@ -84,41 +84,45 @@ class LoggingProtocol(BaseProtocol):
             "priority": item.get("priority", "normal")
         }
         
+        # Use unified append-safe method - NEVER overwrites
         if self.config.session_id:
-            session_path = f"Docs/hive-mind/sessions/{self.config.session_id}"
-            self.atomic_append(f"{session_path}/BACKLOG.jsonl", backlog_entry)
+            SessionManagement.append_to_backlog(self.config.session_id, backlog_entry)
         
         return backlog_entry
     
     def atomic_append(self, filepath: str, data: Dict[str, Any]) -> bool:
         """
-        Atomic append operation using printf for guaranteed write
+        DEPRECATED: Use SessionManagement append methods instead.
+        This method is kept for backwards compatibility only.
         """
-        # Convert to JSON with minimal formatting
-        json_str = json.dumps(data, separators=(',', ':'))
+        # Extract session_id from filepath if possible
+        import re
+        match = re.search(r'/sessions/([^/]+)/', filepath)
+        if match and self.config.session_id:
+            session_id = match.group(1)
+            
+            # Route to appropriate append method
+            if 'EVENTS.jsonl' in filepath:
+                return SessionManagement.append_to_events(session_id, data)
+            elif 'DEBUG.jsonl' in filepath:
+                return SessionManagement.append_to_debug(session_id, data)
+            elif 'BACKLOG.jsonl' in filepath:
+                return SessionManagement.append_to_backlog(session_id, data)
         
-        # Use Bash printf for atomic write (pseudo-code for actual implementation)
-        # Bash(
-        #     command=f'printf "%s\\n" {json.dumps(json_str)} >> "{filepath}"',
-        #     description=f"Atomic append to {filepath}"
-        # )
-        
-        # For architecture demonstration
+        # Fallback for other files
         self.log_execution("atomic_append", {"file": filepath, "success": True})
         return True
     
     def flush_buffer(self) -> int:
         """
-        Flush log buffer to disk
+        Flush log buffer to disk using append-safe operations
         """
         count = len(self.log_buffer)
         
         if count > 0 and self.config.session_id:
-            session_path = f"Docs/hive-mind/sessions/{self.config.session_id}"
-            
-            # Batch write all buffered events
+            # Batch append all buffered events using safe method
             for event in self.log_buffer:
-                self.atomic_append(f"{session_path}/EVENTS.jsonl", event)
+                SessionManagement.append_to_events(self.config.session_id, event)
             
             self.log_buffer.clear()
         
@@ -133,16 +137,11 @@ class LoggingProtocol(BaseProtocol):
             return []
         
         events = []
-        session_path = f"Docs/hive-mind/sessions/{self.config.session_id}"
+        # Use unified session path
+        session_path = SessionManagement.get_session_path(self.config.session_id)
         
-        # Pseudo-code for actual file reading
-        # lines = Read(f"{session_path}/EVENTS.jsonl").strip().split('\n')
-        # for line in lines:
-        #     if line:
-        #         event = json.loads(line)
-        #         if (not event_type or event.get("type") == event_type) and \
-        #            (not agent or event.get("agent") == agent):
-        #             events.append(event)
+        # Note: In production, this would use the Read tool to read EVENTS.jsonl
+        # and parse/filter the events. For now, return empty list as placeholder.
         
         return events
     

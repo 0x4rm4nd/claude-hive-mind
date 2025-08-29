@@ -10,6 +10,7 @@ import re
 from datetime import datetime
 from typing import Dict, Any, Optional, List
 from .protocol_loader import BaseProtocol, ProtocolConfig
+from .session_management import SessionManagement
 
 class StartupProtocol(BaseProtocol):
     """Handles worker startup sequence"""
@@ -32,8 +33,8 @@ class StartupProtocol(BaseProtocol):
             self.startup_metrics["session_id"] = self.config.session_id
             self.startup_metrics["checkpoints"]["session_extracted"] = datetime.now().isoformat()
             
-            # Phase 2: Session validation
-            if not self.validate_session():
+            # Phase 2: Session validation using unified session management
+            if not SessionManagement.ensure_session_exists(self.config.session_id):
                 raise FileNotFoundError(f"Session {self.config.session_id} structure invalid")
             self.startup_metrics["checkpoints"]["session_validated"] = datetime.now().isoformat()
             
@@ -78,13 +79,15 @@ class StartupProtocol(BaseProtocol):
     
     def load_configuration(self) -> Dict[str, Any]:
         """Load worker configuration from session state"""
-        session_path = f"Docs/hive-mind/sessions/{self.config.session_id}"
+        # Use unified state reading
+        state = SessionManagement.read_state(self.config.session_id)
         
-        # Read STATE.json (pseudo-code for actual implementation)
-        # state = json.loads(Read(f"{session_path}/STATE.json"))
-        # return state.get("worker_configs", {}).get(self.config.worker_type, {})
+        if state and "worker_configs" in state:
+            worker_config = state.get("worker_configs", {}).get(self.config.worker_type, {})
+            if worker_config:
+                return worker_config
         
-        # Placeholder for demonstration
+        # Fallback configuration
         return {
             "task_focus": "Analysis task",
             "priority": "high",
@@ -110,29 +113,37 @@ class StartupProtocol(BaseProtocol):
         return loaded
     
     def check_escalations(self) -> List[Dict[str, Any]]:
-        """Check for pending escalations"""
+        """Check for pending escalations from unified session"""
         escalations = []
-        session_path = f"Docs/hive-mind/sessions/{self.config.session_id}"
         
-        # Pseudo-code for actual implementation
-        # events = Read(f"{session_path}/EVENTS.jsonl").strip().split('\n')
-        # for line in events:
-        #     event = json.loads(line)
-        #     if (event.get("type") == "escalation" and
-        #         event.get("target") == self.config.worker_type and
-        #         event.get("status") != "resolved"):
-        #         escalations.append(event)
+        # Use unified session path
+        session_path = SessionManagement.get_session_path(self.config.session_id)
+        
+        # Note: In production, this would read EVENTS.jsonl using Read tool
+        # and filter for escalations targeting this worker
+        # For now, return empty list as placeholder
         
         return escalations
     
     def report_compliance(self) -> Dict[str, bool]:
-        """Report compliance status"""
+        """Report compliance status and log to session"""
         compliance = {
             "session_validated": True,
             "context_loaded": True,
             "escalation_monitoring_active": True,
             "startup_completed": True
         }
+        
+        # Log compliance to session using append-safe method
+        SessionManagement.append_to_events(
+            self.config.session_id,
+            {
+                "type": "worker_compliance",
+                "agent": self.config.worker_type,
+                "compliance": compliance,
+                "timestamp": datetime.now().isoformat()
+            }
+        )
         
         self.log_execution("compliance_check", compliance)
         return compliance

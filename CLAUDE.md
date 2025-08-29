@@ -37,42 +37,19 @@
 
 ### Protocol Enforcement Rules
 
-#### 1. Research-First Protocol (MANDATORY)
-**For ALL implementation tasks:**
-```markdown
-## RESEARCH PHASE [BLOCKING]
-□ Search Context7 for best practices and documentation
-□ Analyze codebase with Serena tools for existing patterns
-□ Review memory bank for relevant implementation patterns
-□ Document findings in workers/[agent]-research.md (>500 words)
-✓ CHECKPOINT: Research file exists and logged to EVENTS.jsonl
+**When spawned, ALL agents must immediately:**
 
-## IMPLEMENTATION PHASE [GATED]  
-⚡ GATE: Only proceed after research checkpoint passed
-□ Code with research context loaded
-□ Log progress every 5 minutes during active coding
-```
+1. **Load Required Protocols** - Read and follow the specific protocol files referenced in their agent configuration
+2. **Complete Startup Sequence** - Execute the mandatory initialization steps defined in `worker-startup-protocol.md`
+3. **Maintain Compliance** - Continuously follow protocol requirements throughout task execution
+4. **Log All Activities** - Use the standardized logging functions from `unified-logging-protocol.md`
 
-#### 2. Event Logging Protocol (MANDATORY)
-**Smart EVENTS.jsonl Monitoring:**
-- **Active Coding**: Suspended during Edit/Write/MultiEdit sequences
-- **Coordination Phase**: Check every 2-3 minutes
-- **Maximum Silence**: Never exceed 10 minutes without checking
-- **Format**: ISO-8601 timestamps, structured JSON
-
-#### 3. Session Coordination Protocol
-**Session Structure:**
-```
-Docs/hive-mind/sessions/{session-id}/
-├── STATE.json              # Current execution state
-├── EVENTS.jsonl            # Event stream log  
-├── DEBUG.jsonl             # Debug information and error logs
-├── RESEARCH_SYNTHESIS.md   # Cross-worker findings
-└── workers/
-    ├── json/               # Worker JSON responses
-    ├── notes/              # Worker markdown notes
-    └── prompts/            # Worker-specific prompts
-```
+**Key Protocol Categories:**
+- **Startup Protocol**: Mandatory initialization sequence for all agents
+- **Research Protocol**: Research-first enforcement before implementation
+- **Logging Protocol**: Standardized event and debug logging
+- **Coordination Protocol**: Inter-agent communication and escalation
+- **Session Protocol**: Session management and state tracking
 
 ## 👑 Queen Orchestrator Unique Responsibilities
 
@@ -95,40 +72,19 @@ Docs/hive-mind/sessions/{session-id}/
 4. **Complete Research Phase**: Document findings before implementation
 5. **Signal Completion**: Update STATE.json and log completion events
 
-### Worker-Specific Protocol References
-```yaml
-researcher-worker:
-  protocols: [worker-startup-protocol, research-protocol, logging-protocol]
-  focus: Context7 research and pattern discovery
+### Worker Protocol Compliance
 
-architect-worker:
-  protocols: [worker-startup-protocol, coordination-protocol, logging-protocol]  
-  focus: System design and architecture patterns
+**Each worker agent declares their required protocols in their individual configuration files** (`.claude/agents/[worker-name].md`). When spawned, workers must:
 
-backend-worker:
-  protocols: [worker-startup-protocol, research-protocol, logging-protocol]
-  focus: API and database implementation
+1. **Read their agent configuration** to identify required protocols
+2. **Load and follow each protocol** from `.claude/protocols/` directory  
+3. **Execute protocol requirements** in the specified order
+4. **Maintain compliance** throughout their task execution
 
-frontend-worker:
-  protocols: [worker-startup-protocol, coordination-protocol, logging-protocol]
-  focus: UI components and state management
-
-designer-worker:
-  protocols: [worker-startup-protocol, research-protocol, logging-protocol]
-  focus: UX/UI design and accessibility
-
-test-worker:
-  protocols: [worker-startup-protocol, coordination-protocol, logging-protocol]
-  focus: Testing strategy and quality assurance
-
-devops-worker:
-  protocols: [worker-startup-protocol, research-protocol, logging-protocol]
-  focus: Infrastructure and deployment
-
-analyzer-worker:
-  protocols: [worker-startup-protocol, research-protocol, logging-protocol]
-  focus: Security and performance analysis
-```
+**Common Protocol Patterns:**
+- All workers follow `worker-startup-protocol.md` and `logging-protocol.md`
+- Implementation-focused workers additionally follow `research-protocol.md`
+- Coordination-heavy workers additionally follow `coordination-protocol.md`
 
 ## ⚡ Token Efficiency Optimizations
 
@@ -145,37 +101,25 @@ analyzer-worker:
 
 ## 🔧 Implementation Patterns
 
-### Worker Startup Sequence Example
-```bash
-# 1. Load agent configuration
-AGENT_TYPE=$(grep "name:" .claude/agents/$(basename $0).md | cut -d' ' -f2)
+### Agent Startup Flow
 
-# 2. Find active session (created by Queen)
-SESSION_DIR=$(find "Docs/hive-mind/sessions/" -name "STATE.json" -exec dirname {} \; | head -1)
+**All agents follow this high-level startup flow:**
 
-# 3. Join session and log spawn
-echo '{"timestamp":"'$(date -Iseconds)'","type":"worker_spawned","agent":"'$AGENT_TYPE'"}' >> "$SESSION_DIR/EVENTS.jsonl"
+1. **Load Agent Configuration** - Read individual agent file from `.claude/agents/`
+2. **Join Active Session** - Locate session directory created by Queen
+3. **Execute Startup Protocol** - Follow `worker-startup-protocol.md` requirements exactly
+4. **Begin Task Execution** - Start assigned work while maintaining protocol compliance
 
-# 4. Load and follow required protocols  
-for protocol in worker-startup-protocol research-protocol logging-protocol; do
-  echo "Following protocol: .claude/protocols/$protocol.md"
-done
-```
+**Implementation details are defined in the individual protocol files** - agents must reference and follow the specific protocols rather than implementing custom startup logic.
 
-### Event Logging Template
-```json
-{
-  "timestamp": "2025-01-15T10:30:00Z",
-  "type": "research_complete|task_progress|worker_ready|escalation",
-  "agent": "[agent-name]",  
-  "session_id": "[session-id]",
-  "details": {
-    "action": "specific_action_taken",
-    "result": "success|in_progress|blocked",
-    "metrics": {"tokens_used": 0, "files_modified": 0}
-  }
-}
-```
+### Protocol Reference
+
+**All event logging, compliance verification, and coordination details are defined in the individual protocol files.** Agents must use the standardized functions and templates provided in:
+
+- `unified-logging-protocol.md` - Event and debug logging functions
+- `worker-startup-protocol.md` - Mandatory initialization sequence  
+- `coordination-protocol.md` - Inter-agent communication patterns
+- `research-protocol.md` - Research-first implementation requirements
 
 ## 🚨 Compliance Verification
 

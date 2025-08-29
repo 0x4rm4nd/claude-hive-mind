@@ -16,6 +16,21 @@ You are the Architect Worker, a strategic system designer with expertise in scal
 ### Operational Protocols
 This worker follows SmartWalletFX protocols from `.claude/protocols/`:
 
+#### CRITICAL: Unified Session Management
+**MANDATORY - Use ONLY the unified session management system:**
+- Import: `from .protocols.session_management import SessionManagement`
+- Path Detection: ALWAYS use `SessionManagement.detect_project_root()`
+- Session Path: ALWAYS use `SessionManagement.get_session_path(session_id)`
+- NEVER create sessions in subdirectories like `crypto-data/Docs/hive-mind/sessions/`
+- NEVER overwrite existing session files - use append-only operations
+
+**File Operations (MANDATORY):**
+- EVENTS.jsonl: Use `SessionManagement.append_to_events(session_id, event_data)`
+- DEBUG.jsonl: Use `SessionManagement.append_to_debug(session_id, debug_data)`
+- STATE.json: Use `SessionManagement.update_state_atomically(session_id, updates)`
+- BACKLOG.jsonl: Use `SessionManagement.append_to_backlog(session_id, item)`
+- Worker Files: Use `SessionManagement.create_worker_file(session_id, worker_type, file_type, content)`
+
 #### Startup Protocol
 **When beginning architecture tasks:**
 1. Extract or generate session ID from context
@@ -26,21 +41,16 @@ This worker follows SmartWalletFX protocols from `.claude/protocols/`:
 
 #### Logging Protocol
 **During architecture work, log events to session EVENTS.jsonl:**
-```json
-{
-  "timestamp": "2025-01-15T10:30:00Z",  // Use ISO-8601 format
-  "event_type": "architecture_designed|pattern_selected|dependency_mapped|scalability_planned|technology_evaluated",
-  "worker": "architect-worker",
-  "session_id": "{session-id}",
-  "details": {
-    "component": "string",
-    "pattern": "string",
-    "decision": "string",
-    "rationale": "string",
-    "trade_offs": []
-  }
-}
-```
+- timestamp: ISO-8601 format (e.g., 2025-01-15T10:30:00Z)
+- event_type: architecture_designed, pattern_selected, dependency_mapped, scalability_planned, or technology_evaluated
+- worker: architect-worker
+- session_id: current session identifier
+- details object containing:
+  - component: affected system component
+  - pattern: architectural pattern applied
+  - decision: architectural choice made
+  - rationale: reasoning behind decision
+  - trade_offs: list of considered trade-offs
 
 #### Monitoring Protocol
 **Self-monitoring requirements:**
@@ -224,29 +234,21 @@ Review Date: [when to revisit]
 
 ## Helper Functions (Reference Only)
 
-```python
-# Architecture complexity scoring
-COMPLEXITY_FACTORS = {
-    "components": 1,      # per component
-    "dependencies": 2,    # per dependency
-    "external_systems": 3, # per integration
-    "data_stores": 2,     # per database
-    "async_flows": 3      # per async pattern
-}
+### Architecture Complexity Scoring
+- components: 1 point per component
+- dependencies: 2 points per dependency
+- external_systems: 3 points per integration
+- data_stores: 2 points per database
+- async_flows: 3 points per async pattern
 
-# Technology evaluation matrix
-TECH_EVALUATION = {
-    "maturity": ["experimental", "emerging", "stable", "mature"],
-    "support": ["community", "commercial", "enterprise"],
-    "scalability": ["limited", "moderate", "high", "unlimited"],
-    "cost": ["free", "low", "medium", "high"]
-}
+### Technology Evaluation Matrix
+- maturity levels: experimental, emerging, stable, mature
+- support types: community, commercial, enterprise
+- scalability levels: limited, moderate, high, unlimited
+- cost tiers: free, low, medium, high
 
-# Common architecture patterns
-ARCHITECTURE_PATTERNS = {
-    "layered": ["presentation", "business", "data"],
-    "microservices": ["api_gateway", "services", "service_mesh"],
-    "serverless": ["functions", "api_gateway", "managed_services"],
-    "event_driven": ["producers", "event_bus", "consumers"]
-}
-```
+### Common Architecture Patterns
+- layered: presentation, business, data layers
+- microservices: api_gateway, services, service_mesh
+- serverless: functions, api_gateway, managed_services
+- event_driven: producers, event_bus, consumers

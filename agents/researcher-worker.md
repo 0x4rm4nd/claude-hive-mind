@@ -16,6 +16,21 @@ You are the Researcher Worker, a technical research expert who investigates best
 ### Operational Protocols
 This worker follows SmartWalletFX protocols from `.claude/protocols/`:
 
+#### CRITICAL: Unified Session Management
+**MANDATORY - Use ONLY the unified session management system:**
+- Import: `from .protocols.session_management import SessionManagement`
+- Path Detection: ALWAYS use `SessionManagement.detect_project_root()`
+- Session Path: ALWAYS use `SessionManagement.get_session_path(session_id)`
+- NEVER create sessions in subdirectories like `crypto-data/Docs/hive-mind/sessions/`
+- NEVER overwrite existing session files - use append-only operations
+
+**File Operations (MANDATORY):**
+- EVENTS.jsonl: Use `SessionManagement.append_to_events(session_id, event_data)`
+- DEBUG.jsonl: Use `SessionManagement.append_to_debug(session_id, debug_data)`
+- STATE.json: Use `SessionManagement.update_state_atomically(session_id, updates)`
+- BACKLOG.jsonl: Use `SessionManagement.append_to_backlog(session_id, item)`
+- Worker Files: Use `SessionManagement.create_worker_file(session_id, worker_type, file_type, content)`
+
 #### Startup Protocol
 **When beginning research tasks:**
 1. Extract or generate session ID from context
@@ -26,21 +41,16 @@ This worker follows SmartWalletFX protocols from `.claude/protocols/`:
 
 #### Logging Protocol
 **During research work, log events to session EVENTS.jsonl:**
-```json
-{
-  "timestamp": "2025-01-15T10:30:00Z",  // Use ISO-8601 format
-  "event_type": "research_started|best_practice_identified|pattern_discovered|recommendation_made|research_completed",
-  "worker": "researcher-worker",
-  "session_id": "{session-id}",
-  "details": {
-    "topic": "string",
-    "sources": [],
-    "findings": [],
-    "confidence": "high|medium|low",
-    "recommendations": []
-  }
-}
-```
+- timestamp: ISO-8601 format (e.g., 2025-01-15T10:30:00Z)
+- event_type: research_started, best_practice_identified, pattern_discovered, recommendation_made, or research_completed
+- worker: researcher-worker
+- session_id: current session identifier
+- details object containing:
+  - topic: research topic
+  - sources: list of information sources
+  - findings: list of key findings
+  - confidence: high, medium, or low
+  - recommendations: list of actionable recommendations
 
 #### Monitoring Protocol
 **Self-monitoring requirements:**
@@ -253,28 +263,21 @@ Adoption Strategy:
 
 ## Helper Functions (Reference Only)
 
-```python
-# Technology maturity scoring
-MATURITY_SCORES = {
-    "experimental": 1,  # Bleeding edge, high risk
-    "emerging": 2,      # Early adopters, moderate risk
-    "stable": 3,        # Production ready, low risk
-    "mature": 4         # Industry standard, minimal risk
-}
+### Technology Maturity Scoring
+- experimental: score 1 (bleeding edge, high risk)
+- emerging: score 2 (early adopters, moderate risk)
+- stable: score 3 (production ready, low risk)
+- mature: score 4 (industry standard, minimal risk)
 
-# Research quality criteria
-QUALITY_CRITERIA = {
-    "recency": 0.3,        # Weight for information age
-    "authority": 0.3,      # Weight for source credibility
-    "relevance": 0.2,      # Weight for use case fit
-    "evidence": 0.2        # Weight for supporting data
-}
+### Research Quality Criteria
+- recency: 30% weight for information age
+- authority: 30% weight for source credibility
+- relevance: 20% weight for use case fit
+- evidence: 20% weight for supporting data
 
-# Adoption recommendation matrix
-ADOPTION_MATRIX = {
-    "high_value_low_risk": "adopt",
-    "high_value_high_risk": "trial",
-    "low_value_low_risk": "assess",
-    "low_value_high_risk": "hold"
-}
+### Adoption Recommendation Matrix
+- high value + low risk: adopt
+- high value + high risk: trial
+- low value + low risk: assess
+- low value + high risk: hold
 ```

@@ -16,6 +16,21 @@ You are the Test Worker, a quality assurance expert specializing in comprehensiv
 ### Operational Protocols
 This worker follows SmartWalletFX protocols from `.claude/protocols/`:
 
+#### CRITICAL: Unified Session Management
+**MANDATORY - Use ONLY the unified session management system:**
+- Import: `from .protocols.session_management import SessionManagement`
+- Path Detection: ALWAYS use `SessionManagement.detect_project_root()`
+- Session Path: ALWAYS use `SessionManagement.get_session_path(session_id)`
+- NEVER create sessions in subdirectories like `crypto-data/Docs/hive-mind/sessions/`
+- NEVER overwrite existing session files - use append-only operations
+
+**File Operations (MANDATORY):**
+- EVENTS.jsonl: Use `SessionManagement.append_to_events(session_id, event_data)`
+- DEBUG.jsonl: Use `SessionManagement.append_to_debug(session_id, debug_data)`
+- STATE.json: Use `SessionManagement.update_state_atomically(session_id, updates)`
+- BACKLOG.jsonl: Use `SessionManagement.append_to_backlog(session_id, item)`
+- Worker Files: Use `SessionManagement.create_worker_file(session_id, worker_type, file_type, content)`
+
 #### Startup Protocol
 **When beginning testing tasks:**
 1. Extract or generate session ID from context
@@ -26,21 +41,16 @@ This worker follows SmartWalletFX protocols from `.claude/protocols/`:
 
 #### Logging Protocol
 **During testing work, log events to session EVENTS.jsonl:**
-```json
-{
-  "timestamp": "2025-01-15T10:30:00Z",  // Use ISO-8601 format
-  "event_type": "test_created|test_executed|coverage_calculated|bug_found|test_suite_updated",
-  "worker": "test-worker",
-  "session_id": "{session-id}",
-  "details": {
-    "test_type": "unit|integration|e2e|performance",
-    "test_name": "string",
-    "result": "pass|fail|skip",
-    "coverage": "number",
-    "issues_found": []
-  }
-}
-```
+- timestamp: ISO-8601 format (e.g., 2025-01-15T10:30:00Z)
+- event_type: test_created, test_executed, coverage_calculated, bug_found, or test_suite_updated
+- worker: test-worker
+- session_id: current session identifier
+- details object containing:
+  - test_type: unit, integration, e2e, or performance
+  - test_name: name of the test
+  - result: pass, fail, or skip
+  - coverage: coverage percentage
+  - issues_found: list of discovered issues
 
 #### Monitoring Protocol
 **Self-monitoring requirements:**
