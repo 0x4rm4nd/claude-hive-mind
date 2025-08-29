@@ -1,0 +1,164 @@
+{
+  "session_id": "{YYYY-MM-DD-HH-MM-task-name}",
+  "status": "active",
+  "created_at": "{ISO_TIMESTAMP}",
+  "complexity_level": 3,
+  "complexity_assessment": {
+    "auto_detected": 2,
+    "user_override": 3,
+    "override_applied": true,
+    "override_reason": "User specified higher complexity due to security requirements",
+    "notification_displayed": "⚠️ COMPLEXITY OVERRIDE: Auto-detected Level 2, using Level 3"
+  },
+  "enforcement": {
+    "archon_required": true,
+    "archon_health_checked": false,
+    "archon_health_check_timestamp": null,
+    "protocols_loaded": {
+      "queen-orchestrator": true,
+      "backend-worker": false,
+      "frontend-worker": false,
+      "analyzer-worker": false,
+      "service-architect": false,
+      "test-worker": false,
+      "devops-worker": false,
+      "designer-worker": false,
+      "researcher-worker": false
+    },
+    "events_monitoring": {
+      "monitoring_active": true,
+      "last_check": null,
+      "required_interval_seconds": 180,
+      "missed_checks": 0
+    },
+    "startup_protocol_status": {
+      "session_validation": "pending",
+      "worker_configuration": "pending",
+      "context_loading": "pending",
+      "events_check": "pending",
+      "archon_task_claim": "pending"
+    }
+  },
+  "required_worker_protocols": {
+    "backend-worker": {
+      "assigned": true,
+      "status": "not_started",
+      "archon_task_id": null,
+      "protocol_compliance": {
+        "startup_completed": false,
+        "monitoring_active": false,
+        "last_events_check": null,
+        "archon_updates_count": 0
+      },
+      "must_complete": [
+        "session_validation",
+        "context_loading",
+        "events_check",
+        "archon_task_claim"
+      ],
+      "completed": [],
+      "tag_access": ["backend", "api", "database", "security"],
+      "escalation_timeout_seconds": 300,
+      "escalation_chain": ["analyzer-worker", "service-architect", "queen-orchestrator"],
+      "blockers": []
+    },
+    "frontend-worker": {
+      "assigned": true,
+      "status": "not_started",
+      "archon_task_id": null,
+      "protocol_compliance": {
+        "startup_completed": false,
+        "monitoring_active": false,
+        "last_events_check": null,
+        "archon_updates_count": 0
+      },
+      "must_complete": [
+        "session_validation",
+        "context_loading",
+        "api_dependency_check",
+        "archon_task_claim"
+      ],
+      "completed": [],
+      "tag_access": ["frontend", "ui", "react", "ux"],
+      "escalation_timeout_seconds": 300,
+      "escalation_chain": ["designer-worker", "service-architect", "queen-orchestrator"],
+      "dependencies": {
+        "waiting_for": ["backend-worker"],
+        "api_ready": false
+      }
+    },
+    "analyzer-worker": {
+      "assigned": false,
+      "status": "not_needed",
+      "note": "Available for escalation from backend/frontend workers"
+    },
+    "service-architect": {
+      "assigned": false,
+      "status": "not_needed",
+      "note": "Available for architecture escalations"
+    }
+  },
+  "archon_integration": {
+    "project_id": "30565f01-937d-433c-b0f0-6960b0dffd93",
+    "project_name": "SmartWalletFX",
+    "feature": null,
+    "task_ids": [],
+    "knowledge_base_uploads": []
+  },
+  "session_structure": {
+    "base_path": "Docs/hive-mind/sessions/{session_id}/",
+    "directories_created": {
+      "workers": true,
+      "research": false,
+      "archive": false,
+      "context": false,
+      "decisions": false,
+      "escalation": false
+    },
+    "files_created": {
+      "SESSION.md": true,
+      "STATE.json": true,
+      "EVENTS.jsonl": true,
+      "BACKLOG.jsonl": false
+    }
+  },
+  "escalation_configuration": {
+    "complexity_timeouts": {
+      "1": 900,
+      "2": 600,
+      "3": 300,
+      "4": 120
+    },
+    "priority_response_times": {
+      "critical": 120,
+      "high": 300,
+      "medium": 600,
+      "low": 900
+    },
+    "auto_escalation_enabled": true,
+    "escalation_chains": {
+      "backend-worker": ["analyzer-worker", "service-architect", "queen-orchestrator"],
+      "frontend-worker": ["designer-worker", "service-architect", "queen-orchestrator"],
+      "test-worker": ["analyzer-worker", "queen-orchestrator"],
+      "devops-worker": ["service-architect", "queen-orchestrator"]
+    }
+  },
+  "context_configuration": {
+    "memory_bank_path": "Docs/hive-mind/memory-bank/",
+    "tag_filtering_enabled": true,
+    "context_loaded": {
+      "activeContext.md": false,
+      "techContext.md": false,
+      "systemPatterns.md": false,
+      "productContext.md": false
+    },
+    "worker_context_cache": {}
+  },
+  "resumption_data": {
+    "can_resume": true,
+    "last_active_worker": null,
+    "last_checkpoint": null,
+    "unresolved_blockers": [],
+    "pending_escalations": []
+  }
+}
