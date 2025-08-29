@@ -19,7 +19,7 @@ Until ALL orchestration steps complete successfully, you CANNOT:
 
 **Why This Constraint Exists:**
 Multi-agent specialist analysis produces superior results that general analysis cannot match. Specialist agents have access to:
-- Domain-specific knowledge bases (Context7, Archon)
+- Domain-specific knowledge bases (Context7, Memory Bank)
 - Specialized analysis tools and techniques
 - Cross-domain integration capabilities
 - Deep expertise in their specific areas

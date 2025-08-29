@@ -2,7 +2,7 @@
 """
 Coordination Protocol Implementation 
 ==========================================
-Handles queen-worker coordination patterns.
+Handles queen-worker coordination patterns with truly dynamic worker selection.
 """
 
 import json
@@ -11,91 +11,94 @@ from typing import Dict, Any, List, Optional
 from .protocol_loader import BaseProtocol, ProtocolConfig
 
 class CoordinationProtocol(BaseProtocol):
-    """Manages coordination between queen and workers"""
+    """Manages coordination between queen and workers with scope-based selection"""
     
     # Worker capability matrix
     WORKER_CAPABILITIES = {
         "analyzer-worker": {
-            "domains": ["security", "performance", "quality"],
-            "complexity_threshold": 2,
+            "domains": ["security", "performance", "quality", "code-review"],
+            "complexity_threshold": 1,
             "priority": 7
         },
         "architect-worker": {
-            "domains": ["design", "scalability", "patterns"],
-            "complexity_threshold": 3,
+            "domains": ["design", "scalability", "patterns", "system-architecture"],
+            "complexity_threshold": 2,
             "priority": 8
         },
         "backend-worker": {
-            "domains": ["api", "database", "server"],
+            "domains": ["api", "database", "server", "business-logic"],
             "complexity_threshold": 2,
             "priority": 6
         },
         "frontend-worker": {
-            "domains": ["ui", "ux", "client"],
+            "domains": ["ui", "ux", "client", "components"],
             "complexity_threshold": 2,
             "priority": 5
         },
         "devops-worker": {
-            "domains": ["infrastructure", "deployment", "ci/cd"],
+            "domains": ["infrastructure", "deployment", "ci-cd", "containers"],
             "complexity_threshold": 3,
             "priority": 6
         },
         "test-worker": {
-            "domains": ["testing", "qa", "validation"],
+            "domains": ["testing", "qa", "validation", "coverage"],
             "complexity_threshold": 1,
             "priority": 4
         },
         "designer-worker": {
-            "domains": ["design", "ux", "visual"],
+            "domains": ["design", "ux", "visual", "wireframes"],
             "complexity_threshold": 2,
             "priority": 5
         },
         "researcher-worker": {
-            "domains": ["research", "context", "documentation"],
+            "domains": ["research", "context", "documentation", "best-practices"],
             "complexity_threshold": 1,
             "priority": 3
         }
     }
     
-    # Complexity-based worker assignment
+    # Complexity affects timeouts and synthesis, NOT worker counts
     COMPLEXITY_MATRIX = {
-        1: {"max_workers": 1, "timeout": 900, "escalation": 15},    # 15min timeout, 15s escalation
-        2: {"max_workers": 2, "timeout": 600, "escalation": 10},    # 10min timeout, 10s escalation  
-        3: {"max_workers": 3, "timeout": 300, "escalation": 5},     # 5min timeout, 5s escalation
-        4: {"max_workers": 5, "timeout": 120, "escalation": 2}      # 2min timeout, 2s escalation
+        1: {"timeout": 900, "escalation": 15},    # 15min timeout, 15s escalation
+        2: {"timeout": 600, "escalation": 10},    # 10min timeout, 10s escalation  
+        3: {"timeout": 300, "escalation": 5},     # 5min timeout, 5s escalation
+        4: {"timeout": 120, "escalation": 2}      # 2min timeout, 2s escalation
     }
     
     def plan_workers(self, task: str, complexity_level: int) -> Dict[str, Any]:
         """
-        Plan worker deployment based on task and complexity.
-        Implements sophisticated coordination from queen-worker-coordination.md
+        Plan worker deployment dynamically based on task scope analysis.
+        Worker count is determined by what's mentioned in the task, NOT complexity.
+        
+        Examples of truly dynamic selection:
+        - "Review the API" → backend-worker, analyzer-worker (2 workers)
+        - "Review the API and frontend" → backend-worker, frontend-worker, analyzer-worker (3 workers)
+        - "Fix typo in README" → analyzer-worker only (1 worker)
+        - "Review entire system" → All relevant workers (5-7 workers)
         """
-        # Get complexity parameters
+        # Get complexity parameters (for timeouts only, not worker count)
         complexity_params = self.COMPLEXITY_MATRIX.get(
             complexity_level, 
             self.COMPLEXITY_MATRIX[3]
         )
         
-        # Analyze task domains
-        required_domains = self.analyze_task_domains(task)
+        # Comprehensive task analysis to understand scope
+        task_analysis = self.analyze_task_scope(task)
         
-        # Select workers based on domains and complexity
-        selected_workers = self.select_workers(
-            required_domains, 
-            complexity_level,
-            complexity_params["max_workers"]
-        )
+        # Select workers based purely on what the task mentions/requires
+        selected_workers = self.scope_based_worker_selection(task_analysis, task)
         
         # Generate worker configurations
         worker_configs = {}
         for worker in selected_workers:
             worker_configs[worker["type"]] = {
-                "task_description": self.generate_worker_task(task, worker["type"]),
-                "specific_focus": worker["domains"],
+                "task_description": self.generate_contextual_task(task, worker["type"], task_analysis),
+                "specific_focus": worker["focus_areas"],
                 "timeout": complexity_params["timeout"],
                 "escalation_timeout": complexity_params["escalation"],
                 "priority": worker["priority"],
-                "dependencies": self.identify_dependencies(worker["type"], selected_workers)
+                "dependencies": self.identify_dependencies(worker["type"], selected_workers),
+                "selection_reason": worker["reason"]
             }
         
         coordination_plan = {
@@ -105,87 +108,259 @@ class CoordinationProtocol(BaseProtocol):
             "coordination_mode": self.determine_coordination_mode(selected_workers),
             "synthesis_strategy": self.determine_synthesis_strategy(complexity_level),
             "timeout_strategy": complexity_params,
-            "verification_loops": self.generate_verification_loops(selected_workers)
+            "verification_loops": self.generate_verification_loops(selected_workers),
+            "task_analysis": task_analysis  # Include for transparency
         }
         
         self.log_execution("plan_workers", coordination_plan)
         return coordination_plan
     
-    def analyze_task_domains(self, task: str) -> List[str]:
-        """Analyze task to identify required domains"""
+    def analyze_task_scope(self, task: str) -> Dict[str, Any]:
+        """
+        Deep analysis of task to understand what systems/components are involved.
+        This determines which workers are needed based on actual task content.
+        """
         task_lower = task.lower()
-        domains = set()
         
-        # Domain keyword mapping
-        domain_keywords = {
-            "security": ["security", "vulnerability", "auth", "encryption"],
-            "performance": ["performance", "optimization", "speed", "latency"],
-            "api": ["api", "endpoint", "rest", "graphql"],
-            "database": ["database", "sql", "query", "schema"],
-            "ui": ["ui", "interface", "frontend", "react", "component"],
-            "testing": ["test", "quality", "coverage", "validation"],
-            "infrastructure": ["deploy", "docker", "kubernetes", "ci/cd"],
-            "design": ["design", "ux", "user experience", "wireframe"],
-            "architecture": ["architecture", "pattern", "scalability", "design"]
+        # Track what's explicitly or implicitly mentioned
+        components_detected = []
+        services_mentioned = []
+        
+        # Backend detection - be precise
+        backend_terms = [
+            "backend", "server", "api", "endpoint", "route", "controller",
+            "service", "business logic", "domain", "repository", "model",
+            "database", "sql", "schema", "migration", "query", "orm"
+        ]
+        if any(term in task_lower for term in backend_terms):
+            components_detected.append("backend")
+        
+        # Frontend detection - be precise
+        frontend_terms = [
+            "frontend", "ui", "user interface", "component", "view", "page",
+            "react", "vue", "angular", "html", "css", "javascript", "typescript",
+            "button", "form", "layout", "display", "screen", "browser", "client"
+        ]
+        if any(term in task_lower for term in frontend_terms):
+            components_detected.append("frontend")
+        
+        # Infrastructure detection
+        infra_terms = [
+            "docker", "kubernetes", "k8s", "deploy", "deployment", "ci/cd",
+            "pipeline", "infrastructure", "container", "production", "staging"
+        ]
+        if any(term in task_lower for term in infra_terms):
+            components_detected.append("infrastructure")
+        
+        # Testing detection
+        test_terms = [
+            "test", "testing", "spec", "coverage", "unit test", "integration",
+            "e2e", "jest", "pytest", "qa", "quality assurance", "validation"
+        ]
+        if any(term in task_lower for term in test_terms):
+            components_detected.append("testing")
+        
+        # Security detection
+        security_terms = [
+            "security", "auth", "authentication", "authorization", "oauth",
+            "jwt", "token", "permission", "vulnerability", "encryption"
+        ]
+        if any(term in task_lower for term in security_terms):
+            components_detected.append("security")
+        
+        # Performance detection
+        perf_terms = [
+            "performance", "optimization", "speed", "cache", "latency",
+            "slow", "bottleneck", "memory", "cpu", "profiling"
+        ]
+        if any(term in task_lower for term in perf_terms):
+            components_detected.append("performance")
+        
+        # Architecture detection
+        arch_terms = [
+            "architecture", "pattern", "design", "scalability", "system design",
+            "structure", "refactor", "restructure", "modularity"
+        ]
+        if any(term in task_lower for term in arch_terms):
+            components_detected.append("architecture")
+        
+        # UX/Design detection
+        design_terms = [
+            "ux", "user experience", "design", "wireframe", "mockup",
+            "visual", "aesthetic", "usability", "accessibility"
+        ]
+        if any(term in task_lower for term in design_terms):
+            components_detected.append("design")
+        
+        # Determine action type
+        action = "review"  # default
+        if any(word in task_lower for word in ["build", "create", "implement", "add", "develop"]):
+            action = "build"
+        elif any(word in task_lower for word in ["fix", "debug", "resolve", "repair", "patch"]):
+            action = "fix"
+        elif any(word in task_lower for word in ["review", "analyze", "assess", "evaluate", "audit"]):
+            action = "review"
+        elif any(word in task_lower for word in ["refactor", "optimize", "improve", "enhance"]):
+            action = "refactor"
+        elif any(word in task_lower for word in ["test", "validate", "verify", "check"]):
+            action = "test"
+        elif any(word in task_lower for word in ["research", "investigate", "explore"]):
+            action = "research"
+        
+        # Determine scope breadth
+        scope = "targeted"
+        if any(phrase in task_lower for phrase in ["entire system", "whole application", "full", "complete", "all"]):
+            scope = "comprehensive"
+        elif any(phrase in task_lower for phrase in ["cross-service", "multiple services", "integration"]):
+            scope = "cross-service"
+        elif len(components_detected) > 3:
+            scope = "broad"
+        elif len(components_detected) <= 1:
+            scope = "narrow"
+        else:
+            scope = "moderate"
+        
+        # Check for specific service mentions (for microservices)
+        if "api service" in task_lower or "/api" in task_lower:
+            services_mentioned.append("api-service")
+        if "frontend service" in task_lower or "/frontend" in task_lower:
+            services_mentioned.append("frontend-service")
+        if "sara" in task_lower:
+            services_mentioned.append("sara-service")
+        if "crypto" in task_lower or "crypto-data" in task_lower:
+            services_mentioned.append("crypto-service")
+        if "archon" in task_lower:
+            services_mentioned.append("archon-service")
+        
+        return {
+            "components": components_detected,
+            "services": services_mentioned,
+            "action": action,
+            "scope": scope,
+            "is_cross_service": len(services_mentioned) > 1 or scope == "cross-service",
+            "is_comprehensive": scope in ["comprehensive", "broad"],
+            "requires_coordination": len(components_detected) > 2 or scope == "cross-service"
+        }
+    
+    def scope_based_worker_selection(self, analysis: Dict[str, Any], task: str) -> List[Dict]:
+        """
+        Select workers based purely on what the task mentions or requires.
+        Number of workers is determined by scope, not complexity.
+        
+        This is the KEY method that ensures dynamic selection.
+        """
+        task_lower = task.lower()
+        workers_needed = set()
+        
+        # Map components to workers
+        component_worker_map = {
+            "backend": "backend-worker",
+            "frontend": "frontend-worker",
+            "infrastructure": "devops-worker",
+            "testing": "test-worker",
+            "security": "analyzer-worker",
+            "performance": "analyzer-worker",
+            "architecture": "architect-worker",
+            "design": "designer-worker"
         }
         
-        for domain, keywords in domain_keywords.items():
-            if any(keyword in task_lower for keyword in keywords):
-                domains.add(domain)
+        # Add workers for detected components
+        for component in analysis["components"]:
+            if component in component_worker_map:
+                workers_needed.add(component_worker_map[component])
         
-        # Default to general analysis if no specific domains found
-        if not domains:
-            domains = {"quality", "architecture", "testing"}
-            
-        return list(domains)
-    
-    def select_workers(self, required_domains: List[str], complexity: int, max_workers: int) -> List[Dict]:
-        """Select optimal workers for task"""
+        # Action-specific additions
+        if analysis["action"] == "review":
+            # Reviews need analyzer for quality assessment
+            workers_needed.add("analyzer-worker")
+        elif analysis["action"] == "build":
+            # Building needs architecture guidance
+            if analysis["scope"] != "narrow":
+                workers_needed.add("architect-worker")
+        elif analysis["action"] == "fix":
+            # Fixes need analyzer to verify
+            workers_needed.add("analyzer-worker")
+        elif analysis["action"] == "refactor":
+            # Refactoring needs both architect and analyzer
+            workers_needed.add("architect-worker")
+            workers_needed.add("analyzer-worker")
+        elif analysis["action"] == "test":
+            workers_needed.add("test-worker")
+        elif analysis["action"] == "research":
+            workers_needed.add("researcher-worker")
+        
+        # Scope-based additions
+        if analysis["is_comprehensive"]:
+            # Comprehensive tasks need architecture overview
+            workers_needed.add("architect-worker")
+            # For true full-system reviews, ensure main domains covered
+            if "entire system" in task_lower or "whole application" in task_lower:
+                workers_needed.update(["backend-worker", "frontend-worker", "analyzer-worker"])
+        
+        if analysis["is_cross_service"]:
+            # Cross-service needs architecture coordination
+            workers_needed.add("architect-worker")
+        
+        # Special case: documentation-only tasks
+        if "readme" in task_lower and "typo" in task_lower and len(analysis["components"]) == 0:
+            # Just need analyzer for simple doc fixes
+            workers_needed = {"analyzer-worker"}
+        
+        # Edge case: if no workers selected, use analyzer as fallback
+        if not workers_needed:
+            workers_needed.add("analyzer-worker")
+        
+        # Convert to worker list with metadata
         selected = []
-        domain_coverage = set()
-        
-        # Sort workers by priority and domain match
-        candidates = []
-        for worker_type, capabilities in self.WORKER_CAPABILITIES.items():
-            domain_match = len(set(capabilities["domains"]) & set(required_domains))
-            if domain_match > 0 or complexity >= capabilities["complexity_threshold"]:
-                candidates.append({
+        for worker_type in workers_needed:
+            if worker_type in self.WORKER_CAPABILITIES:
+                capabilities = self.WORKER_CAPABILITIES[worker_type]
+                selected.append({
                     "type": worker_type,
-                    "domains": capabilities["domains"],
+                    "focus_areas": capabilities["domains"],
                     "priority": capabilities["priority"],
-                    "match_score": domain_match,
-                    "complexity_fit": complexity >= capabilities["complexity_threshold"]
+                    "reason": self.get_selection_reason(worker_type, analysis, task)
                 })
         
-        # Sort by match score and priority
-        candidates.sort(key=lambda x: (x["match_score"], x["priority"]), reverse=True)
-        
-        # Select workers up to max_workers limit
-        for candidate in candidates[:max_workers]:
-            selected.append(candidate)
-            domain_coverage.update(candidate["domains"])
-            
-            # Check if all domains covered
-            if set(required_domains).issubset(domain_coverage):
-                break
+        # Sort by priority for optimal execution order
+        selected.sort(key=lambda x: x["priority"], reverse=True)
         
         return selected
     
-    def generate_worker_task(self, main_task: str, worker_type: str) -> str:
-        """Generate specific task description for worker"""
-        worker_focus = {
-            "analyzer-worker": "Analyze code quality, security vulnerabilities, and performance metrics",
-            "architect-worker": "Design system architecture and identify scalability patterns",
-            "backend-worker": "Examine API design, database schema, and server-side logic",
-            "frontend-worker": "Review UI components, user experience, and client-side code",
-            "devops-worker": "Assess infrastructure, deployment pipelines, and CI/CD configuration",
-            "test-worker": "Evaluate test coverage, quality assurance, and validation strategies",
-            "designer-worker": "Create UX designs and visual interface improvements",
-            "researcher-worker": "Research context, documentation, and best practices"
+    def get_selection_reason(self, worker_type: str, analysis: Dict, task: str) -> str:
+        """Generate clear reason for selecting this worker"""
+        task_snippet = task[:50] + "..." if len(task) > 50 else task
+        
+        reasons = {
+            "analyzer-worker": f"{analysis['action'].title()} quality and security analysis",
+            "architect-worker": f"System design for {analysis['scope']} scope",
+            "backend-worker": f"Server-side {analysis['action']} for mentioned API/backend",
+            "frontend-worker": f"UI/client-side {analysis['action']} for mentioned frontend",
+            "devops-worker": f"Infrastructure {analysis['action']} for deployment concerns",
+            "test-worker": f"Testing and validation for {analysis['action']}",
+            "designer-worker": f"UX design for {analysis['action']}",
+            "researcher-worker": f"Research and context gathering"
         }
         
-        base_focus = worker_focus.get(worker_type, "Perform specialized analysis")
-        return f"{base_focus} for: {main_task}"
+        return reasons.get(worker_type, f"Domain expertise for {analysis['action']}")
+    
+    def generate_contextual_task(self, task: str, worker_type: str, analysis: Dict) -> str:
+        """Generate worker-specific task description"""
+        action = analysis["action"]
+        scope = analysis["scope"]
+        
+        templates = {
+            "analyzer-worker": f"Perform {scope} {action} focusing on code quality, security, and performance for: {task}",
+            "architect-worker": f"Analyze system architecture and design patterns with {scope} scope for: {task}",
+            "backend-worker": f"Execute {action} on server-side components and API logic for: {task}",
+            "frontend-worker": f"Handle {action} for UI components and user interface for: {task}",
+            "devops-worker": f"Assess infrastructure and deployment aspects for: {task}",
+            "test-worker": f"Validate testing coverage and quality assurance for: {task}",
+            "designer-worker": f"Create UX improvements and visual designs for: {task}",
+            "researcher-worker": f"Research context and best practices for: {task}"
+        }
+        
+        return templates.get(worker_type, f"Perform specialized {action} for: {task}")
     
     def identify_dependencies(self, worker_type: str, all_workers: List[Dict]) -> List[str]:
         """Identify worker dependencies for coordination"""
@@ -207,14 +382,14 @@ class CoordinationProtocol(BaseProtocol):
         return dependencies
     
     def determine_coordination_mode(self, workers: List[Dict]) -> str:
-        """Determine coordination strategy"""
+        """Determine coordination strategy based on worker count and dependencies"""
         worker_count = len(workers)
         
         if worker_count == 1:
             return "single_worker"
         elif worker_count == 2:
             return "parallel_independent"
-        elif any(w.get("dependencies") for w in workers):
+        elif any("dependencies" in w and w["dependencies"] for w in workers):
             return "sequential_dependent"
         else:
             return "parallel_synthesis"

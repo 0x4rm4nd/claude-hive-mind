@@ -1,15 +1,30 @@
 # Hive-Mind Technical Decisions & Architecture Rationale
 
-> **Purpose**: Definitive reference for all technical choices in the `.claude/` hive-mind system integrated with Archon MCP. This prevents repeated questions about design decisions across sessions.
+> **Purpose**: Definitive reference for all technical choices in the `.claude/` hive-mind system. This prevents repeated questions about design decisions across sessions.
 
 ---
 
 ## 🚀 Enhanced Coordination System
 
-### Fast Worker Escalation
-**Decision**: Priority-based escalation timeouts (2min critical, 5min high, 10min medium, 15min low)
-**Rationale**: 50-60% multi-worker tasks need real-time coordination, not iteration-based coordination
-**Impact**: 40-60% reduction in coordination delays, workers unblock each other in minutes
+### Dynamic Escalation System with Cross-Worker Coordination
+**Decision**: Dynamic escalation timeouts based on task urgency + domain complexity with peer-to-peer escalation before hierarchical escalation
+**Rationale**: 50-60% multi-worker tasks need real-time coordination; escalation chains should adapt to actual blocker severity and worker availability
+**Dynamic Timeout Formula**:
+- **Base Timeout**: Complexity level (2min critical, 5min high, 10min medium, 15min low)
+- **Urgency Multiplier**: Critical issues (0.5x), blocking multiple workers (0.3x), individual blockers (1x)
+- **Domain Factor**: Security/performance issues (0.7x), UI/UX issues (1.2x), research blockers (1.5x)
+
+**Escalation Hierarchy**:
+1. **Peer Cross-Escalation** (First): frontend ↔ backend, analyzer ↔ architect, test ↔ devops
+2. **Domain Escalation** (Second): Vertical escalation to domain experts (analyzer-worker, service-architect)
+3. **Queen Intervention** (Final): Complex coordination and resolution decisions
+
+**Failure Handling**: 
+- **Unavailable Escalation Target**: Worker completes all possible work, marks status as "blocked_done", Queen handles resolution
+- **Chain Failure Recovery**: Queen checks blocked tasks on respawn, resolves issues, re-spawns blocked workers
+- **Alternative Work**: Blocked workers shift to non-dependent tasks while awaiting resolution
+
+**Impact**: 40-60% reduction in coordination delays with intelligent escalation routing and robust failure recovery
 
 ### Tag-Based Memory Bank & Context Isolation  
 **Decision**: Inline tag system with programmatic worker context filtering 
@@ -22,6 +37,7 @@
 **Implementation**: Tag-integrated learning pipeline from sessions to memory bank
 
 ---
+
 
 ## 🎯 Production Usage Insights & Validation
 
@@ -52,9 +68,9 @@
 - **Impact**: Worker consolidation would reduce coordination effectiveness and domain coverage
 - **Architecture Validation**: Specialization architecture matches actual expertise distribution needs
 
-**Infrastructure Dependency**: Archon MCP provides reliable task management and knowledge persistence
-- **Rationale**: Infrastructure under user control enables immediate issue resolution
-- **Impact**: Hard failure strategy prevents token waste on incomplete work tracking
+**Local Session Management**: Self-contained coordination through local STATE.json and EVENTS.jsonl files
+- **Rationale**: Eliminates external dependencies while maintaining full coordination capabilities
+- **Impact**: System operates independently with graceful degradation for research tools
 
 ### Architecture Validation & Optimization Focus
 ✅ **4-Level Complexity System**: Validated by 50% Level 4 task distribution requiring sophisticated coordination
@@ -62,7 +78,7 @@
 ✅ **Multi-File Coordination**: Required for parallel worker coordination and complete state preservation  
 ✅ **8-Worker Specialization**: Proven necessary for cross-domain expertise requirements in financial applications
 ✅ **Tag-Based Context Filtering**: Critical for token efficiency and preventing cognitive overload from irrelevant context
-✅ **Archon Hard Dependency**: Appropriate given infrastructure control and reliable task management needs
+✅ **Local Session Coordination**: Self-contained session management eliminates external dependencies
 
 **Architectural Assessment**: Implementation complexity is justified by actual usage patterns and operational requirements. The system is correctly sized for its intended use case rather than over-engineered.
 
@@ -101,34 +117,30 @@
 - **Maintenance**: Pattern library + minimal external research
 
 ### 3. Tool Dependency & Failure Strategy with Protocol Enforcement
-**Decision**: Selective hard failure with mandatory enforcement - Archon critical with no fallbacks, other tools have fallbacks
+**Decision**: Graceful degradation for all external tools, local session management as primary coordination
 **Rationale**:
-- **Archon MCP**: Hard failure prevents incomplete work tracking and loss of project continuity - NO workarounds allowed
 - **Context7 MCP**: Fallback to WebSearch + documentation analysis when unavailable  
 - **Serena MCP**: Fallback to built-in tools (Read, Edit, Grep) when unavailable
-- **Token efficiency**: Fail fast on critical dependencies, graceful degradation on research tools
-- **User Control**: User explicitly handles Archon server availability, system doesn't attempt fixes
+- **Session Management**: Local STATE.json and EVENTS.jsonl provide coordination without external dependencies
+- **Token efficiency**: Graceful degradation maintains functionality while optimizing resource usage
+- **Self-Contained**: System operates independently with enhanced functionality when tools available
 
-**Enforcement Implementation**:
+**Implementation Strategy**:
 ```python
-# MANDATORY FIRST ACTION in summon-queen: Hard stop if Archon unavailable
-try:
-    archon_health = mcp__archon__health_check()
-    if not archon_health.success:
-        raise ArchonUnavailableError("STOP: Archon MCP required for hive-mind operations")
-except:
-    print("🚨 FATAL: Archon MCP server unavailable")
-    print("❌ Cannot proceed - hive-mind requires Archon for task management")
-    print("📧 User will handle Archon server availability")
-    exit(1)  # HARD STOP - NO TOKEN WASTE
-
 # Research tools: graceful degradation
 try:
     context7_research = mcp__context7__get_library_docs(...)
 except:
     context7_research = fallback_web_research(...)  # Use WebSearch + documentation analysis
 
-# BACKLOG.jsonl serves as temporary local task buffer when Archon briefly unavailable
+try:
+    serena_analysis = mcp__serena__find_symbol(...)
+except:
+    serena_analysis = fallback_grep_analysis(...)  # Use built-in Read, Edit, Grep tools
+
+# Local session management as primary coordination mechanism
+session_coordinator = LocalSessionManager(session_id)
+session_coordinator.initialize_state()
 ```
 
 ### 4. Session Complexity & Resumption Requirements
@@ -142,7 +154,7 @@ except:
 **Session Scope**: Software development only - used for tracking implementation history and coordination
 
 **Session State Components**:
-- **STATE.json**: Machine-readable resumption data with Archon task IDs
+- **STATE.json**: Machine-readable resumption data with worker coordination state
 - **SESSION.md**: Human-readable summary for historical context and project documentation
 - **EVENTS.jsonl**: Complete coordination history for worker synchronization and resumption
 - **Worker Notes**: Individual worker context, research findings, and decision rationale
@@ -157,7 +169,7 @@ except:
 
 #### STATE.json - Worker Configuration & State
 ```json
-{"coordination_status": {"worker_configs": {"backend-worker": {"status": "not_started", "archon_task_id": "...", "tag_access": ["backend"]}}}}
+{"coordination_status": {"worker_configs": {"backend-worker": {"status": "not_started", "task_id": "local_task_001", "tag_access": ["backend"]}}}}
 ```
 **Purpose**:
 - Single source of truth for session state.
@@ -181,7 +193,7 @@ except:
 {"id": "task-001", "title": "Implement user authentication", "status": "completed", "deliverables": ["auth/middleware.js", "tests/auth.test.js"], "complexity": "medium", "research_time": "1 hour", "implementation_time": "4 hours"}
 ```
 **Purpose**:
-- Temporary local task buffer when Archon briefly unavailable
+- Primary task management and tracking system
 - Audit trail of accomplished work for any software project
 - Complexity/time tracking for improved future estimation
 - Project velocity metrics and learning insights
@@ -205,16 +217,28 @@ except:
 ## 🔄 Worker Coordination Protocol with Enforcement
 
 ### Mandatory Startup Protocol for All Workers
-**Decision**: Embed protocols directly in agent files with visual workflows
-**Rationale**: AI agents cannot skip what's embedded in their instructions with visual guidance
+**Decision**: Centralized protocol files that all agents reference and follow
+**Rationale**: 
+- Single source of truth prevents protocol drift across 8 workers + Queen
+- Behavioral changes require updating only the protocol file, not 9 agent files
+- Consistent enforcement patterns across all agent types
+- Easier maintenance and version control of coordination behavior
 **Implementation**:
-- Each agent has MANDATORY STARTUP PROTOCOL section at top
-- Visual mermaid workflow diagrams for complex processes
-- Step-by-step enforcement with validation checks
-- Workers MUST complete startup protocol or cannot proceed
+- Protocol files in `.claude/protocols/` contain step-by-step instructions
+- Each agent references the appropriate protocol sections in their configuration
+- Visual mermaid workflow diagrams in shared protocol files
+- Workers MUST follow centralized protocols - cannot proceed without compliance
 
-### Blocking/Notification System Design with Continuous Monitoring
-**Decision**: Dynamic priority reprioritization via EVENTS.jsonl monitoring with mandatory 2-3 minute checks
+### Blocking/Notification System Design with Smart Monitoring & Compliance
+**Decision**: Dynamic priority reprioritization via EVENTS.jsonl monitoring with context-aware timing and Queen oversight
+**Rationale**: Balance coordination needs with uninterrupted deep work; manual adherence insufficient for 8-worker coordination
+**Smart Monitoring Implementation**:
+- **Active Coding Phase**: Suspend monitoring during Edit/Write/MultiEdit sequences, check after completion
+- **Coordination Phase**: Mandatory 2-3 minute intervals during research/planning/dependencies  
+- **Maximum Silence Rule**: Never exceed 10 minutes without checking regardless of activity
+- **Queen Compliance Monitoring**: Real-time analysis of STATE.json and EVENTS.jsonl for violations
+- **Progressive Correction**: Gentle reminders → escalation for deliberate skips, delivered at natural workflow breaks
+
 **Enforcement Pattern**:
 
 1. **Worker Blocked Example**:
@@ -229,16 +253,37 @@ events = read_events_for_target("backend-worker")
 blocking_events = filter_events(events, type="notification", event="worker_blocking")
 
 if blocking_events:
-    # Reprioritize Archon tasks based on blocking notifications
+    # Reprioritize local tasks based on blocking notifications
     for event in blocking_events:
-        archon:manage_task(action="update", task_id=event.blocking_task, 
-                          update_fields={"task_order": 1})  # Highest priority
+        update_local_task_priority(event.blocking_task, priority="high")
 ```
 
 3. **Unblocking Notification**:
 ```json
 {"type": "notification", "event": "worker_ready", "agent": "backend-worker", "target": "frontend-worker", "data": {"unblocked": "api_specification", "available": ["/api/v1/users", "/api/v1/auth"], "documentation": "docs/api/README.md"}}
 ```
+
+4. **Peer Cross-Escalation Example**:
+```json
+{"type": "escalation", "event": "peer_escalation", "agent": "frontend-worker", "target": "backend-worker", "data": {"blocker_id": "api_auth_spec", "escalation_reason": "timeout_exceeded", "timeout_reached": "5min", "alternative_work": ["ui_components", "styling"], "cross_domain_expertise_needed": "backend_api_design"}}
+```
+
+5. **Escalation Chain Failure & Recovery**:
+```json
+{"type": "escalation", "event": "escalation_failed", "agent": "backend-worker", "data": {"escalation_target": "analyzer-worker", "failure_reason": "worker_unavailable", "status_update": "blocked_done", "completed_work": ["auth_middleware_skeleton", "basic_validation"], "remaining_blockers": ["security_review", "token_implementation"], "queen_intervention_required": true}}
+```
+
+6. **Queen Blocked Task Resolution**:
+```json
+{"type": "coordination", "event": "blocked_task_resolution", "agent": "queen-orchestrator", "data": {"session_resumed": true, "blocked_tasks_found": 3, "resolution_actions": [{"task": "api_auth_spec", "resolution": "spawn_analyzer_worker", "context_provided": "security_requirements.md"}], "worker_respawn_queue": ["backend-worker", "frontend-worker"]}}
+```
+
+**Dynamic Escalation Actions**:
+- **Timeout Calculation**: Base timeout × urgency multiplier × domain factor
+- **Peer Cross-Escalation**: Direct worker-to-worker coordination before hierarchical escalation
+- **Chain Failure Handling**: Workers mark "blocked_done", Queen resolves on respawn
+- **Alternative Work Routing**: Blocked workers continue on non-dependent tasks
+- **Resolution & Re-spawn**: Queen addresses blockers, re-activates blocked workers
 
 ### Universal Coordination Benefits
 - **Dynamic Priority Management**: Critical blockers automatically reprioritize work across any project
@@ -261,14 +306,15 @@ if blocking_events:
 - Directories created on first write, not at session initialization
 - Template consolidation completed: Removed 5 redundant template files with 80% overlapping structure
 
-### Coordination Complexity
-**Decision**: Full EVENTS.jsonl coordination system for all project types with mandatory monitoring
+### Coordination Complexity with Smart Monitoring
+**Decision**: Full EVENTS.jsonl coordination system for all project types with context-aware monitoring and zero-tolerance compliance
 **Rationale**: 
 - Enables efficient session resumption regardless of when interruption occurs
 - Provides complete audit trail for understanding project decisions
 - Prevents loss of coordination context during multi-session development
 - Essential for tracking progress when sessions interrupted due to credit limits or terminal closures
-- **Enforcement**: Workers MUST check EVENTS.jsonl every 2-3 minutes for coordination
+- **Smart Enforcement**: Context-aware monitoring suspended during active coding, mandatory during coordination phases
+- **Protocol Compliance**: Workers must fix violations immediately; Queen validates all logging and protocol adherence
 
 ---
 
@@ -300,7 +346,7 @@ if blocking_events:
 ### Hard Failure Strategy
 **Rule**: NEVER consume tokens on partial implementations due to critical infrastructure unavailability
 **Implementation**:
-- Pre-flight checks for Archon MCP dependency (critical)
+- Local session initialization and validation
 - Graceful degradation for research tools (Context7, Serena) when unavailable
 - Clear error messages indicating required vs optional infrastructure
 - Resume-ready state preservation to avoid re-work
@@ -317,8 +363,11 @@ if blocking_events:
 ## 🎯 Success Metrics & Validation
 
 ### Hive-Mind Effectiveness Indicators
+- **Protocol Compliance**: 100% workers complete mandatory initialization steps; zero-tolerance violation correction
+- **Dynamic Escalation Performance**: Timeout optimization based on urgency/domain factors; peer cross-escalation success rate before hierarchical escalation
+- **Chain Failure Resilience**: Recovery rate from escalation chain failures; blocked worker alternative work efficiency
 - **Research Quality**: Implementation success rate from research-backed decisions across all project types
-- **Coordination Efficiency**: Time saved through blocking/notification protocols for any development scenario
+- **Coordination Efficiency**: Time saved through blocking/notification protocols with smart monitoring and Queen-mediated blocked task resolution
 - **Knowledge Reuse**: Pattern library usage reducing research duplication across projects
 - **Session Continuity**: Successful resumption rate after interruptions (credit limits, terminal closures)
 
@@ -419,7 +468,7 @@ Given daily resume frequency:
 
 ### Credit Limit Resilience Features
 **Token Efficiency Maximization**:
-- Pre-flight Archon health check prevents wasted tokens on unavailable infrastructure
+- Session state validation prevents wasted tokens on corrupted coordination files
 - Research ROI scaling based on task complexity
 - Session state checkpoints at worker completion boundaries
 - Graceful degradation when non-critical MCP servers unavailable
@@ -445,7 +494,7 @@ Given daily resume frequency:
    - Session status dashboards for progress and coordination visibility
 
 4. **Coordination Overhead Reduction** (Medium): Minimize operational friction in multi-worker scenarios
-   - Batched Archon task updates and status synchronization
+   - Batched local task updates and status synchronization
    - Consolidated EVENTS.jsonl coordination messaging
    - Parallel worker context restoration during session resumption
 

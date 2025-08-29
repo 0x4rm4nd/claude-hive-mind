@@ -109,27 +109,136 @@ Next Steps: [recommended actions]
 Issues Encountered: [problems and resolutions]
 ```
 
-## Coordination Protocols
+## Protocol Integration
 
-### Session Management
-- Unique session IDs for each orchestration
-- Persistent context across worker interactions
-- State recovery for interrupted workflows
-- Audit trail of all coordination decisions
+### Protocol System Reference
+The Queen Orchestrator operates in conjunction with the SmartWalletFX protocol system located at `.claude/protocols/`. These protocols provide operational patterns that should guide your coordination behavior.
+
+### Core Protocol Implementations
+
+#### Startup Protocol (`startup_protocol.py`)
+**Follow this initialization sequence:**
+1. Extract session ID from task context
+2. Validate session structure exists in `Docs/hive-mind/sessions/`
+3. Load configuration from session state
+4. Check for escalations from previous workers
+5. Report compliance status
+6. Log initialization metrics
+
+#### Coordination Protocol (`coordination_protocol.py`)
+**Use this worker selection matrix:**
+- Complexity Level 1: 1 worker, 15min timeout
+- Complexity Level 2: 2 workers, 10min timeout  
+- Complexity Level 3: 3 workers, 5min timeout
+- Complexity Level 4: 5 workers, 2min timeout
+
+**Worker capability domains:**
+- analyzer: security, performance, quality
+- architect: design, scalability, patterns
+- backend: api, database, server
+- frontend: ui, ux, client
+- devops: infrastructure, deployment, ci/cd
+- test: testing, qa, validation
+
+#### Session Protocol (`session_protocol.py`)
+**Session management pattern:**
+```
+Session Path: Docs/hive-mind/sessions/{session-id}/
+Required Files:
+- STATE.json: Current execution state
+- EVENTS.jsonl: Event stream log
+- DEBUG.jsonl: Debug information
+- METRICS.json: Performance metrics
+```
+
+#### Synthesis Protocol (`synthesis_protocol.py`)
+**Result synthesis pattern:**
+1. Collect all worker outputs from session
+2. Identify consensus and conflicts
+3. Merge complementary insights
+4. Generate unified recommendations
+5. Calculate confidence scores
+
+#### Logging Protocol (`logging_protocol.py`)
+**Event logging format:**
+```json
+{
+  "timestamp": "2025-01-15T10:30:00Z",  // Use ISO-8601 format
+  "event_type": "worker_spawned|task_assigned|result_received|synthesis_complete",
+  "session_id": "string",
+  "worker_type": "string",
+  "details": "object"
+}
+```
+
+#### Monitoring Protocol (`monitoring_protocol.py`)
+**Health check intervals:**
+- Worker heartbeat: Every 30 seconds
+- Timeout escalation: Based on complexity level
+- Resource usage tracking: CPU, memory, token count
+
+#### Escalation Protocol (`escalation_protocol.py`)
+**Escalation triggers:**
+- Worker timeout exceeded
+- Critical error detected
+- Resource limits reached
+- Conflicting worker outputs
+- User intervention required
+
+#### Completion Protocol (`completion_protocol.py`)
+**Task finalization checklist:**
+1. All workers have reported results
+2. Synthesis completed successfully
+3. Quality validation passed
+4. Session state persisted
+5. Metrics recorded
+6. Cleanup performed
+
+### Protocol Execution Guidance
+
+When orchestrating tasks, follow these protocol-aware patterns:
+
+1. **Initialization Phase**
+   - Create session directory structure per session protocol
+   - Initialize STATE.json with task metadata
+   - Begin event logging to EVENTS.jsonl
+
+2. **Worker Assignment Phase**
+   - Apply coordination protocol complexity matrix
+   - Match workers to task domains
+   - Set timeouts based on complexity level
+   - Record assignments in event log
+
+3. **Monitoring Phase**
+   - Track worker progress via monitoring protocol
+   - Check for timeout conditions
+   - Escalate issues per escalation protocol
+   - Maintain heartbeat records
+
+4. **Synthesis Phase**
+   - Follow synthesis protocol merging patterns
+   - Resolve conflicts using conflict-resolution protocol
+   - Calculate aggregate confidence scores
+   - Generate unified output
+
+5. **Completion Phase**
+   - Execute completion protocol checklist
+   - Persist final state to STATE.json
+   - Record performance metrics
+   - Archive session for future reference
 
 ### Error Handling Strategy
-1. **Detection**: Monitor worker health and output quality
-2. **Classification**: Categorize error severity and impact
-3. **Recovery**: Attempt automatic recovery when possible
-4. **Escalation**: Request human intervention for critical failures
-5. **Learning**: Document failure patterns for future prevention
+1. **Detection**: Monitor per monitoring protocol specifications
+2. **Classification**: Use escalation protocol severity levels
+3. **Recovery**: Apply protocol-defined recovery procedures
+4. **Escalation**: Follow escalation protocol chain of command
+5. **Learning**: Update pattern library per protocol
 
 ### Performance Optimization
-- Minimize redundant analysis across workers
-- Share common context to reduce token usage
-- Batch similar operations when possible
-- Cache intermediate results for reuse
-- Profile execution patterns for continuous improvement
+- Use protocol-defined caching strategies
+- Apply token optimization from protocol guidelines
+- Batch operations per protocol recommendations
+- Profile using protocol metrics collection
 
 ## Worker Ecosystem Knowledge
 

@@ -123,24 +123,23 @@ Write("Docs/hive-mind/sessions/{session-id}/ARCHIVE_SUMMARY.md", summary)
 **Future References**: {when to reference this session}
 ```
 
-## Integration with Archon
+## Integration with Memory Bank
 
-### Step 6: Upload Reflection to Archon KB
+### Step 6: Archive Reflection to Memory Bank
 ```
-Use mcp__archon__manage_document to preserve learnings:
-mcp__archon__manage_document(
-  action="add",
-  project_id="{project-id}",
-  document_type="reflection",
-  title="Session Reflection: {session-id}",
-  content={reflection_content}
+Archive learnings to local memory bank:
+Write(
+  file_path=f"Docs/hive-mind/memory-bank/patterns/{session_id}_learnings.md",
+  content=reflection_content
 )
 ```
 
-### Step 7: Update Archon Tasks
+### Step 7: Update Local Task Records
 ```
-Use mcp__archon__manage_task to close related tasks:
-Update task descriptions with final outcomes and links to reflection documents
+Update local task tracking in BACKLOG.jsonl:
+- Mark session tasks as completed
+- Record final outcomes and deliverables
+- Link to archived session and reflection documents
 ```
 
 ## Quality Gates for Archival
