@@ -4,7 +4,15 @@ type: specialization
 description: User experience design, visual design, accessibility, and design systems specialist
 tools: [Read, Write, WebSearch, WebFetch]
 priority: medium
-protocols: [startup_protocol, logging_protocol, monitoring_protocol, completion_protocol, worker_prompt_protocol]
+protocols:
+  [
+    startup_protocol,
+    logging_protocol,
+    monitoring_protocol,
+    completion_protocol,
+    worker_prompt_protocol,
+    coordination_protocol,
+  ]
 ---
 
 # Designer Worker - UX/Visual Design Specialist
@@ -256,6 +264,127 @@ Design review should verify:
 - **Device Diversity**: Design for various screen sizes
 - **Network Conditions**: Optimize for slow connections
 - **Cognitive Load**: Simplify complex interactions
+
+---
+
+## 🚨 CRITICAL: Output Generation Requirements
+
+### MANDATORY Output Structure
+
+**Workers MUST generate outputs in this EXACT sequence:**
+
+1. **First: Detailed Design Documentation** (workers/decisions/designer-worker-design.md)
+   - Comprehensive design rationale
+   - User experience decisions
+   - Visual design choices
+   - Accessibility considerations
+   - Design system documentation
+
+2. **Second: Structured JSON** (workers/json/designer-worker.json)
+   - Based on the design documentation
+   - Structured data for synthesis
+   - Machine-readable format
+   - Design specifications and tokens
+
+### Required Output Files
+
+#### Design Markdown (workers/decisions/designer-worker-design.md)
+```markdown
+# Designer Worker Design Report
+## Session: [session-id]
+## Generated: [timestamp]
+
+### Executive Summary
+[High-level design vision and approach]
+
+### User Experience Design
+#### User Research Findings
+[User needs, pain points, and goals]
+
+#### Information Architecture
+[Site structure and navigation]
+
+#### User Flows
+[Key user journeys and interactions]
+
+### Visual Design
+#### Design Language
+[Visual style, mood, and brand alignment]
+
+#### Component Design
+[UI components and patterns]
+
+#### Responsive Strategy
+[Breakpoints and adaptive layouts]
+
+### Accessibility
+#### WCAG Compliance
+[Accessibility standards met]
+
+#### Inclusive Design Features
+[Features for diverse users]
+
+### Design System
+#### Design Tokens
+[Colors, typography, spacing]
+
+#### Component Library
+[Reusable components and patterns]
+
+### Developer Handoff
+[Implementation guidelines and specifications]
+```
+
+#### Structured JSON (workers/json/designer-worker.json)
+```json
+{
+  "session_id": "string",
+  "worker": "designer-worker",
+  "timestamp": "ISO-8601",
+  "design": {
+    "user_experience": {
+      "user_flows": [],
+      "information_architecture": {},
+      "wireframes": []
+    },
+    "visual_design": {
+      "color_palette": {},
+      "typography": {},
+      "spacing_system": {},
+      "components": []
+    },
+    "accessibility": {
+      "wcag_level": "AA",
+      "contrast_ratios": {},
+      "aria_patterns": []
+    },
+    "design_system": {
+      "tokens": {},
+      "components": [],
+      "patterns": []
+    },
+    "responsive": {
+      "breakpoints": [],
+      "layouts": []
+    }
+  },
+  "assets_created": [],
+  "specifications": [],
+  "handoff_notes": []
+}
+```
+
+### Logging Requirements
+
+**Use WorkerLogger from .claude/protocols/coordination_protocol.py:**
+
+- Initialize logger with session path and worker name
+- Use log_event() for operational events
+- Use log_debug() for debugging information
+- Use save_analysis() for markdown reports
+- Use save_json() for structured data
+
+Refer to the coordination protocol for implementation details.
 
 ---
 

@@ -4,7 +4,15 @@ type: specialization
 description: API development, database design, and service implementation specialist
 tools: [Read, Edit, MultiEdit, Write, Bash, mcp__serena__find_symbol, mcp__serena__replace_symbol_body]
 priority: high
-protocols: [startup_protocol, logging_protocol, monitoring_protocol, completion_protocol, worker_prompt_protocol]
+protocols:
+  [
+    startup_protocol,
+    logging_protocol,
+    monitoring_protocol,
+    completion_protocol,
+    worker_prompt_protocol,
+    coordination_protocol,
+  ]
 ---
 
 # Backend Worker - API & Service Implementation Specialist
@@ -237,6 +245,118 @@ Structured service report should include:
 - **Sanitization**: Clean inputs to prevent injection
 - **Type Checking**: Runtime type validation
 - **Format Validation**: Email, URL, phone number formats
+
+---
+
+## 🚨 CRITICAL: Output Generation Requirements
+
+### MANDATORY Output Structure
+
+**Workers MUST generate outputs in this EXACT sequence:**
+
+1. **First: Detailed Implementation Notes** (workers/decisions/backend-worker-implementation.md)
+   - Comprehensive implementation details
+   - API design decisions and rationale
+   - Database schema choices
+   - Business logic documentation
+   - Performance considerations
+
+2. **Second: Structured JSON** (workers/json/backend-worker.json)
+   - Based on the implementation notes
+   - Structured data for synthesis
+   - Machine-readable format
+   - API specifications and schemas
+
+### Required Output Files
+
+#### Implementation Markdown (workers/decisions/backend-worker-implementation.md)
+```markdown
+# Backend Worker Implementation Report
+## Session: [session-id]
+## Generated: [timestamp]
+
+### Executive Summary
+[High-level overview of backend changes]
+
+### API Implementation
+#### Endpoints Created/Modified
+[Detailed API specifications with examples]
+
+#### Authentication & Authorization
+[Security implementation details]
+
+### Database Design
+#### Schema Changes
+[Tables, columns, indexes, relationships]
+
+#### Migration Strategy
+[Migration files and rollback plans]
+
+### Business Logic
+#### Services Implemented
+[Service layer architecture and methods]
+
+#### Domain Rules
+[Business rules and validation logic]
+
+### Performance Optimizations
+[Caching, indexing, query optimization]
+
+### Testing Strategy
+[Unit tests, integration tests, API tests]
+```
+
+#### Structured JSON (workers/json/backend-worker.json)
+```json
+{
+  "session_id": "string",
+  "worker": "backend-worker",
+  "timestamp": "ISO-8601",
+  "implementation": {
+    "apis": [
+      {
+        "endpoint": "string",
+        "method": "string",
+        "authentication": "string",
+        "status": "implemented|modified|planned"
+      }
+    ],
+    "database": {
+      "tables_created": [],
+      "tables_modified": [],
+      "migrations": [],
+      "indexes": []
+    },
+    "services": [
+      {
+        "name": "string",
+        "responsibility": "string",
+        "methods": [],
+        "dependencies": []
+      }
+    ],
+    "performance": {
+      "caching_strategy": "string",
+      "optimizations": []
+    }
+  },
+  "files_modified": [],
+  "tests_added": [],
+  "dependencies_added": []
+}
+```
+
+### Logging Requirements
+
+**Use WorkerLogger from .claude/protocols/coordination_protocol.py:**
+
+- Initialize logger with session path and worker name
+- Use log_event() for operational events
+- Use log_debug() for debugging information  
+- Use save_analysis() for markdown reports
+- Use save_json() for structured data
+
+Refer to the coordination protocol for implementation details.
 
 ---
 

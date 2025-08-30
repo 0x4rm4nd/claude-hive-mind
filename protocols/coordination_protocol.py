@@ -1,862 +1,761 @@
 #!/usr/bin/env python3
 """
-Coordination Protocol Implementation 
-==========================================
-Handles queen-worker coordination patterns with truly dynamic worker selection.
+Coordination Protocol for Multi-Agent Task Management
+Ensures proper event ordering, logging, and session management
 """
 
 import json
+import os
+import sys
 from datetime import datetime
-from typing import Dict, Any, List, Optional
+from pathlib import Path
+from typing import Dict, List, Any, Optional
+import hashlib
+import time
 
-try:
-    from .protocol_loader import BaseProtocol, ProtocolConfig
-    from .session_management import SessionManagement
-except ImportError:
-    # Fallback for direct script execution
-    class BaseProtocol:
-        def __init__(self, config):
-            self.config = config
+
+class CoordinationProtocol:
+    """Manages multi-agent coordination, session creation, and event logging"""
+    
+    def __init__(self, project_root: Optional[Path] = None):
+        """Initialize coordination protocol with project root detection"""
+        self.project_root = project_root or self._find_project_root()
+        self.sessions_dir = self.project_root / "Docs" / "hive-mind" / "sessions"
+        self.current_session = None
+        self.session_path = None
         
-        def log_execution(self, method, data):
-            pass
+    def _find_project_root(self) -> Path:
+        """Find project root by looking for key markers"""
+        current = Path.cwd()
+        markers = ['.git', 'package.json', 'requirements.txt', 'pyproject.toml', 'Docs']
+        
+        while current != current.parent:
+            for marker in markers:
+                if (current / marker).exists():
+                    # Special case: if we're in .claude/agents, go up to project root
+                    if '.claude' in str(current):
+                        while '.claude' in str(current):
+                            current = current.parent
+                    return current
+            current = current.parent
+        
+        return Path.cwd()  # Fallback to current directory
     
-    class ProtocolConfig:
-        pass
-    
-    # Import session management even in fallback
-    try:
-        from session_management import SessionManagement
-    except ImportError:
-        pass
-
-class CoordinationProtocol(BaseProtocol):
-    """Manages coordination between queen and workers with scope-based selection"""
-    
-    # Worker capability matrix
-    WORKER_CAPABILITIES = {
-        "analyzer-worker": {
-            "domains": ["security", "performance", "quality", "code-review"],
-            "complexity_threshold": 1,
-            "priority": 7
-        },
-        "architect-worker": {
-            "domains": ["design", "scalability", "patterns", "system-architecture"],
-            "complexity_threshold": 2,
-            "priority": 8
-        },
-        "backend-worker": {
-            "domains": ["api", "database", "server", "business-logic"],
-            "complexity_threshold": 2,
-            "priority": 6
-        },
-        "frontend-worker": {
-            "domains": ["ui", "ux", "client", "components"],
-            "complexity_threshold": 2,
-            "priority": 5
-        },
-        "devops-worker": {
-            "domains": ["infrastructure", "deployment", "ci-cd", "containers"],
-            "complexity_threshold": 3,
-            "priority": 6
-        },
-        "test-worker": {
-            "domains": ["testing", "qa", "validation", "coverage"],
-            "complexity_threshold": 1,
-            "priority": 4
-        },
-        "designer-worker": {
-            "domains": ["design", "ux", "visual", "wireframes"],
-            "complexity_threshold": 2,
-            "priority": 5
-        },
-        "researcher-worker": {
-            "domains": ["research", "context", "documentation", "best-practices"],
-            "complexity_threshold": 1,
-            "priority": 3
-        }
-    }
-    
-    # Complexity affects timeouts and synthesis, NOT worker counts
-    COMPLEXITY_MATRIX = {
-        1: {"timeout": 900, "escalation": 15},    # 15min timeout, 15s escalation
-        2: {"timeout": 600, "escalation": 10},    # 10min timeout, 10s escalation  
-        3: {"timeout": 300, "escalation": 5},     # 5min timeout, 5s escalation
-        4: {"timeout": 120, "escalation": 2}      # 2min timeout, 2s escalation
-    }
-    
-    def generate_session_id(self, task: str) -> str:
+    def generate_session_id(self, task_description: str) -> str:
         """Generate session ID in YYYY-MM-DD-HH-mm-TASKSLUG format"""
-        from datetime import datetime
-        import re
+        now = datetime.now()
+        date_part = now.strftime("%Y-%m-%d-%H-%M")
         
-        # Get current date and time
-        date_str = datetime.now().strftime("%Y-%m-%d-%H-%M")
+        # Create task slug (min 15 chars)
+        original_length = len(task_description)
+        task_slug = task_description.lower()
+        task_slug = ''.join(c if c.isalnum() or c == '-' else '-' for c in task_slug)
+        task_slug = '-'.join(filter(None, task_slug.split('-')))[:50]  # Max 50 chars
         
-        # Create task slug - increased length for better descriptiveness
-        # Remove special characters but keep spaces for conversion to hyphens
-        task_slug = re.sub(r'[^a-zA-Z0-9\s]', '', task.lower())
-        task_slug = re.sub(r'\s+', '-', task_slug.strip())
+        # Ensure minimum length
+        if len(task_slug) < 15:
+            task_slug = task_slug.ljust(15, '-')
         
-        # Increase character limit to 40 for more descriptive slugs
-        # But ensure minimum 15 characters unless task is very short
-        if len(task_slug) < 15 and len(task_slug) < len(task.lower()):
-            # Try to capture more meaningful content
-            task_slug = task_slug[:40]
-        else:
-            task_slug = task_slug[:40]
+        session_id = f"{date_part}-{task_slug}"
         
-        # Clean up trailing hyphens and ensure no truncation mid-word
-        task_slug = task_slug.rstrip('-')
+        # Log technical details about ID generation (if session path exists)
+        if hasattr(self, 'session_path') and self.session_path:
+            self.log_debug(
+                "Session ID generated",
+                "INFO",
+                details={
+                    "session_id": session_id,
+                    "timestamp": now.isoformat(),
+                    "original_task_length": original_length,
+                    "slug_length": len(task_slug),
+                    "total_id_length": len(session_id)
+                }
+            )
         
-        # If slug ends with incomplete word, try to complete it
-        if len(task_slug) >= 40 and task_slug[-1] != '-':
-            # Find last complete word boundary
-            last_hyphen = task_slug.rfind('-')
-            if last_hyphen > 15:  # Ensure we keep at least 15 chars
-                task_slug = task_slug[:last_hyphen]
-        
-        return f"{date_str}-{task_slug}"
+        return session_id
     
-    def create_session_structure(self, session_id: str) -> str:
-        """Create complete session directory structure at project root"""
-        import os
+    def create_session_structure(self, session_id: str, task_description: str, complexity_level: int = 2) -> Dict[str, Any]:
+        """Create complete session directory structure and files"""
+        self.current_session = session_id
+        self.session_path = self.sessions_dir / session_id
         
-        # Use unified project root detection
-        project_root = SessionManagement.detect_project_root()
+        # Create directories
+        self.session_path.mkdir(parents=True, exist_ok=True)
+        (self.session_path / "workers").mkdir(exist_ok=True)
+        (self.session_path / "workers" / "json").mkdir(exist_ok=True)
+        (self.session_path / "workers" / "prompts").mkdir(exist_ok=True)
+        (self.session_path / "workers" / "decisions").mkdir(exist_ok=True)
         
-        # Session should be created at project root Docs/hive-mind/sessions/
-        session_path = os.path.join(project_root, 'Docs', 'hive-mind', 'sessions', session_id)
-        
-        # Create all required directories
-        directories = [
-            session_path,
-            os.path.join(session_path, 'workers'),
-            os.path.join(session_path, 'workers', 'json'),
-            os.path.join(session_path, 'workers', 'prompts'),
-            os.path.join(session_path, 'workers', 'decisions')
-        ]
-        
-        for directory in directories:
-            os.makedirs(directory, exist_ok=True)
-            
-        # Return relative path for consistency
-        return f"Docs/hive-mind/sessions/{session_id}"
-    
-    def initialize_session_files(self, session_id: str, task: str, complexity_level: int) -> Dict[str, Any]:
-        """Initialize all session files with proper structure"""
-        import json
-        import os
-        from datetime import datetime
-        
-        # First ensure the session structure exists
-        session_path = self.create_session_structure(session_id)
-        
-        # Use unified session path
-        absolute_session_path = SessionManagement.get_session_path(session_id)
-        
-        # Create STATE.json using unified write (first time only)
-        initial_state = {
+        # Initialize STATE.json
+        state = {
             "session_id": session_id,
-            "task_description": task,
+            "task_description": task_description,
             "complexity_level": complexity_level,
             "created_at": datetime.now().isoformat(),
             "status": "initializing",
             "worker_configs": {},
             "coordination_status": {
-                "phase": "planning",
+                "phase": "initialization",
                 "workers_spawned": [],
                 "workers_completed": [],
                 "synthesis_ready": False
             },
-            "update_count": 0
+            "update_count": 0,
+            "last_updated": datetime.now().isoformat()
         }
         
-        # Initial write (only time we write instead of update)
-        with open(os.path.join(absolute_session_path, 'STATE.json'), 'w') as f:
-            json.dump(initial_state, f, indent=2)
+        with open(self.session_path / "STATE.json", 'w') as f:
+            json.dump(state, f, indent=2)
         
-        # Create SESSION.md
-        session_md = f"""# {task} - Session {session_id}
-
-## Session Overview
-- **Task**: {task}
-- **Complexity Level**: {complexity_level}
-- **Created**: {datetime.now().strftime("%Y-%m-%d %H:%M:%S")}
-- **Status**: Initializing
-
-## Coordination Log
-[Worker assignments and progress will be logged here]
-
-## Results Summary
-[Final synthesis results will be documented here]
-"""
+        # Initialize EVENTS.jsonl (empty, will be appended to)
+        (self.session_path / "EVENTS.jsonl").touch()
         
-        with open(os.path.join(absolute_session_path, 'SESSION.md'), 'w') as f:
-            f.write(session_md)
-        
-        # Initialize EVENTS.jsonl (only first write is 'w', all others append)
-        initial_event = {
-            "timestamp": datetime.now().isoformat(),
-            "type": "session_created",
-            "agent": "queen-orchestrator",
-            "details": f"Session {session_id} initialized for task: {task}"
-        }
-        
-        # Only initial creation uses write mode
-        with open(os.path.join(absolute_session_path, 'EVENTS.jsonl'), 'w') as f:
-            f.write(json.dumps(initial_event) + "\n")
-        
-        # Create DEBUG.jsonl file for debug information (only first write is 'w')
-        debug_event = {
+        # Initialize DEBUG.jsonl with first entry
+        debug_entry = {
             "timestamp": datetime.now().isoformat(),
             "type": "debug_initialized",
             "agent": "queen-orchestrator",
             "details": "DEBUG.jsonl file created for session debugging"
         }
+        with open(self.session_path / "DEBUG.jsonl", 'w') as f:
+            f.write(json.dumps(debug_entry) + '\n')
         
-        # Only initial creation uses write mode
-        with open(os.path.join(absolute_session_path, 'DEBUG.jsonl'), 'w') as f:
-            f.write(json.dumps(debug_event) + "\n")
+        # Initialize SESSION.md
+        session_md = f"""# Session: {session_id}
+
+## Task Description
+{task_description}
+
+## Metadata
+- **Created**: {datetime.now().isoformat()}
+- **Complexity Level**: {complexity_level}
+- **Status**: Initializing
+
+## Workers
+_Workers will be listed here as they are spawned_
+
+## Progress Log
+_Session progress will be tracked here_
+"""
+        with open(self.session_path / "SESSION.md", 'w') as f:
+            f.write(session_md)
         
-        # Validate that all required files and directories were created
-        validation_results = self.validate_session_structure(session_id)
-        if not validation_results['valid']:
-            raise ValueError(f"Session structure validation failed: {validation_results['errors']}")
-        
-        return initial_state
+        return state
     
-    def log_queen_spawn(self, session_id: str, task: str, complexity_level: int) -> None:
-        """Log queen activation event to EVENTS.jsonl"""
-        from datetime import datetime
+    def log_event(self, event_type: str, details: Dict[str, Any], worker: str = "queen-orchestrator") -> None:
+        """Append event to EVENTS.jsonl - NEVER overwrites, always appends"""
+        if not self.session_path:
+            raise ValueError("No active session. Create session first.")
         
-        # Log queen spawn event using append-safe method
-        spawn_event = {
+        event = {
             "timestamp": datetime.now().isoformat(),
-            "type": "queen_spawned",
-            "agent": "queen-orchestrator",
-            "details": {
-                "message": "Queen Orchestrator activated for task coordination",
-                "task": task,
+            "event_type": event_type,
+            "worker": worker,
+            "session_id": self.current_session,
+            "details": details
+        }
+        
+        # CRITICAL: Append mode to prevent overwriting + ensure file exists
+        events_file = self.session_path / "EVENTS.jsonl"
+        if not events_file.exists():
+            events_file.touch()  # Create if missing
+        
+        with open(events_file, 'a') as f:
+            f.write(json.dumps(event) + '\n')
+    
+    def log_debug(self, message: str, level: str = "INFO", agent: str = "queen-orchestrator", details: Any = None) -> None:
+        """Append debug information to DEBUG.jsonl"""
+        if not self.session_path:
+            return  # Silent fail for debug logs before session creation
+        
+        debug_entry = {
+            "timestamp": datetime.now().isoformat(),
+            "level": level,
+            "agent": agent,
+            "message": message,
+            "details": details
+        }
+        
+        # CRITICAL: Append mode to prevent overwriting + ensure file exists
+        debug_file = self.session_path / "DEBUG.jsonl"
+        if not debug_file.exists():
+            debug_file.touch()  # Create if missing
+        
+        with open(debug_file, 'a') as f:
+            f.write(json.dumps(debug_entry) + '\n')
+    
+    def log_queen_spawn(self, task_description: str, complexity_level: int) -> None:
+        """Log queen activation - MUST be first operational event"""
+        self.log_event(
+            event_type="queen_spawned",
+            details={
+                "task_description": task_description,
                 "complexity_level": complexity_level,
-                "session_id": session_id
+                "initialization_complete": True,
+                "session_structure_created": True
             }
-        }
-        
-        # Use append-safe method
-        SessionManagement.append_to_events(session_id, spawn_event)
+        )
+        # Debug: Log technical details about initialization
+        self.log_debug(
+            "Queen initialization parameters",
+            "INFO",
+            details={
+                "process_id": os.getpid(),
+                "python_version": sys.version,
+                "working_directory": str(self.project_root),
+                "sessions_directory": str(self.sessions_dir)
+            }
+        )
     
-    def log_worker_selection(self, session_id: str, selected_workers: List[Dict], 
-                           task_analysis: Dict[str, Any], coordination_plan: Dict[str, Any]) -> None:
-        """Log worker selection decisions to EVENTS.jsonl"""
-        from datetime import datetime
-        
-        # Log worker selection event
-        selection_event = {
-            "timestamp": datetime.now().isoformat(),
-            "type": "worker_selection_completed",
-            "agent": "queen-orchestrator",
-            "details": {
-                "message": "Worker selection process completed",
-                "workers_selected": [w["type"] for w in selected_workers],
-                "worker_count": len(selected_workers),
-                "task_analysis": task_analysis,
-                "coordination_mode": coordination_plan.get("coordination_mode"),
-                "synthesis_strategy": coordination_plan.get("synthesis_strategy"),
-                "worker_details": [
-                    {
-                        "type": w["type"],
-                        "reason": w.get("reason", "Domain expertise required"),
-                        "focus_areas": w.get("focus_areas", []),
-                        "priority": w.get("priority", 5)
-                    } for w in selected_workers
-                ]
+    def log_session_created(self) -> None:
+        """Log session creation event - should come AFTER queen spawn"""
+        self.log_event(
+            event_type="session_created",
+            details={
+                "session_path": str(self.session_path),
+                "structure_validated": True,
+                "files_initialized": ["STATE.json", "EVENTS.jsonl", "DEBUG.jsonl", "SESSION.md"]
             }
-        }
-        
-        # Use append-safe method
-        SessionManagement.append_to_events(session_id, selection_event)
-        
-        # Also log each worker assignment individually
-        for worker in selected_workers:
-            worker_config = coordination_plan["worker_configs"].get(worker["type"], {})
-            assignment_event = {
-                "timestamp": datetime.now().isoformat(),
-                "type": "task_assigned",
-                "agent": "queen-orchestrator",
-                "worker": worker["type"],
-                "details": {
-                    "task_description": worker_config.get("task_description", "Task assigned"),
-                    "focus_areas": worker_config.get("specific_focus", []),
-                    "selection_reason": worker_config.get("selection_reason", "Required for task"),
-                    "timeout": worker_config.get("timeout", 300),
-                    "dependencies": worker_config.get("dependencies", [])
+        )
+        # Debug: Log generated paths and file sizes
+        self.log_debug(
+            "Session files initialized",
+            "INFO",
+            details={
+                "session_id": self.current_session,
+                "absolute_path": str(self.session_path.absolute()),
+                "parent_dir": str(self.session_path.parent),
+                "files_created": {
+                    "STATE.json": os.path.getsize(self.session_path / "STATE.json") if (self.session_path / "STATE.json").exists() else 0,
+                    "EVENTS.jsonl": os.path.getsize(self.session_path / "EVENTS.jsonl") if (self.session_path / "EVENTS.jsonl").exists() else 0,
+                    "DEBUG.jsonl": os.path.getsize(self.session_path / "DEBUG.jsonl") if (self.session_path / "DEBUG.jsonl").exists() else 0,
+                    "SESSION.md": os.path.getsize(self.session_path / "SESSION.md") if (self.session_path / "SESSION.md").exists() else 0
                 }
             }
-            
-            # Use append-safe method for each assignment
-            SessionManagement.append_to_events(session_id, assignment_event)
+        )
     
-    def plan_workers(self, task: str, complexity_level: int, session_id: str = None) -> Dict[str, Any]:
-        """
-        Plan worker deployment dynamically based on task scope analysis.
-        Worker count is determined by what's mentioned in the task, NOT complexity.
+    def plan_workers(self, task_description: str, complexity_level: int, session_id: str) -> Dict[str, Any]:
+        """Plan worker allocation based on task complexity and requirements"""
+        # Analyze task for domain keywords
+        task_lower = task_description.lower()
+        workers_needed = []
         
-        Examples of truly dynamic selection:
-        - "Review the API" → backend-worker, analyzer-worker (2 workers)
-        - "Review the API and frontend" → backend-worker, frontend-worker, analyzer-worker (3 workers)
-        - "Fix typo in README" → analyzer-worker only (1 worker)
-        - "Review entire system" → All relevant workers (5-7 workers)
-        """
-        # Get complexity parameters (for timeouts only, not worker count)
-        complexity_params = self.COMPLEXITY_MATRIX.get(
-            complexity_level, 
-            self.COMPLEXITY_MATRIX[3]
+        # Domain-based worker selection
+        if any(word in task_lower for word in ['security', 'vulnerability', 'performance', 'optimize', 'analyze']):
+            workers_needed.append('analyzer-worker')
+        
+        if any(word in task_lower for word in ['architecture', 'design', 'structure', 'pattern', 'scalability']):
+            workers_needed.append('architect-worker')
+        
+        if any(word in task_lower for word in ['api', 'backend', 'server', 'database', 'service']):
+            workers_needed.append('backend-worker')
+        
+        if any(word in task_lower for word in ['ui', 'ux', 'frontend', 'client', 'interface']):
+            workers_needed.append('frontend-worker')
+        
+        if any(word in task_lower for word in ['test', 'quality', 'qa', 'coverage', 'validation']):
+            workers_needed.append('test-worker')
+        
+        if any(word in task_lower for word in ['deploy', 'infrastructure', 'ci', 'cd', 'docker']):
+            workers_needed.append('devops-worker')
+        
+        # Ensure minimum workers based on complexity
+        min_workers = {1: 1, 2: 2, 3: 3, 4: 5}.get(complexity_level, 3)
+        
+        # Add default workers if needed
+        if len(workers_needed) < min_workers:
+            defaults = ['analyzer-worker', 'architect-worker', 'backend-worker', 'frontend-worker', 'test-worker']
+            for worker in defaults:
+                if worker not in workers_needed and len(workers_needed) < min_workers:
+                    workers_needed.append(worker)
+        
+        # Log worker selection
+        self.log_event(
+            event_type="worker_selection_completed",
+            details={
+                "workers_selected": workers_needed,
+                "selection_rationale": f"Based on task analysis and complexity level {complexity_level}",
+                "total_workers": len(workers_needed)
+            }
         )
         
-        # Comprehensive task analysis to understand scope
-        task_analysis = self.analyze_task_scope(task)
+        # Create worker configurations
+        worker_configs = []
+        all_assignments = {}  # Track all assignments for consolidated logging
         
-        # Select workers based purely on what the task mentions/requires
-        selected_workers = self.scope_based_worker_selection(task_analysis, task)
-        
-        # Generate worker configurations
-        worker_configs = {}
-        for worker in selected_workers:
-            worker_configs[worker["type"]] = {
-                "task_description": self.generate_contextual_task(task, worker["type"], task_analysis),
-                "specific_focus": worker["focus_areas"],
-                "timeout": complexity_params["timeout"],
-                "escalation_timeout": complexity_params["escalation"],
-                "priority": worker["priority"],
-                "dependencies": self.identify_dependencies(worker["type"], selected_workers),
-                "selection_reason": worker["reason"]
+        for worker in workers_needed:
+            config = self._create_worker_config(worker, task_description, complexity_level)
+            worker_configs.append(config)
+            
+            # Collect assignment details for consolidated logging
+            all_assignments[worker] = {
+                "task": config["task_description"],
+                "focus_areas": config.get("specific_focus", []),
+                "priority": config["priority"],
+                "timeout": config["timeout"],
+                "dependencies": config.get("dependencies", [])
             }
         
-        coordination_plan = {
-            "complexity_level": complexity_level,
-            "workers": selected_workers,
-            "worker_configs": worker_configs,
-            "coordination_mode": self.determine_coordination_mode(selected_workers),
-            "synthesis_strategy": self.determine_synthesis_strategy(complexity_level),
-            "timeout_strategy": complexity_params,
-            "verification_loops": self.generate_verification_loops(selected_workers),
-            "task_analysis": task_analysis  # Include for transparency
-        }
+        # Log ALL task assignments in a single consolidated event
+        self.log_event(
+            event_type="all_tasks_assigned",
+            details={
+                "total_workers": len(workers_needed),
+                "workers": workers_needed,
+                "assignments": all_assignments,
+                "complexity_level": complexity_level,
+                "status": "all_workers_configured"
+            }
+        )
         
-        # Log worker selection if session_id provided
-        if session_id:
-            self.log_worker_selection(session_id, selected_workers, task_analysis, coordination_plan)
-        
-        self.log_execution("plan_workers", coordination_plan)
-        return coordination_plan
-    
-    def analyze_task_scope(self, task: str) -> Dict[str, Any]:
-        """
-        Deep analysis of task to understand what systems/components are involved.
-        This determines which workers are needed based on actual task content.
-        """
-        task_lower = task.lower()
-        
-        # Track what's explicitly or implicitly mentioned
-        components_detected = []
-        services_mentioned = []
-        
-        # Backend detection - be precise
-        backend_terms = [
-            "backend", "server", "api", "endpoint", "route", "controller",
-            "service", "business logic", "domain", "repository", "model",
-            "database", "sql", "schema", "migration", "query", "orm"
-        ]
-        if any(term in task_lower for term in backend_terms):
-            components_detected.append("backend")
-        
-        # Frontend detection - be precise
-        frontend_terms = [
-            "frontend", "ui", "user interface", "component", "view", "page",
-            "react", "vue", "angular", "html", "css", "javascript", "typescript",
-            "button", "form", "layout", "display", "screen", "browser", "client"
-        ]
-        if any(term in task_lower for term in frontend_terms):
-            components_detected.append("frontend")
-        
-        # Infrastructure detection
-        infra_terms = [
-            "docker", "kubernetes", "k8s", "deploy", "deployment", "ci/cd",
-            "pipeline", "infrastructure", "container", "production", "staging"
-        ]
-        if any(term in task_lower for term in infra_terms):
-            components_detected.append("infrastructure")
-        
-        # Testing detection
-        test_terms = [
-            "test", "testing", "spec", "coverage", "unit test", "integration",
-            "e2e", "jest", "pytest", "qa", "quality assurance", "validation"
-        ]
-        if any(term in task_lower for term in test_terms):
-            components_detected.append("testing")
-        
-        # Security detection
-        security_terms = [
-            "security", "auth", "authentication", "authorization", "oauth",
-            "jwt", "token", "permission", "vulnerability", "encryption"
-        ]
-        if any(term in task_lower for term in security_terms):
-            components_detected.append("security")
-        
-        # Performance detection
-        perf_terms = [
-            "performance", "optimization", "speed", "cache", "latency",
-            "slow", "bottleneck", "memory", "cpu", "profiling"
-        ]
-        if any(term in task_lower for term in perf_terms):
-            components_detected.append("performance")
-        
-        # Architecture detection
-        arch_terms = [
-            "architecture", "pattern", "design", "scalability", "system design",
-            "structure", "refactor", "restructure", "modularity"
-        ]
-        if any(term in task_lower for term in arch_terms):
-            components_detected.append("architecture")
-        
-        # UX/Design detection
-        design_terms = [
-            "ux", "user experience", "design", "wireframe", "mockup",
-            "visual", "aesthetic", "usability", "accessibility"
-        ]
-        if any(term in task_lower for term in design_terms):
-            components_detected.append("design")
-        
-        # Determine action type
-        action = "review"  # default
-        if any(word in task_lower for word in ["build", "create", "implement", "add", "develop"]):
-            action = "build"
-        elif any(word in task_lower for word in ["fix", "debug", "resolve", "repair", "patch"]):
-            action = "fix"
-        elif any(word in task_lower for word in ["review", "analyze", "assess", "evaluate", "audit"]):
-            action = "review"
-        elif any(word in task_lower for word in ["refactor", "optimize", "improve", "enhance"]):
-            action = "refactor"
-        elif any(word in task_lower for word in ["test", "validate", "verify", "check"]):
-            action = "test"
-        elif any(word in task_lower for word in ["research", "investigate", "explore"]):
-            action = "research"
-        
-        # Determine scope breadth
-        scope = "targeted"
-        if any(phrase in task_lower for phrase in ["entire system", "whole application", "full", "complete", "all"]):
-            scope = "comprehensive"
-        elif any(phrase in task_lower for phrase in ["cross-service", "multiple services", "integration"]):
-            scope = "cross-service"
-        elif len(components_detected) > 3:
-            scope = "broad"
-        elif len(components_detected) <= 1:
-            scope = "narrow"
-        else:
-            scope = "moderate"
-        
-        # Check for specific service mentions (for microservices)
-        if "api service" in task_lower or "/api" in task_lower:
-            services_mentioned.append("api-service")
-        if "frontend service" in task_lower or "/frontend" in task_lower:
-            services_mentioned.append("frontend-service")
-        if "sara" in task_lower:
-            services_mentioned.append("sara-service")
-        if "crypto" in task_lower or "crypto-data" in task_lower:
-            services_mentioned.append("crypto-service")
-        if "archon" in task_lower:
-            services_mentioned.append("archon-service")
+        # Debug: Log technical details about worker configuration
+        self.log_debug(
+            "Worker configuration completed",
+            "INFO",
+            details={
+                "config_count": len(worker_configs),
+                "total_timeout_seconds": sum(c["timeout"] for c in worker_configs),
+                "priority_distribution": {
+                    f"priority_{p}": len([c for c in worker_configs if c["priority"] == p])
+                    for p in set(c["priority"] for c in worker_configs)
+                },
+                "dependency_graph": {
+                    w: c.get("dependencies", []) for w, c in zip(workers_needed, worker_configs)
+                }
+            }
+        )
         
         return {
-            "components": components_detected,
-            "services": services_mentioned,
-            "action": action,
-            "scope": scope,
-            "is_cross_service": len(services_mentioned) > 1 or scope == "cross-service",
-            "is_comprehensive": scope in ["comprehensive", "broad"],
-            "requires_coordination": len(components_detected) > 2 or scope == "cross-service"
+            "workers": workers_needed,
+            "configs": worker_configs,
+            "complexity_level": complexity_level
         }
     
-    def scope_based_worker_selection(self, analysis: Dict[str, Any], task: str) -> List[Dict]:
-        """
-        Select workers based purely on what the task mentions or requires.
-        Number of workers is determined by scope, not complexity.
-        
-        This is the KEY method that ensures dynamic selection.
-        """
-        task_lower = task.lower()
-        workers_needed = set()
-        
-        # Map components to workers
-        component_worker_map = {
-            "backend": "backend-worker",
-            "frontend": "frontend-worker",
-            "infrastructure": "devops-worker",
-            "testing": "test-worker",
-            "security": "analyzer-worker",
-            "performance": "analyzer-worker",
-            "architecture": "architect-worker",
-            "design": "designer-worker"
+    def _create_worker_config(self, worker_type: str, task_description: str, complexity_level: int) -> Dict[str, Any]:
+        """Create configuration for a specific worker"""
+        # Worker-specific task descriptions
+        worker_tasks = {
+            "analyzer-worker": f"Analyze security, performance, and code quality for: {task_description}",
+            "architect-worker": f"Review architecture, design patterns, and scalability for: {task_description}",
+            "backend-worker": f"Examine backend implementation, APIs, and data layer for: {task_description}",
+            "frontend-worker": f"Review UI/UX implementation and client-side code for: {task_description}",
+            "test-worker": f"Assess testing strategy, coverage, and quality assurance for: {task_description}",
+            "devops-worker": f"Evaluate infrastructure, deployment, and CI/CD for: {task_description}"
         }
         
-        # Add workers for detected components
-        for component in analysis["components"]:
-            if component in component_worker_map:
-                workers_needed.add(component_worker_map[component])
-        
-        # Action-specific additions
-        if analysis["action"] == "review":
-            # Reviews need analyzer for quality assessment
-            workers_needed.add("analyzer-worker")
-        elif analysis["action"] == "build":
-            # Building needs architecture guidance
-            if analysis["scope"] != "narrow":
-                workers_needed.add("architect-worker")
-        elif analysis["action"] == "fix":
-            # Fixes need analyzer to verify
-            workers_needed.add("analyzer-worker")
-        elif analysis["action"] == "refactor":
-            # Refactoring needs both architect and analyzer
-            workers_needed.add("architect-worker")
-            workers_needed.add("analyzer-worker")
-        elif analysis["action"] == "test":
-            workers_needed.add("test-worker")
-        elif analysis["action"] == "research":
-            workers_needed.add("researcher-worker")
-        
-        # Scope-based additions
-        if analysis["is_comprehensive"]:
-            # Comprehensive tasks need architecture overview
-            workers_needed.add("architect-worker")
-            # For true full-system reviews, ensure main domains covered
-            if "entire system" in task_lower or "whole application" in task_lower:
-                workers_needed.update(["backend-worker", "frontend-worker", "analyzer-worker"])
-        
-        if analysis["is_cross_service"]:
-            # Cross-service needs architecture coordination
-            workers_needed.add("architect-worker")
-        
-        # Special case: documentation-only tasks
-        if "readme" in task_lower and "typo" in task_lower and len(analysis["components"]) == 0:
-            # Just need analyzer for simple doc fixes
-            workers_needed = {"analyzer-worker"}
-        
-        # Edge case: if no workers selected, use analyzer as fallback
-        if not workers_needed:
-            workers_needed.add("analyzer-worker")
-        
-        # Convert to worker list with metadata
-        selected = []
-        for worker_type in workers_needed:
-            if worker_type in self.WORKER_CAPABILITIES:
-                capabilities = self.WORKER_CAPABILITIES[worker_type]
-                selected.append({
-                    "type": worker_type,
-                    "focus_areas": capabilities["domains"],
-                    "priority": capabilities["priority"],
-                    "reason": self.get_selection_reason(worker_type, analysis, task)
-                })
-        
-        # Sort by priority for optimal execution order
-        selected.sort(key=lambda x: x["priority"], reverse=True)
-        
-        return selected
-    
-    def get_selection_reason(self, worker_type: str, analysis: Dict, task: str) -> str:
-        """Generate clear reason for selecting this worker"""
-        task_snippet = task[:50] + "..." if len(task) > 50 else task
-        
-        reasons = {
-            "analyzer-worker": f"{analysis['action'].title()} quality and security analysis",
-            "architect-worker": f"System design for {analysis['scope']} scope",
-            "backend-worker": f"Server-side {analysis['action']} for mentioned API/backend",
-            "frontend-worker": f"UI/client-side {analysis['action']} for mentioned frontend",
-            "devops-worker": f"Infrastructure {analysis['action']} for deployment concerns",
-            "test-worker": f"Testing and validation for {analysis['action']}",
-            "designer-worker": f"UX design for {analysis['action']}",
-            "researcher-worker": f"Research and context gathering"
+        # Worker focus areas
+        worker_focus = {
+            "analyzer-worker": ["security", "performance", "quality", "vulnerabilities"],
+            "architect-worker": ["design", "patterns", "scalability", "architecture"],
+            "backend-worker": ["api", "database", "server", "business-logic"],
+            "frontend-worker": ["ui", "ux", "client", "components"],
+            "test-worker": ["testing", "coverage", "qa", "validation"],
+            "devops-worker": ["infrastructure", "deployment", "ci-cd", "monitoring"]
         }
         
-        return reasons.get(worker_type, f"Domain expertise for {analysis['action']}")
-    
-    def generate_contextual_task(self, task: str, worker_type: str, analysis: Dict) -> str:
-        """Generate worker-specific task description"""
-        action = analysis["action"]
-        scope = analysis["scope"]
+        # Calculate timeout based on complexity
+        timeout_map = {1: 900, 2: 600, 3: 300, 4: 120}
+        timeout = timeout_map.get(complexity_level, 300)
         
-        templates = {
-            "analyzer-worker": f"Perform {scope} {action} focusing on code quality, security, and performance for: {task}",
-            "architect-worker": f"Analyze system architecture and design patterns with {scope} scope for: {task}",
-            "backend-worker": f"Execute {action} on server-side components and API logic for: {task}",
-            "frontend-worker": f"Handle {action} for UI components and user interface for: {task}",
-            "devops-worker": f"Assess infrastructure and deployment aspects for: {task}",
-            "test-worker": f"Validate testing coverage and quality assurance for: {task}",
-            "designer-worker": f"Create UX improvements and visual designs for: {task}",
-            "researcher-worker": f"Research context and best practices for: {task}"
+        return {
+            "worker_type": worker_type,
+            "task_description": worker_tasks.get(worker_type, task_description),
+            "specific_focus": worker_focus.get(worker_type, []),
+            "priority": self._calculate_priority(worker_type, complexity_level),
+            "timeout": timeout,
+            "dependencies": self._get_dependencies(worker_type)
         }
-        
-        return templates.get(worker_type, f"Perform specialized {action} for: {task}")
     
-    def identify_dependencies(self, worker_type: str, all_workers: List[Dict]) -> List[str]:
-        """Identify worker dependencies for coordination"""
-        dependencies = []
-        
-        # Define dependency relationships
-        dependency_map = {
-            "frontend-worker": ["backend-worker", "designer-worker"],
-            "backend-worker": ["architect-worker"],
+    def _calculate_priority(self, worker_type: str, complexity_level: int) -> int:
+        """Calculate worker priority based on type and complexity"""
+        base_priority = {
+            "analyzer-worker": 1,
+            "architect-worker": 1,
+            "backend-worker": 2,
+            "frontend-worker": 2,
+            "test-worker": 3,
+            "devops-worker": 3
+        }
+        return base_priority.get(worker_type, 2)
+    
+    def _get_dependencies(self, worker_type: str) -> List[str]:
+        """Get worker dependencies"""
+        dependencies = {
+            "frontend-worker": ["backend-worker"],
             "test-worker": ["backend-worker", "frontend-worker"],
-            "devops-worker": ["architect-worker", "backend-worker"]
+            "devops-worker": ["backend-worker", "test-worker"]
         }
-        
-        if worker_type in dependency_map:
-            for dep in dependency_map[worker_type]:
-                if any(w["type"] == dep for w in all_workers):
-                    dependencies.append(dep)
-                    
-        return dependencies
+        return dependencies.get(worker_type, [])
     
-    def determine_coordination_mode(self, workers: List[Dict]) -> str:
-        """Determine coordination strategy based on worker count and dependencies"""
-        worker_count = len(workers)
+    def create_worker_prompts(self, worker_configs: List[Dict[str, Any]], session_id: str) -> List[str]:
+        """Create prompt files for all workers and log ONCE when complete"""
+        if not self.session_path:
+            raise ValueError("No active session")
         
-        if worker_count == 1:
-            return "single_worker"
-        elif worker_count == 2:
-            return "parallel_independent"
-        elif any("dependencies" in w and w["dependencies"] for w in workers):
-            return "sequential_dependent"
-        else:
-            return "parallel_synthesis"
-    
-    def determine_synthesis_strategy(self, complexity: int) -> str:
-        """Determine synthesis approach based on complexity"""
-        strategies = {
-            1: "simple_aggregation",
-            2: "weighted_synthesis",
-            3: "cross_reference_analysis",
-            4: "deep_integration_synthesis"
-        }
-        return strategies.get(complexity, "cross_reference_analysis")
-    
-    def validate_session_structure(self, session_id: str) -> Dict[str, Any]:
-        """Validate that all required session files and directories exist"""
-        import os
+        prompt_files = []
+        prompts_dir = self.session_path / "workers" / "prompts"
         
-        # Use unified session path
-        session_path = SessionManagement.get_session_path(session_id)
-        
-        errors = []
-        required_items = {
-            'directories': [
-                session_path,
-                os.path.join(session_path, 'workers'),
-                os.path.join(session_path, 'workers', 'json'),
-                os.path.join(session_path, 'workers', 'prompts'),
-                os.path.join(session_path, 'workers', 'decisions')
-            ],
-            'files': [
-                os.path.join(session_path, 'STATE.json'),
-                os.path.join(session_path, 'SESSION.md'),
-                os.path.join(session_path, 'EVENTS.jsonl'),
-                os.path.join(session_path, 'DEBUG.jsonl')
-            ]
-        }
-        
-        # Check directories
-        for directory in required_items['directories']:
-            if not os.path.isdir(directory):
-                errors.append(f"Missing directory: {directory}")
-        
-        # Check files
-        for file_path in required_items['files']:
-            if not os.path.isfile(file_path):
-                errors.append(f"Missing file: {file_path}")
-        
-        return {
-            'valid': len(errors) == 0,
-            'errors': errors,
-            'session_path': session_path,
-            'session_id': session_id
-        }
-    
-    def generate_verification_loops(self, workers: List[Dict]) -> Dict[str, Any]:
-        """Generate verification checkpoints"""
-        return {
-            "startup_verification": {
-                "check_interval": 5,  # seconds
-                "max_attempts": 3,
-                "required_events": ["worker_spawned", "worker_configured", "worker_ready"]
-            },
-            "progress_monitoring": {
-                "check_interval": 30,  # seconds
-                "heartbeat_required": True,
-                "stall_detection": 120  # seconds
-            },
-            "completion_verification": {
-                "required_outputs": ["json_response", "detailed_notes"],
-                "validation_checks": ["format_validation", "content_validation"]
-            }
-        }
-    
-    def generate_worker_prompts(self, session_id: str, worker_configs: Dict[str, Any], task: str) -> Dict[str, str]:
-        """Generate and write prompt files for each selected worker"""
-        import os
-        from datetime import datetime
-        
-        # Get session path
-        session_path = SessionManagement.get_session_path(session_id)
-        prompts_dir = os.path.join(session_path, 'workers', 'prompts')
-        
-        # Ensure prompts directory exists
-        os.makedirs(prompts_dir, exist_ok=True)
-        
-        prompt_files = {}
-        
-        for worker_type, config in worker_configs.items():
-            # Generate worker-specific prompt content
-            prompt_content = f"""# Task Assignment for {worker_type}
-Session ID: {session_id}
-Generated: {datetime.now().isoformat()}
+        for config in worker_configs:
+            worker_type = config["worker_type"]
+            prompt_file = prompts_dir / f"{worker_type}.prompt"
+            
+            prompt_content = f"""# Worker: {worker_type}
+# Session: {session_id}
+# Generated: {datetime.now().isoformat()}
 
-## Primary Task
-{config.get('task_description', task)}
+## Task
+{config['task_description']}
 
-## Specific Focus Areas
-{chr(10).join('- ' + area for area in config.get('specific_focus', []))}
+## Focus Areas
+{json.dumps(config['specific_focus'], indent=2)}
 
-## Selection Rationale
-{config.get('selection_reason', 'Domain expertise required')}
+## Context
+- Session ID: {session_id}
+- Priority: {config['priority']}
+- Timeout: {config['timeout']} seconds
+- Dependencies: {json.dumps(config.get('dependencies', []))}
 
-## Task Context
-Original Request: {task}
-
-## Dependencies
-{chr(10).join('- ' + dep for dep in config.get('dependencies', [])) if config.get('dependencies') else 'No dependencies - can proceed immediately'}
-
-## Timeout Configuration
-- Execution Timeout: {config.get('timeout', 300)} seconds
-- Escalation Timeout: {config.get('escalation_timeout', 10)} seconds
-
-## Success Criteria
-1. Complete analysis within assigned domain
-2. Generate structured JSON response
-3. Document all findings in session files
-4. Coordinate with dependent workers if applicable
+## Instructions
+1. Analyze the assigned domain thoroughly
+2. Generate detailed notes and findings FIRST
+3. Create structured JSON output based on your analysis
+4. Ensure all findings are evidence-based
+5. Log progress to session DEBUG.jsonl
+6. Save outputs to:
+   - workers/decisions/{worker_type}-analysis.md (detailed notes)
+   - workers/json/{worker_type}.json (structured data)
 
 ## Output Requirements
-- Primary output: workers/json/{worker_type}.json
-- Detailed notes: workers/decisions/{worker_type}-analysis.md
-- Update STATE.json with progress
-- Log all events to EVENTS.jsonl
-
-## Coordination Notes
-Priority Level: {config.get('priority', 5)}
-Session Path: Docs/hive-mind/sessions/{session_id}/
+- Detailed markdown analysis in decisions folder
+- Structured JSON in json folder
+- Progress events in EVENTS.jsonl (append only)
+- Debug information in DEBUG.jsonl (append only)
 """
             
-            # Write prompt file
-            prompt_file = os.path.join(prompts_dir, f"{worker_type}.prompt")
             with open(prompt_file, 'w') as f:
                 f.write(prompt_content)
             
-            prompt_files[worker_type] = prompt_file
-            
-            # Log prompt generation
-            prompt_event = {
-                "timestamp": datetime.now().isoformat(),
-                "type": "prompt_generated",
-                "agent": "queen-orchestrator",
-                "worker": worker_type,
-                "details": {
-                    "prompt_file": f"workers/prompts/{worker_type}.prompt",
-                    "task_description": config.get('task_description', task)[:100],
-                    "focus_areas": config.get('specific_focus', [])
-                }
+            prompt_files.append(str(prompt_file))
+        
+        # Log ONCE after ALL prompts are created
+        self.log_event(
+            event_type="prompts_created",
+            details={
+                "total_prompts": len(prompt_files),
+                "workers": [c["worker_type"] for c in worker_configs],
+                "prompt_files": prompt_files,
+                "status": "all_prompts_generated"
             }
-            SessionManagement.append_to_events(session_id, prompt_event)
+        )
+        
+        # Debug: Log technical details about prompt files
+        self.log_debug(
+            "Prompt generation completed",
+            "INFO",
+            details={
+                "prompts_directory": str(prompts_dir),
+                "file_count": len(prompt_files),
+                "file_sizes": {
+                    os.path.basename(f): os.path.getsize(f) if os.path.exists(f) else 0
+                    for f in prompt_files
+                },
+                "total_size_bytes": sum(
+                    os.path.getsize(f) if os.path.exists(f) else 0
+                    for f in prompt_files
+                )
+            }
+        )
         
         return prompt_files
     
-    def coordinate_execution(self, worker_configs: Dict[str, Any]) -> Dict[str, Any]:
-        """Coordinate worker execution with monitoring"""
-        execution_status = {
-            "started_at": datetime.now().isoformat(),
-            "workers_spawned": list(worker_configs.keys()),
-            "workers_completed": [],
-            "workers_failed": [],
-            "coordination_events": []
-        }
+    def generate_spawn_instructions(self, worker_configs: List[Dict[str, Any]], prompt_files: List[str], 
+                                   session_id: str, task_description: str, complexity_level: int) -> Dict[str, Any]:
+        """Generate spawn instructions for Claude Code to execute"""
+        workers_to_spawn = []
         
-        # This would contain actual coordination logic
-        # Including spawn verification, progress monitoring, etc.
-        
-        self.log_execution("coordinate_execution", execution_status)
-        return execution_status
-    
-    def generate_spawn_instructions(self, session_id: str, coordination_plan: Dict[str, Any], task: str) -> Dict[str, Any]:
-        """Generate JSON spawn instructions for Claude Code to execute"""
-        
-        # First generate prompt files for all workers
-        prompt_files = self.generate_worker_prompts(session_id, coordination_plan["worker_configs"], task)
-        
-        # Build spawn instructions
-        spawn_instructions = {
-            "coordination_action": "spawn_workers",
-            "session_id": session_id,
-            "task": task,
-            "complexity_level": coordination_plan.get("complexity_level", 2),
-            "workers_to_spawn": []
-        }
-        
-        # Add each worker to spawn list
-        for worker in coordination_plan["workers"]:
-            worker_type = worker["type"]
-            config = coordination_plan["worker_configs"][worker_type]
-            
-            spawn_instructions["workers_to_spawn"].append({
-                "worker_type": worker_type,
+        for config, prompt_file in zip(worker_configs, prompt_files):
+            workers_to_spawn.append({
+                "worker_type": config["worker_type"],
                 "task_description": config["task_description"],
                 "specific_focus": config["specific_focus"],
-                "priority": worker["priority"],
-                "prompt_file": f"workers/prompts/{worker_type}.prompt",
+                "priority": config["priority"],
+                "prompt_file": prompt_file,
                 "timeout": config["timeout"]
             })
         
-        # Log spawn instructions generation
-        spawn_event = {
+        return {
+            "coordination_action": "spawn_workers",
+            "session_id": session_id,
+            "task": task_description,
+            "complexity_level": complexity_level,
+            "workers_to_spawn": workers_to_spawn,
+            "session_path": str(self.session_path),
+            "total_workers": len(workers_to_spawn)
+        }
+    
+    def update_state(self, updates: Dict[str, Any]) -> None:
+        """Atomically update STATE.json"""
+        if not self.session_path:
+            raise ValueError("No active session")
+        
+        state_file = self.session_path / "STATE.json"
+        
+        # Read current state
+        with open(state_file, 'r') as f:
+            state = json.load(f)
+        
+        # Apply updates
+        state.update(updates)
+        state["update_count"] = state.get("update_count", 0) + 1
+        state["last_updated"] = datetime.now().isoformat()
+        
+        # Write atomically
+        temp_file = state_file.with_suffix('.tmp')
+        with open(temp_file, 'w') as f:
+            json.dump(state, f, indent=2)
+        
+        temp_file.replace(state_file)
+    
+    def validate_session_structure(self) -> bool:
+        """Validate that all required session files and directories exist"""
+        if not self.session_path:
+            return False
+        
+        required_files = [
+            self.session_path / "STATE.json",
+            self.session_path / "EVENTS.jsonl",
+            self.session_path / "DEBUG.jsonl",
+            self.session_path / "SESSION.md"
+        ]
+        
+        required_dirs = [
+            self.session_path / "workers",
+            self.session_path / "workers" / "json",
+            self.session_path / "workers" / "prompts",
+            self.session_path / "workers" / "decisions"
+        ]
+        
+        validation_errors = []
+        
+        for file in required_files:
+            if not file.exists():
+                validation_errors.append(f"Missing file: {file.name}")
+                self.log_debug(
+                    "Validation error: Missing required file",
+                    "ERROR",
+                    details={
+                        "file_path": str(file),
+                        "expected_type": "file",
+                        "parent_exists": file.parent.exists()
+                    }
+                )
+        
+        for dir in required_dirs:
+            if not dir.exists():
+                validation_errors.append(f"Missing directory: {dir.name}")
+                self.log_debug(
+                    "Validation error: Missing required directory",
+                    "ERROR",
+                    details={
+                        "directory_path": str(dir),
+                        "expected_type": "directory",
+                        "parent_exists": dir.parent.exists()
+                    }
+                )
+        
+        if validation_errors:
+            self.log_debug(
+                "Session structure validation failed",
+                "ERROR",
+                details={
+                    "error_count": len(validation_errors),
+                    "errors": validation_errors
+                }
+            )
+            return False
+        
+        # Log successful validation with technical details
+        self.log_debug(
+            "Session structure validation passed",
+            "INFO",
+            details={
+                "files_validated": len(required_files),
+                "directories_validated": len(required_dirs),
+                "session_path": str(self.session_path),
+                "total_size_bytes": sum(
+                    os.path.getsize(f) if f.exists() else 0
+                    for f in required_files
+                )
+            }
+        )
+        return True
+
+
+# Helper class for workers to use
+class WorkerLogger:
+    """Helper class for workers to properly log to session files"""
+    
+    def __init__(self, session_path: Path, worker_name: str):
+        self.session_path = Path(session_path)
+        self.worker_name = worker_name
+        self.session_id = self.session_path.name
+    
+    def log_event(self, event_type: str, details: Dict[str, Any]) -> None:
+        """Append event to EVENTS.jsonl - NEVER overwrite, always append"""
+        event = {
             "timestamp": datetime.now().isoformat(),
-            "type": "spawn_instructions_generated",
-            "agent": "queen-orchestrator",
-            "details": {
+            "event_type": event_type,
+            "worker": self.worker_name,
+            "session_id": self.session_id,
+            "details": details
+        }
+        
+        # CRITICAL: Append mode + ensure file exists + error handling
+        events_file = self.session_path / "EVENTS.jsonl"
+        if not events_file.exists():
+            events_file.touch()  # Create if missing
+        
+        try:
+            with open(events_file, 'a') as f:
+                f.write(json.dumps(event) + '\n')
+        except Exception as e:
+            # If logging fails, don't break the worker
+            print(f"WARNING: Failed to log event {event_type} for {self.worker_name}: {e}")
+    
+    def log_debug(self, message: str, level: str = "INFO", details: Any = None) -> None:
+        """Append debug log to DEBUG.jsonl - NEVER overwrite, always append"""
+        debug_entry = {
+            "timestamp": datetime.now().isoformat(),
+            "level": level,
+            "agent": self.worker_name,
+            "message": message,
+            "details": details
+        }
+        
+        # CRITICAL: Append mode + ensure file exists + error handling
+        debug_file = self.session_path / "DEBUG.jsonl"
+        if not debug_file.exists():
+            debug_file.touch()  # Create if missing
+        
+        try:
+            with open(debug_file, 'a') as f:
+                f.write(json.dumps(debug_entry) + '\n')
+        except Exception as e:
+            # If logging fails, don't break the worker
+            print(f"WARNING: Failed to log debug for {self.worker_name}: {e}")
+    
+    def save_analysis(self, content: str) -> None:
+        """Save analysis markdown to decisions folder"""
+        output_file = self.session_path / "workers" / "decisions" / f"{self.worker_name}-analysis.md"
+        with open(output_file, 'w') as f:
+            f.write(content)
+        
+        # Debug: Log technical details about saved analysis
+        self.log_debug(
+            "Analysis document saved",
+            "INFO",
+            details={
+                "file_path": str(output_file),
+                "file_size_bytes": os.path.getsize(output_file),
+                "content_length": len(content),
+                "line_count": content.count('\n')
+            }
+        )
+    
+    def save_json(self, data: Dict[str, Any]) -> None:
+        """Save structured JSON to json folder"""
+        output_file = self.session_path / "workers" / "json" / f"{self.worker_name}.json"
+        with open(output_file, 'w') as f:
+            json.dump(data, f, indent=2)
+        
+        # Debug: Log technical details about saved JSON
+        self.log_debug(
+            "JSON output saved",
+            "INFO",
+            details={
+                "file_path": str(output_file),
+                "file_size_bytes": os.path.getsize(output_file),
+                "key_count": len(data.keys()) if isinstance(data, dict) else None,
+                "data_type": type(data).__name__
+            }
+        )
+
+
+# Example usage for Queen Orchestrator
+def orchestrate_task(task_description: str, complexity_level: int = 2):
+    """Main orchestration function demonstrating proper protocol usage"""
+    
+    # Step 1: Initialize protocol
+    coordinator = CoordinationProtocol()
+    
+    # Step 2: Generate session ID
+    session_id = coordinator.generate_session_id(task_description)
+    
+    # Step 3: Create session structure (but don't log session_created yet)
+    state = coordinator.create_session_structure(session_id, task_description, complexity_level)
+    
+    # Step 4: CRITICAL - Log Queen spawn FIRST (before any other events)
+    coordinator.log_queen_spawn(task_description, complexity_level)
+    
+    # Step 5: Log session creation AFTER queen spawn
+    coordinator.log_session_created()
+    
+    # Step 6: Plan workers (automatically logs selection)
+    worker_plan = coordinator.plan_workers(task_description, complexity_level, session_id)
+    
+    # Step 7: Create worker prompts (logs ONCE when all complete)
+    prompt_files = coordinator.create_worker_prompts(worker_plan["configs"], session_id)
+    
+    # Step 8: Generate spawn instructions
+    spawn_instructions = coordinator.generate_spawn_instructions(
+        worker_plan["configs"],
+        prompt_files,
+        session_id,
+        task_description,
+        complexity_level
+    )
+    
+    # Step 9: Update state
+    coordinator.update_state({
+        "status": "workers_spawning",
+        "coordination_status": {
+            "phase": "execution",
+            "workers_spawned": worker_plan["workers"],
+            "workers_completed": [],
+            "synthesis_ready": False
+        }
+    })
+    
+    # Step 10: Validate everything
+    if coordinator.validate_session_structure():
+        coordinator.log_debug(
+            "Orchestration completed successfully",
+            "INFO",
+            details={
                 "session_id": session_id,
                 "worker_count": len(spawn_instructions["workers_to_spawn"]),
-                "workers": [w["worker_type"] for w in spawn_instructions["workers_to_spawn"]],
-                "coordination_mode": coordination_plan.get("coordination_mode", "parallel_synthesis")
+                "total_complexity_level": complexity_level,
+                "spawn_instructions_size": len(json.dumps(spawn_instructions))
             }
-        }
-        SessionManagement.append_to_events(session_id, spawn_event)
-        
+        )
         return spawn_instructions
-    
-    def handle_escalation(self, worker_type: str, issue: str) -> Dict[str, Any]:
-        """Handle worker escalation"""
-        escalation_response = {
-            "timestamp": datetime.now().isoformat(),
-            "worker": worker_type,
-            "issue": issue,
-            "action": "retry",  # or "skip", "reassign", "abort"
-            "resolution": None
-        }
-        
-        # Escalation logic based on issue type
-        if "timeout" in issue.lower():
-            escalation_response["action"] = "extend_timeout"
-        elif "dependency" in issue.lower():
-            escalation_response["action"] = "resolve_dependency"
-        elif "error" in issue.lower():
-            escalation_response["action"] = "retry"
-            
-        self.log_execution("handle_escalation", escalation_response)
-        return escalation_response
+    else:
+        coordinator.log_debug(
+            "Critical: Session validation failed after orchestration",
+            "ERROR",
+            details={
+                "session_id": session_id,
+                "session_path": str(coordinator.session_path),
+                "recovery_action": "Manual intervention required"
+            }
+        )
+        raise ValueError("Failed to create valid session structure")
+
+
+if __name__ == "__main__":
+    # Example usage
+    result = orchestrate_task(
+        "Analyze crypto-data service architecture for security and performance",
+        complexity_level=3
+    )
+    print(json.dumps(result, indent=2))

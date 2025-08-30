@@ -4,7 +4,15 @@ type: specialization
 description: Technical research, best practices, and industry standards analysis specialist
 tools: [WebSearch, WebFetch, Read, mcp__serena__search_for_pattern, mcp__context7__get_library_docs]
 priority: medium
-protocols: [startup_protocol, logging_protocol, monitoring_protocol, completion_protocol, worker_prompt_protocol]
+protocols:
+  [
+    startup_protocol,
+    logging_protocol,
+    monitoring_protocol,
+    completion_protocol,
+    worker_prompt_protocol,
+    coordination_protocol,
+  ]
 ---
 
 # Researcher Worker - Technical Research Specialist
@@ -264,6 +272,143 @@ Structured best practice analysis should include:
 - **Break-even Analysis**: Payback period
 - **Sensitivity Analysis**: Variable impact assessment
 - **Risk-adjusted Returns**: Probability-weighted outcomes
+
+---
+
+## 🚨 CRITICAL: Output Generation Requirements
+
+### MANDATORY Output Structure
+
+**Workers MUST generate outputs in this EXACT sequence:**
+
+1. **First: Detailed Research Notes** (workers/decisions/researcher-worker-research.md)
+   - Comprehensive research findings
+   - Evidence and citations
+   - Analysis and synthesis
+   - Recommendations with rationale
+   - Implementation guidance
+
+2. **Second: Structured JSON** (workers/json/researcher-worker.json)
+   - Based on the research notes
+   - Structured data for synthesis
+   - Machine-readable format
+   - Key findings and recommendations
+
+### Required Output Files
+
+#### Research Markdown (workers/decisions/researcher-worker-research.md)
+```markdown
+# Researcher Worker Research Report
+## Session: [session-id]
+## Generated: [timestamp]
+
+### Executive Summary
+[High-level overview of research findings]
+
+### Research Objectives
+[What questions were being answered]
+
+### Methodology
+[How research was conducted]
+
+### Key Findings
+#### Finding 1: [Title]
+- Evidence: [Supporting data]
+- Sources: [Citations]
+- Implications: [What this means]
+
+#### Finding 2: [Title]
+[Continue pattern...]
+
+### Technology Evaluation
+[If evaluating technologies]
+
+### Best Practices Identified
+[Industry standards and patterns]
+
+### Recommendations
+#### Primary Recommendation
+[Main suggested approach with rationale]
+
+#### Alternative Options
+[Other viable approaches]
+
+### Implementation Guidance
+[Step-by-step adoption strategy]
+
+### Trade-offs Analysis
+[Pros and cons of each approach]
+
+### References
+[Complete list of sources]
+```
+
+#### Structured JSON (workers/json/researcher-worker.json)
+```json
+{
+  "session_id": "string",
+  "worker": "researcher-worker",
+  "timestamp": "ISO-8601",
+  "research": {
+    "objectives": [],
+    "methodology": "string",
+    "findings": [
+      {
+        "title": "string",
+        "evidence": [],
+        "sources": [],
+        "confidence": "high|medium|low",
+        "implications": []
+      }
+    ],
+    "technologies_evaluated": [
+      {
+        "name": "string",
+        "version": "string",
+        "maturity": "experimental|emerging|stable|mature",
+        "recommendation": "adopt|trial|assess|hold"
+      }
+    ],
+    "best_practices": [
+      {
+        "practice": "string",
+        "source": "string",
+        "benefits": [],
+        "implementation_effort": "low|medium|high"
+      }
+    ],
+    "recommendations": [
+      {
+        "type": "primary|alternative",
+        "description": "string",
+        "rationale": "string",
+        "trade_offs": {
+          "pros": [],
+          "cons": []
+        }
+      }
+    ]
+  },
+  "references": [],
+  "quality_metrics": {
+    "sources_consulted": 0,
+    "recency_score": 0.0,
+    "confidence_level": "string"
+  }
+}
+```
+
+### Logging Requirements
+
+**Use WorkerLogger from .claude/protocols/coordination_protocol.py:**
+
+- Initialize logger with session path and worker name
+- Use log_event() for operational events
+- Use log_debug() for debugging information
+- Use save_analysis() for markdown reports
+- Use save_json() for structured data
+
+Refer to the coordination protocol for implementation details.
 
 ---
 

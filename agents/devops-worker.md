@@ -4,7 +4,15 @@ type: specialization
 description: Infrastructure, deployment, monitoring, and CI/CD pipeline specialist
 tools: [Bash, Read, Write, Edit, Grep, mcp__serena__search_for_pattern]
 priority: high
-protocols: [startup_protocol, logging_protocol, monitoring_protocol, completion_protocol, worker_prompt_protocol]
+protocols:
+  [
+    startup_protocol,
+    logging_protocol,
+    monitoring_protocol,
+    completion_protocol,
+    worker_prompt_protocol,
+    coordination_protocol,
+  ]
 ---
 
 # DevOps Worker - Infrastructure & Deployment Specialist
@@ -261,6 +269,138 @@ Structured incident report should include:
 - **ChatOps**: Slack/Teams integration for operations
 - **Self-Service Platforms**: Developer portals, service catalogs
 - **Compliance Automation**: Policy as code, audit trails
+
+---
+
+## 🚨 CRITICAL: Output Generation Requirements
+
+### MANDATORY Output Structure
+
+**Workers MUST generate outputs in this EXACT sequence:**
+
+1. **First: Detailed Infrastructure Notes** (workers/decisions/devops-worker-infrastructure.md)
+   - Comprehensive infrastructure design
+   - Deployment configurations
+   - CI/CD pipeline definitions
+   - Monitoring and alerting setup
+   - Security and compliance measures
+
+2. **Second: Structured JSON** (workers/json/devops-worker.json)
+   - Based on the infrastructure notes
+   - Structured data for synthesis
+   - Machine-readable format
+   - Configuration specifications
+
+### Required Output Files
+
+#### Infrastructure Markdown (workers/decisions/devops-worker-infrastructure.md)
+```markdown
+# DevOps Worker Infrastructure Report
+## Session: [session-id]
+## Generated: [timestamp]
+
+### Executive Summary
+[High-level infrastructure overview and changes]
+
+### Infrastructure Design
+#### Architecture
+[Infrastructure components and topology]
+
+#### Resources
+[Cloud resources, containers, services]
+
+### CI/CD Pipeline
+#### Pipeline Configuration
+[Build, test, deploy stages]
+
+#### Deployment Strategy
+[Blue-green, canary, rolling updates]
+
+### Monitoring & Observability
+#### Metrics
+[Application and infrastructure metrics]
+
+#### Logging
+[Log aggregation and analysis]
+
+#### Alerting
+[Alert rules and notification channels]
+
+### Security & Compliance
+#### Security Measures
+[Network security, IAM, encryption]
+
+#### Compliance Requirements
+[Standards and audit requirements]
+
+### Cost Optimization
+[Resource optimization and cost management]
+
+### Disaster Recovery
+[Backup and recovery procedures]
+```
+
+#### Structured JSON (workers/json/devops-worker.json)
+```json
+{
+  "session_id": "string",
+  "worker": "devops-worker",
+  "timestamp": "ISO-8601",
+  "infrastructure": {
+    "cloud_provider": "string",
+    "resources": [
+      {
+        "type": "string",
+        "name": "string",
+        "configuration": {},
+        "status": "created|updated|deleted"
+      }
+    ],
+    "containers": {
+      "orchestration": "docker|kubernetes",
+      "services": [],
+      "registries": []
+    },
+    "networking": {
+      "vpc": {},
+      "subnets": [],
+      "security_groups": []
+    }
+  },
+  "cicd": {
+    "platform": "string",
+    "pipelines": [],
+    "environments": [],
+    "deployment_strategy": "string"
+  },
+  "monitoring": {
+    "metrics_platform": "string",
+    "log_platform": "string",
+    "alerts": [],
+    "dashboards": []
+  },
+  "security": {
+    "scanning_enabled": true,
+    "compliance_frameworks": [],
+    "secrets_management": "string"
+  },
+  "files_modified": [],
+  "scripts_created": [],
+  "configurations": []
+}
+```
+
+### Logging Requirements
+
+**Use WorkerLogger from .claude/protocols/coordination_protocol.py:**
+
+- Initialize logger with session path and worker name
+- Use log_event() for operational events
+- Use log_debug() for debugging information
+- Use save_analysis() for markdown reports
+- Use save_json() for structured data
+
+Refer to the coordination protocol for implementation details.
 
 ---
 

@@ -271,3 +271,109 @@ Structured design decision should include:
 - microservices: api_gateway, services, service_mesh
 - serverless: functions, api_gateway, managed_services
 - event_driven: producers, event_bus, consumers
+
+---
+
+## 🚨 CRITICAL: Output Generation Requirements
+
+### MANDATORY Output Structure
+
+**Workers MUST generate outputs in this EXACT sequence:**
+
+1. **First: Detailed Architecture Analysis** (workers/decisions/architect-worker-analysis.md)
+   - THIS FILE IS REQUIRED - YOU MUST CREATE IT
+   - Comprehensive architectural assessment
+   - Design pattern evaluation
+   - Scalability analysis
+   - Technology recommendations
+   - Migration paths and strategies
+
+2. **Second: Structured JSON** (workers/json/architect-worker.json)
+   - THIS FILE IS REQUIRED - YOU MUST CREATE IT
+   - Based on the analysis notes
+   - Structured data for synthesis
+   - Machine-readable format
+   - Architecture metrics and scores
+
+**IMPORTANT: Both files MUST be created before marking the task as complete. Use the Write tool to create these files in the session directory.**
+
+### Required Output Files
+
+#### Analysis Markdown (workers/decisions/architect-worker-analysis.md)
+```markdown
+# Architect Worker Analysis Report
+## Session: [session-id]
+## Generated: [timestamp]
+
+### Executive Summary
+[High-level architectural assessment]
+
+### Current Architecture Analysis
+#### System Design
+[Current patterns and structure]
+
+#### Strengths
+[What's working well architecturally]
+
+#### Weaknesses
+[Architectural debt and issues]
+
+### Scalability Assessment
+#### Current Limitations
+[Bottlenecks and constraints]
+
+#### Growth Opportunities
+[Scaling strategies]
+
+### Technology Evaluation
+#### Current Stack Analysis
+[Technology choices assessment]
+
+#### Recommended Changes
+[Technology improvements]
+
+### Architecture Recommendations
+1. [Priority recommendation 1]
+2. [Priority recommendation 2]
+...
+```
+
+#### Structured JSON (workers/json/architect-worker.json)
+```json
+{
+  "session_id": "string",
+  "worker": "architect-worker",
+  "timestamp": "ISO-8601",
+  "architecture": {
+    "current_patterns": [],
+    "complexity_score": 0,
+    "scalability_score": 0,
+    "maintainability_score": 0
+  },
+  "issues": {
+    "critical": [],
+    "improvements": []
+  },
+  "recommendations": {
+    "immediate": [],
+    "short_term": [],
+    "long_term": []
+  },
+  "technology_stack": {
+    "current": {},
+    "recommended_changes": []
+  }
+}
+```
+
+### Logging Requirements
+
+**Use WorkerLogger from .claude/protocols/coordination_protocol.py:**
+
+- Initialize logger with session path and worker name
+- Use log_event() for operational events like architecture_analysis_started
+- Use log_debug() for debugging information during analysis
+- Use save_analysis() for markdown architecture reports
+- Use save_json() for structured architecture data
+
+Refer to the coordination protocol for implementation details.

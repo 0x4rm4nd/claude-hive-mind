@@ -270,6 +270,108 @@ Structured analysis summary should include:
 
 ---
 
+## 🚨 CRITICAL: Output Generation Requirements
+
+### MANDATORY Output Structure
+
+**Workers MUST generate outputs in this EXACT sequence:**
+
+1. **First: Detailed Analysis Notes** (workers/decisions/analyzer-worker-analysis.md)
+   - THIS FILE IS REQUIRED - YOU MUST CREATE IT
+   - Comprehensive findings with evidence
+   - Detailed reasoning and methodology
+   - Code snippets and examples
+   - Metrics and measurements
+   - Risk assessments and impacts
+
+2. **Second: Structured JSON** (workers/json/analyzer-worker.json)
+   - THIS FILE IS REQUIRED - YOU MUST CREATE IT
+   - Based on the analysis notes
+   - Structured data for synthesis
+   - Machine-readable format
+   - Summary metrics and scores
+
+**IMPORTANT: Both files MUST be created before marking the task as complete. Use the Write tool to create these files in the session directory.**
+
+### Required Output Files
+
+#### Analysis Markdown (workers/decisions/analyzer-worker-analysis.md)
+```markdown
+# Analyzer Worker Analysis Report
+## Session: [session-id]
+## Generated: [timestamp]
+
+### Executive Summary
+[High-level findings and risk assessment]
+
+### Security Analysis
+#### Critical Vulnerabilities
+[Detailed security issues with evidence]
+
+#### Recommendations
+[Prioritized security fixes]
+
+### Performance Analysis
+#### Bottlenecks Identified
+[Performance issues with metrics]
+
+#### Optimization Opportunities
+[Specific performance improvements]
+
+### Code Quality Assessment
+#### Technical Debt
+[Quality issues and refactoring needs]
+
+#### Positive Observations
+[What's working well]
+
+### Priority Action Items
+1. [Critical fix 1]
+2. [Critical fix 2]
+...
+```
+
+#### Structured JSON (workers/json/analyzer-worker.json)
+```json
+{
+  "session_id": "string",
+  "worker": "analyzer-worker",
+  "timestamp": "ISO-8601",
+  "analysis": {
+    "security": {
+      "critical_count": 0,
+      "high_count": 0,
+      "vulnerabilities": []
+    },
+    "performance": {
+      "bottlenecks": [],
+      "metrics": {}
+    },
+    "quality": {
+      "technical_debt_ratio": 0.0,
+      "complexity_score": 0,
+      "issues": []
+    }
+  },
+  "recommendations": [],
+  "risk_score": 0
+}
+```
+
+### Logging Requirements
+
+**Use WorkerLogger from .claude/protocols/coordination_protocol.py:**
+
+- Initialize logger with session path and worker name
+- Use log_event() for operational events
+- Use log_debug() for debugging information
+- Use save_analysis() for markdown reports
+- Use save_json() for structured data
+
+Refer to the coordination protocol for implementation details.
+
+---
+
 ## Helper Functions (Reference Only)
 
 ### Severity Scoring for Prioritization

@@ -4,7 +4,15 @@ type: specialization
 description: Testing strategy, quality assurance, and test coverage analysis specialist
 tools: [Read, Write, Edit, Bash, Grep, mcp__serena__find_symbol]
 priority: high
-protocols: [startup_protocol, logging_protocol, monitoring_protocol, completion_protocol, worker_prompt_protocol]
+protocols:
+  [
+    startup_protocol,
+    logging_protocol,
+    monitoring_protocol,
+    completion_protocol,
+    worker_prompt_protocol,
+    coordination_protocol,
+  ]
 ---
 
 # Test Worker - Quality Assurance Specialist
@@ -274,6 +282,150 @@ Structured bug report should include:
 - **Parallel Execution**: Distributed testing
 - **Continuous Testing**: Shift-left approach
 - **Smart Test Selection**: Impact analysis
+
+---
+
+## 🚨 CRITICAL: Output Generation Requirements
+
+### MANDATORY Output Structure
+
+**Workers MUST generate outputs in this EXACT sequence:**
+
+1. **First: Detailed Test Strategy** (workers/decisions/test-worker-strategy.md)
+   - Comprehensive test planning
+   - Test case specifications
+   - Coverage analysis
+   - Quality metrics
+   - Bug reports and findings
+
+2. **Second: Structured JSON** (workers/json/test-worker.json)
+   - Based on the test strategy
+   - Structured data for synthesis
+   - Machine-readable format
+   - Test results and metrics
+
+### Required Output Files
+
+#### Test Strategy Markdown (workers/decisions/test-worker-strategy.md)
+```markdown
+# Test Worker Strategy Report
+## Session: [session-id]
+## Generated: [timestamp]
+
+### Executive Summary
+[High-level overview of testing approach and results]
+
+### Test Strategy
+#### Approach
+[Overall testing methodology]
+
+#### Risk Assessment
+[Critical areas requiring thorough testing]
+
+### Test Coverage
+#### Unit Tests
+[Coverage and key test cases]
+
+#### Integration Tests
+[API and component interaction tests]
+
+#### E2E Tests
+[User journey and workflow tests]
+
+### Test Results
+#### Summary
+[Pass/fail rates, coverage metrics]
+
+#### Failed Tests
+[Details of any failures]
+
+### Quality Metrics
+#### Code Coverage
+[Line, branch, function coverage]
+
+#### Performance Metrics
+[Test execution times, bottlenecks]
+
+### Bugs Found
+[List of discovered issues with severity]
+
+### Recommendations
+[Improvements for better quality]
+
+### Test Maintenance
+[Guidelines for keeping tests updated]
+```
+
+#### Structured JSON (workers/json/test-worker.json)
+```json
+{
+  "session_id": "string",
+  "worker": "test-worker",
+  "timestamp": "ISO-8601",
+  "testing": {
+    "strategy": {
+      "approach": "string",
+      "test_types": [],
+      "risk_areas": []
+    },
+    "coverage": {
+      "unit": {
+        "percentage": 0,
+        "files_covered": 0,
+        "files_total": 0
+      },
+      "integration": {
+        "endpoints_tested": 0,
+        "endpoints_total": 0
+      },
+      "e2e": {
+        "scenarios_tested": 0,
+        "critical_paths_covered": true
+      }
+    },
+    "results": {
+      "total_tests": 0,
+      "passed": 0,
+      "failed": 0,
+      "skipped": 0,
+      "duration_ms": 0
+    },
+    "quality_metrics": {
+      "code_coverage": {
+        "lines": 0,
+        "branches": 0,
+        "functions": 0,
+        "statements": 0
+      },
+      "mutation_score": 0,
+      "defect_density": 0
+    },
+    "bugs_found": [
+      {
+        "id": "string",
+        "severity": "critical|high|medium|low",
+        "description": "string",
+        "location": "string"
+      }
+    ]
+  },
+  "tests_created": [],
+  "tests_modified": [],
+  "test_frameworks": []
+}
+```
+
+### Logging Requirements
+
+**Use WorkerLogger from .claude/protocols/coordination_protocol.py:**
+
+- Initialize logger with session path and worker name
+- Use log_event() for operational events
+- Use log_debug() for debugging information
+- Use save_analysis() for markdown reports
+- Use save_json() for structured data
+
+Refer to the coordination protocol for implementation details.
 
 ---
 

@@ -4,7 +4,15 @@ type: specialization
 description: UI/UX implementation, component architecture, and state management specialist
 tools: [Read, Edit, MultiEdit, Write, Bash, mcp__serena__find_symbol]
 priority: high
-protocols: [startup_protocol, logging_protocol, monitoring_protocol, completion_protocol, worker_prompt_protocol]
+protocols:
+  [
+    startup_protocol,
+    logging_protocol,
+    monitoring_protocol,
+    completion_protocol,
+    worker_prompt_protocol,
+    coordination_protocol,
+  ]
 ---
 
 # Frontend Worker - UI/UX Implementation Specialist
@@ -250,6 +258,134 @@ Structured performance metrics should include:
 - **Field Types**: Appropriate input types for mobile keyboards
 - **Auto-Complete**: Help users with suggestions
 - **Progress Indicators**: Multi-step form progress
+
+---
+
+## 🚨 CRITICAL: Output Generation Requirements
+
+### MANDATORY Output Structure
+
+**Workers MUST generate outputs in this EXACT sequence:**
+
+1. **First: Detailed Implementation Notes** (workers/decisions/frontend-worker-implementation.md)
+   - Comprehensive UI implementation details
+   - Component architecture decisions
+   - State management patterns
+   - Performance optimizations
+   - Accessibility considerations
+
+2. **Second: Structured JSON** (workers/json/frontend-worker.json)
+   - Based on the implementation notes
+   - Structured data for synthesis
+   - Machine-readable format
+   - Component specifications
+
+### Required Output Files
+
+#### Implementation Markdown (workers/decisions/frontend-worker-implementation.md)
+```markdown
+# Frontend Worker Implementation Report
+## Session: [session-id]
+## Generated: [timestamp]
+
+### Executive Summary
+[High-level overview of frontend changes]
+
+### Component Architecture
+#### Components Created/Modified
+[Component hierarchy and relationships]
+
+#### Component Specifications
+[Props, state, events for each component]
+
+### State Management
+#### State Architecture
+[Global vs local state decisions]
+
+#### Data Flow
+[How data moves through the application]
+
+### UI/UX Implementation
+#### User Interface
+[Visual elements and interactions]
+
+#### Responsive Design
+[Breakpoints and adaptive layouts]
+
+### Performance Optimizations
+#### Bundle Optimization
+[Code splitting, lazy loading]
+
+#### Render Performance
+[Memoization, virtual scrolling]
+
+### Accessibility
+[WCAG compliance and keyboard navigation]
+
+### Testing Strategy
+[Unit tests, integration tests, E2E tests]
+```
+
+#### Structured JSON (workers/json/frontend-worker.json)
+```json
+{
+  "session_id": "string",
+  "worker": "frontend-worker",
+  "timestamp": "ISO-8601",
+  "implementation": {
+    "components": [
+      {
+        "name": "string",
+        "type": "functional|class",
+        "props": [],
+        "state": [],
+        "events": [],
+        "status": "created|modified"
+      }
+    ],
+    "state_management": {
+      "pattern": "redux|context|zustand",
+      "stores": [],
+      "actions": [],
+      "selectors": []
+    },
+    "routing": {
+      "routes": [],
+      "navigation": []
+    },
+    "styling": {
+      "approach": "css-in-js|css-modules|tailwind",
+      "theme": {},
+      "responsive_breakpoints": []
+    },
+    "performance": {
+      "bundle_size": "string",
+      "code_splitting": [],
+      "lazy_loaded": []
+    },
+    "accessibility": {
+      "wcag_level": "A|AA|AAA",
+      "aria_patterns": [],
+      "keyboard_nav": true
+    }
+  },
+  "files_modified": [],
+  "tests_added": [],
+  "dependencies_added": []
+}
+```
+
+### Logging Requirements
+
+**Use WorkerLogger from .claude/protocols/coordination_protocol.py:**
+
+- Initialize logger with session path and worker name
+- Use log_event() for operational events
+- Use log_debug() for debugging information
+- Use save_analysis() for markdown reports
+- Use save_json() for structured data
+
+Refer to the coordination protocol for implementation details.
 
 ---
 
