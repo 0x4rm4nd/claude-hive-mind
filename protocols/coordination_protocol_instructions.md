@@ -62,7 +62,7 @@ coord.update_worker_status(session_id, "backend-worker", "in_progress")
 ### Event Management
 - **session_id**: Current session identifier
 - **worker_name**: Name of the worker (e.g., "backend-worker")
-- **event_type**: Type of event (task_claimed, status_update, blocker, handoff)
+- **type (event field)**: Event name (task_claimed, status_update, blocker, handoff)
 - **last_event_id**: ID of last processed event (for polling)
 
 ## Output
@@ -87,8 +87,8 @@ Docs/hive-mind/sessions/{session_id}/
   "id": "evt_001",
   "timestamp": "2024-03-15T14:30:00Z",
   "type": "task_claimed",
-  "worker": "backend-worker",
-  "data": {
+  "agent": "backend-worker",
+  "details": {
     "task_id": "task_001",
     "description": "Create authentication service"
   }
@@ -127,7 +127,7 @@ coord.log_event(
     session_id=session_id,
     event_type="api_ready",
     worker="backend-worker",
-    data={"endpoint": "/api/v2/auth", "swagger_url": "/api/docs"}
+    details={"endpoint": "/api/v2/auth", "swagger_url": "/api/docs"}
 )
 ```
 

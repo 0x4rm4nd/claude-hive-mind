@@ -54,15 +54,14 @@ logger.log_critical("Database connection lost",
 - **ERROR**: Error messages for failures
 - **CRITICAL**: Critical failures requiring immediate attention
 
-### Log Entry Structure
+### DEBUG.jsonl Entry Structure
 ```python
 {
-    "timestamp": "2024-03-15T14:30:45.123Z",
+    "timestamp": "2025-01-15T10:30:00Z",
     "level": "INFO",
-    "worker": "backend-worker",
-    "session_id": "2024-03-15-14-30-auth-api",
+    "agent": "backend-worker",
     "message": "API endpoint created successfully",
-    "data": {
+    "details": {
         "endpoint": "/api/v2/auth/login",
         "method": "POST",
         "duration_ms": 1250
