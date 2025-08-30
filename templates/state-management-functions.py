@@ -28,8 +28,8 @@ def update_state(session_id, updates, merge_strategy="deep"):
             updated_state = {**current_state, **updates}
         
         # Update metadata
-        updated_state["timestamps"]["updated_at"] = datetime.now().astimezone().isoformat()
-        updated_state["timestamps"]["last_heartbeat"] = datetime.now().astimezone().isoformat()
+        updated_state["timestamps"]["updated_at"] = datetime.utcnow().strftime('%Y-%m-%dT%H:%M:%SZ')
+        updated_state["timestamps"]["last_heartbeat"] = datetime.utcnow().strftime('%Y-%m-%dT%H:%M:%SZ')
         
         # Write back
         f.seek(0)
@@ -96,12 +96,19 @@ def check_worker_health(session_id):
     Monitor worker health via heartbeat
     """
     state = read_state(session_id)
-    current_time = datetime.now().astimezone()
+    current_time = datetime.utcnow()
     unhealthy_workers = []
     
     for worker_name, worker_state in state["worker_states"].items():
         if worker_state["status"] == "active":
-            last_heartbeat = datetime.fromisoformat(worker_state["last_heartbeat"])
+            # Support both Z and ISO with offset
+            try:
+                if isinstance(worker_state["last_heartbeat"], str) and worker_state["last_heartbeat"].endswith('Z'):
+                    last_heartbeat = datetime.strptime(worker_state["last_heartbeat"], '%Y-%m-%dT%H:%M:%SZ')
+                else:
+                    last_heartbeat = datetime.fromisoformat(worker_state["last_heartbeat"]) 
+            except Exception:
+                last_heartbeat = current_time
             time_since_heartbeat = (current_time - last_heartbeat).seconds
             
             if time_since_heartbeat > 300:  # 5 minutes timeout

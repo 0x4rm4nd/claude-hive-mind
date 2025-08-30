@@ -21,7 +21,7 @@ class CompletionProtocol(BaseProtocol):
         finalized_output = {
             "worker": self.config.worker_type,
             "session_id": self.config.session_id,
-            "timestamp": datetime.now().isoformat(),
+            "timestamp": datetime.utcnow().strftime('%Y-%m-%dT%H:%M:%SZ'),
             "status": "completed",
             "protocol_version": self.config.version,
             "summary": self.generate_summary(results),
@@ -81,7 +81,7 @@ class CompletionProtocol(BaseProtocol):
                 "evidence": finding.get("evidence", ""),
                 "location": finding.get("location", ""),
                 "impact": finding.get("impact", "unknown"),
-                "timestamp": datetime.now().isoformat()
+                "timestamp": datetime.utcnow().strftime('%Y-%m-%dT%H:%M:%SZ')
             })
         
         # Sort by severity
@@ -244,7 +244,7 @@ class CompletionProtocol(BaseProtocol):
         """Mark entire session as complete"""
         completion_record = {
             "session_id": self.config.session_id,
-            "completed_at": datetime.now().isoformat(),
+            "completed_at": datetime.utcnow().strftime('%Y-%m-%dT%H:%M:%SZ'),
             "status": "completed",
             "final_state": self.get_final_state()
         }

@@ -21,7 +21,7 @@ def extract_session_id(prompt_text, worker_type):
         # Fallback: Generate from context
         task_slug = re.sub(r'[^a-zA-Z0-9]+', '-', prompt_text[:100].lower())[:50]
         from datetime import datetime
-        timestamp = datetime.now().strftime('%Y-%m-%d-%H-%M')
+        timestamp = datetime.utcnow().strftime('%Y-%m-%d-%H-%M')
         session_id = f"{timestamp}-{task_slug}"
     
     # Validate session path exists
@@ -47,10 +47,11 @@ def log_event(session_id, event_type, agent_name, details, status=None):
     timestamp = datetime.utcnow().strftime("%Y-%m-%dT%H:%M:%SZ")
     
     # Build event - NO session_id field in the event object
+    # Standardize field names to match schema: type + agent
     event = {
         "timestamp": timestamp,
-        "event_type": event_type,  # Standardized field name
-        "worker": agent_name,  # Use 'worker' for consistency
+        "type": event_type,
+        "agent": agent_name,
         "details": str(details)[:500] if details else "No details provided"
     }
     
@@ -135,8 +136,9 @@ def verify_worker_compliance(session_id, worker_name):
     for line in events.strip().split('\n'):
         try:
             event = json.loads(line)
-            if event.get("worker") == worker_name or event.get("agent") == worker_name:
-                worker_events.append(event.get("event_type", event.get("type")))  # Support both field names
+            if event.get("agent") == worker_name or event.get("worker") == worker_name:
+                # Prefer standardized field names; keep backward compatibility when parsing
+                worker_events.append(event.get("type") or event.get("event_type"))
         except:
             continue
     

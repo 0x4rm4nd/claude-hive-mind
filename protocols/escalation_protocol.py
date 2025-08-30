@@ -27,8 +27,8 @@ class EscalationProtocol(BaseProtocol):
                          details: str, severity: str = "medium") -> Dict[str, Any]:
         """Create new escalation"""
         escalation = {
-            "id": f"esc_{datetime.now().strftime('%Y%m%d%H%M%S')}_{self.config.worker_type}",
-            "timestamp": datetime.now().isoformat(),
+            "id": f"esc_{datetime.utcnow().strftime('%Y%m%d%H%M%S')}_{self.config.worker_type}",
+            "timestamp": datetime.utcnow().strftime('%Y-%m-%dT%H:%M:%SZ'),
             "type": escalation_type.value,
             "worker": self.config.worker_type,
             "session_id": self.config.session_id,
@@ -76,7 +76,7 @@ class EscalationProtocol(BaseProtocol):
         # Update escalation status
         escalation["status"] = response["status"]
         escalation["resolution"] = response.get("resolution")
-        escalation["last_updated"] = datetime.now().isoformat()
+        escalation["last_updated"] = datetime.utcnow().strftime('%Y-%m-%dT%H:%M:%SZ')
         
         self.log_execution("handle_escalation", response)
         return response
@@ -249,7 +249,7 @@ class EscalationProtocol(BaseProtocol):
         """Mark escalation as resolved"""
         resolution_record = {
             "escalation_id": escalation_id,
-            "timestamp": datetime.now().isoformat(),
+            "timestamp": datetime.utcnow().strftime('%Y-%m-%dT%H:%M:%SZ'),
             "status": "resolved",
             "resolution": resolution,
             "resolved_by": self.config.worker_type

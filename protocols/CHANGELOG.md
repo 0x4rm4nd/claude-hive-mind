@@ -152,7 +152,7 @@ Replaced multiple individual `task_assigned` events with a single consolidated `
 #### Event Structure
 ```json
 {
-  "event_type": "tasks_assigned",
+  "type": "tasks_assigned",
   "details": {
     "total_workers": 3,
     "workers": ["worker1", "worker2", "worker3"],

@@ -25,17 +25,17 @@ class MonitoringProtocol(BaseProtocol):
     
     def start_monitoring(self) -> Dict[str, Any]:
         """Initialize monitoring for a worker"""
-        self.monitoring_state["start_time"] = datetime.now().isoformat()
+        self.monitoring_state["start_time"] = datetime.utcnow().strftime('%Y-%m-%dT%H:%M:%SZ')
         self.monitoring_state["health_status"] = "healthy"
-        self.monitoring_state["last_heartbeat"] = datetime.now().isoformat()
+        self.monitoring_state["last_heartbeat"] = datetime.utcnow().strftime('%Y-%m-%dT%H:%M:%SZ')
         
         self.log_execution("start_monitoring", self.monitoring_state)
         return self.monitoring_state
     
     def heartbeat(self, status: Optional[str] = None, metadata: Optional[Dict] = None) -> Dict[str, Any]:
         """Record heartbeat from worker"""
-        now = datetime.now()
-        self.monitoring_state["last_heartbeat"] = now.isoformat()
+        now = datetime.utcnow()
+        self.monitoring_state["last_heartbeat"] = now.strftime('%Y-%m-%dT%H:%M:%SZ')
         
         if status:
             self.monitoring_state["health_status"] = status
@@ -49,7 +49,14 @@ class MonitoringProtocol(BaseProtocol):
         
         # Check for stalls
         if self.monitoring_state["start_time"]:
-            start = datetime.fromisoformat(self.monitoring_state["start_time"])
+            # Support Z or ISO with offset
+            try:
+                if isinstance(self.monitoring_state["start_time"], str) and self.monitoring_state["start_time"].endswith('Z'):
+                    start = datetime.strptime(self.monitoring_state["start_time"], '%Y-%m-%dT%H:%M:%SZ')
+                else:
+                    start = datetime.fromisoformat(self.monitoring_state["start_time"]) 
+            except Exception:
+                start = now
             duration = (now - start).total_seconds()
             
             # Stall detection based on timeout
@@ -63,7 +70,7 @@ class MonitoringProtocol(BaseProtocol):
     def check_health(self) -> Dict[str, Any]:
         """Check worker health status"""
         health_report = {
-            "timestamp": datetime.now().isoformat(),
+            "timestamp": datetime.utcnow().strftime('%Y-%m-%dT%H:%M:%SZ'),
             "worker": self.config.worker_type,
             "health_status": self.monitoring_state["health_status"],
             "stall_detected": self.monitoring_state["stall_detected"],
@@ -77,8 +84,14 @@ class MonitoringProtocol(BaseProtocol):
         elif not self.monitoring_state["last_heartbeat"]:
             health_report["health_status"] = "unknown"
         else:
-            last_heartbeat = datetime.fromisoformat(self.monitoring_state["last_heartbeat"])
-            time_since_heartbeat = (datetime.now() - last_heartbeat).total_seconds()
+            try:
+                if isinstance(self.monitoring_state["last_heartbeat"], str) and self.monitoring_state["last_heartbeat"].endswith('Z'):
+                    last_heartbeat = datetime.strptime(self.monitoring_state["last_heartbeat"], '%Y-%m-%dT%H:%M:%SZ')
+                else:
+                    last_heartbeat = datetime.fromisoformat(self.monitoring_state["last_heartbeat"]) 
+            except Exception:
+                last_heartbeat = datetime.utcnow()
+            time_since_heartbeat = (datetime.utcnow() - last_heartbeat).total_seconds()
             
             if time_since_heartbeat > 120:  # 2 minutes without heartbeat
                 health_report["health_status"] = "unresponsive"
@@ -94,7 +107,7 @@ class MonitoringProtocol(BaseProtocol):
         """Add monitoring checkpoint"""
         checkpoint = {
             "name": checkpoint_name,
-            "timestamp": datetime.now().isoformat(),
+            "timestamp": datetime.utcnow().strftime('%Y-%m-%dT%H:%M:%SZ'),
             "metadata": metadata or {}
         }
         
@@ -112,12 +125,24 @@ class MonitoringProtocol(BaseProtocol):
         }
         
         if self.monitoring_state["start_time"]:
-            start = datetime.fromisoformat(self.monitoring_state["start_time"])
-            metrics["uptime_seconds"] = (datetime.now() - start).total_seconds()
+            try:
+                if isinstance(self.monitoring_state["start_time"], str) and self.monitoring_state["start_time"].endswith('Z'):
+                    start = datetime.strptime(self.monitoring_state["start_time"], '%Y-%m-%dT%H:%M:%SZ')
+                else:
+                    start = datetime.fromisoformat(self.monitoring_state["start_time"]) 
+            except Exception:
+                start = datetime.utcnow()
+            metrics["uptime_seconds"] = (datetime.utcnow() - start).total_seconds()
         
         if self.monitoring_state["last_heartbeat"]:
-            last = datetime.fromisoformat(self.monitoring_state["last_heartbeat"])
-            metrics["time_since_last_heartbeat"] = (datetime.now() - last).total_seconds()
+            try:
+                if isinstance(self.monitoring_state["last_heartbeat"], str) and self.monitoring_state["last_heartbeat"].endswith('Z'):
+                    last = datetime.strptime(self.monitoring_state["last_heartbeat"], '%Y-%m-%dT%H:%M:%SZ')
+                else:
+                    last = datetime.fromisoformat(self.monitoring_state["last_heartbeat"]) 
+            except Exception:
+                last = datetime.utcnow()
+            metrics["time_since_last_heartbeat"] = (datetime.utcnow() - last).total_seconds()
         
         return metrics
     
@@ -127,7 +152,7 @@ class MonitoringProtocol(BaseProtocol):
         # todos = TodoRead()
         
         progress = {
-            "timestamp": datetime.now().isoformat(),
+            "timestamp": datetime.utcnow().strftime('%Y-%m-%dT%H:%M:%SZ'),
             "worker": self.config.worker_type,
             "checkpoints_completed": len(self.monitoring_state["checkpoints"]),
             "estimated_completion": self.estimate_completion(),

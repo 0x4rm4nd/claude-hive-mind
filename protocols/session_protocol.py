@@ -21,7 +21,7 @@ class SessionProtocol(BaseProtocol):
         """
         # Generate session ID
         task_slug = re.sub(r'[^a-zA-Z0-9]+', '-', task.lower())[:50]
-        timestamp = datetime.now().strftime('%Y-%m-%d-%H-%M')
+        timestamp = datetime.utcnow().strftime('%Y-%m-%d-%H-%M')
         session_id = f"{timestamp}-{task_slug}"
         
         self.config.session_id = session_id
@@ -40,8 +40,8 @@ class SessionProtocol(BaseProtocol):
         # Initialize state
         state = {
             "session_id": session_id,
-            "created_at": datetime.now().isoformat(),
-            "last_updated": datetime.now().isoformat(),
+            "created_at": datetime.utcnow().strftime('%Y-%m-%dT%H:%M:%SZ'),
+            "last_updated": datetime.utcnow().strftime('%Y-%m-%dT%H:%M:%SZ'),
             "task": task,
             "complexity_level": complexity_level,
             "coordinator": self.config.worker_type or "queen-orchestrator",
@@ -56,7 +56,7 @@ class SessionProtocol(BaseProtocol):
             },
             "worker_configs": {},
             "metrics": {
-                "start_time": datetime.now().isoformat(),
+                "start_time": datetime.utcnow().strftime('%Y-%m-%dT%H:%M:%SZ'),
                 "events_logged": 0,
                 "workers_total": 0,
                 "completion_percentage": 0
@@ -121,7 +121,7 @@ class SessionProtocol(BaseProtocol):
             )
             raise ValueError("Session ID not configured")
         
-        state["last_updated"] = datetime.now().isoformat()
+        state["last_updated"] = datetime.utcnow().strftime('%Y-%m-%dT%H:%M:%SZ')
         session_path = f"Docs/hive-mind/sessions/{self.config.session_id}"
         
         # Write(f"{session_path}/STATE.json", json.dumps(state, indent=2))
@@ -199,7 +199,7 @@ class SessionProtocol(BaseProtocol):
 {task}
 
 ## Metadata
-- **Created**: {datetime.now().isoformat()}
+- **Created**: {datetime.utcnow().strftime('%Y-%m-%dT%H:%M:%SZ')}
 - **Complexity Level**: {complexity}/4
 - **Coordinator**: {self.config.worker_type or 'queen-orchestrator'}
 - **Protocol Version**: {self.config.version}
@@ -267,8 +267,15 @@ class SessionProtocol(BaseProtocol):
         
         # Calculate duration
         if "start_time" in metrics:
-            start = datetime.fromisoformat(metrics["start_time"])
-            duration = (datetime.now() - start).total_seconds()
+            start_raw = metrics["start_time"]
+            try:
+                if isinstance(start_raw, str) and start_raw.endswith("Z"):
+                    start = datetime.strptime(start_raw, "%Y-%m-%dT%H:%M:%SZ")
+                else:
+                    start = datetime.fromisoformat(start_raw)
+            except Exception:
+                start = datetime.utcnow()
+            duration = (datetime.utcnow() - start).total_seconds()
             metrics["duration_seconds"] = duration
             metrics["duration_formatted"] = f"{int(duration//60)}m {int(duration%60)}s"
         
@@ -292,7 +299,7 @@ class SessionProtocol(BaseProtocol):
         
         # Update final status
         state["status"] = "completed"
-        state["completed_at"] = datetime.now().isoformat()
+        state["completed_at"] = datetime.utcnow().strftime('%Y-%m-%dT%H:%M:%SZ')
         
         # Calculate final metrics
         metrics = self.get_session_metrics()

@@ -26,14 +26,14 @@
 ### Function: `log_event(session_id, event_type, agent_name, details, status=None)`
 - **Purpose**: ATOMIC APPEND to EVENTS.jsonl - Thread-safe implementation
 - **Parameters**:
-  - `session_id`: Active session identifier (used for file path only, NOT included in event)
-  - `event_type`: Type of event (see Event Types Reference) - standardized field name
-  - `agent_name`: Name of the agent logging the event
+  - `session_id`: Active session identifier (file path only; not logged)
+  - `event_type`: Event type name (serialized in JSON as `type`)
+  - `agent_name`: Agent name (serialized in JSON as `agent`)
   - `details`: Event details (max 500 chars)
   - `status`: Optional status field
 - **Returns**: True on successful logging
-- **Implementation**: Uses Bash echo for atomic append operations
-- **CRITICAL**: session_id is ONLY used to determine file path, never included in the event object
+- **Implementation**: Atomic append operations
+- **CRITICAL**: `session_id` is ONLY used for file path; never included in the event object
 
 ## 🐛 DEBUG.jsonl Logging Function (Universal)
 

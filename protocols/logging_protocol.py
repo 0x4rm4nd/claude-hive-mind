@@ -23,7 +23,7 @@ class LoggingProtocol(BaseProtocol):
         """
         Atomic event logging to EVENTS.jsonl using append-safe operations
         """
-        timestamp = datetime.now().isoformat()
+        timestamp = datetime.utcnow().strftime('%Y-%m-%dT%H:%M:%SZ')
         self.event_counter += 1
         
         event = {
@@ -54,7 +54,7 @@ class LoggingProtocol(BaseProtocol):
         """
         Debug logging to DEBUG.jsonl using append-safe operations
         """
-        timestamp = datetime.now().isoformat()
+        timestamp = datetime.utcnow().strftime('%Y-%m-%dT%H:%M:%SZ')
         
         debug_entry = {
             "timestamp": timestamp,
@@ -74,7 +74,7 @@ class LoggingProtocol(BaseProtocol):
         """
         Log to BACKLOG.jsonl for deferred items using append-safe operations
         """
-        timestamp = datetime.now().isoformat()
+        timestamp = datetime.utcnow().strftime('%Y-%m-%dT%H:%M:%SZ')
         
         backlog_entry = {
             "timestamp": timestamp,

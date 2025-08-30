@@ -1,0 +1,48 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "DEBUG.jsonl Line",
+  "type": "object",
+  "additionalProperties": true,
+  "required": ["timestamp", "level", "agent", "message"],
+  "properties": {
+    "timestamp": {
+      "type": "string",
+      "description": "UTC ISO-8601 timestamp with Z",
+      "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}Z$",
+      "examples": [
+        "2025-01-15T10:30:00Z"
+      ]
+    },
+    "level": {
+      "type": "string",
+      "enum": ["INFO", "SUCCESS", "WARNING", "ERROR", "DECISION", "COMPLIANCE"],
+      "description": "Log level"
+    },
+    "agent": {
+      "type": "string",
+      "description": "Agent name (e.g., queen-orchestrator, frontend-worker)"
+    },
+    "message": {
+      "type": "string",
+      "maxLength": 1000,
+      "description": "Debug message"
+    },
+    "context": {
+      "description": "Optional additional context data",
+      "oneOf": [
+        { "type": "string" },
+        { "type": "object" },
+        { "type": "array" }
+      ]
+    },
+    "details": {
+      "description": "Optional details field (legacy compatibility)",
+      "oneOf": [
+        { "type": "string" },
+        { "type": "object" },
+        { "type": "array" }
+      ]
+    }
+  }
+}
+

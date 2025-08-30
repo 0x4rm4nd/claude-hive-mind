@@ -214,4 +214,4 @@ class WorkerPromptProtocol(BaseProtocol):
     def _get_timestamp(self) -> str:
         """Get current ISO-8601 timestamp"""
         from datetime import datetime
-        return datetime.now().isoformat()
+        return datetime.utcnow().strftime('%Y-%m-%dT%H:%M:%SZ')

@@ -18,7 +18,7 @@ class StartupProtocol(BaseProtocol):
     def __init__(self, config: ProtocolConfig):
         super().__init__(config)
         self.startup_metrics = {
-            "start_time": datetime.now().isoformat(),
+            "start_time": datetime.utcnow().strftime('%Y-%m-%dT%H:%M:%SZ'),
             "checkpoints": {},
             "errors": []
         }
@@ -31,7 +31,7 @@ class StartupProtocol(BaseProtocol):
         try:
             # Phase 1: Session extraction (already done in loader)
             self.startup_metrics["session_id"] = self.config.session_id
-            self.startup_metrics["checkpoints"]["session_extracted"] = datetime.now().isoformat()
+            self.startup_metrics["checkpoints"]["session_extracted"] = datetime.utcnow().strftime('%Y-%m-%dT%H:%M:%SZ')
             
             # Phase 2: Session validation using unified session management
             if not SessionManagement.ensure_session_exists(self.config.session_id):
@@ -47,28 +47,28 @@ class StartupProtocol(BaseProtocol):
                     }
                 )
                 raise FileNotFoundError(f"Session {self.config.session_id} structure invalid")
-            self.startup_metrics["checkpoints"]["session_validated"] = datetime.now().isoformat()
+            self.startup_metrics["checkpoints"]["session_validated"] = datetime.utcnow().strftime('%Y-%m-%dT%H:%M:%SZ')
             
             # Phase 3: Configuration loading
             config = self.load_configuration()
-            self.startup_metrics["checkpoints"]["config_loaded"] = datetime.now().isoformat()
+            self.startup_metrics["checkpoints"]["config_loaded"] = datetime.utcnow().strftime('%Y-%m-%dT%H:%M:%SZ')
             self.startup_metrics["config"] = config
             
             # Phase 4: Context loading
             context_loaded = self.load_context()
-            self.startup_metrics["checkpoints"]["context_loaded"] = datetime.now().isoformat()
+            self.startup_metrics["checkpoints"]["context_loaded"] = datetime.utcnow().strftime('%Y-%m-%dT%H:%M:%SZ')
             
             # Phase 5: Escalation check
             escalations = self.check_escalations()
-            self.startup_metrics["checkpoints"]["escalations_checked"] = datetime.now().isoformat()
+            self.startup_metrics["checkpoints"]["escalations_checked"] = datetime.utcnow().strftime('%Y-%m-%dT%H:%M:%SZ')
             self.startup_metrics["escalations_found"] = len(escalations)
             
             # Phase 6: Compliance reporting
             self.report_compliance()
-            self.startup_metrics["checkpoints"]["compliance_reported"] = datetime.now().isoformat()
+            self.startup_metrics["checkpoints"]["compliance_reported"] = datetime.utcnow().strftime('%Y-%m-%dT%H:%M:%SZ')
             
             # Phase 7: Final confirmation
-            self.startup_metrics["end_time"] = datetime.now().isoformat()
+            self.startup_metrics["end_time"] = datetime.utcnow().strftime('%Y-%m-%dT%H:%M:%SZ')
             self.startup_metrics["status"] = "success"
             
             self.log_execution("initialize", "success", self.startup_metrics)
@@ -83,7 +83,7 @@ class StartupProtocol(BaseProtocol):
         except Exception as e:
             self.startup_metrics["status"] = "failed"
             self.startup_metrics["error"] = str(e)
-            self.startup_metrics["end_time"] = datetime.now().isoformat()
+            self.startup_metrics["end_time"] = datetime.utcnow().strftime('%Y-%m-%dT%H:%M:%SZ')
             
             self.log_execution("initialize", "failed", self.startup_metrics)
             raise
@@ -152,7 +152,7 @@ class StartupProtocol(BaseProtocol):
                 "type": "worker_compliance",
                 "agent": self.config.worker_type,
                 "compliance": compliance,
-                "timestamp": datetime.now().isoformat()
+                "timestamp": datetime.utcnow().strftime('%Y-%m-%dT%H:%M:%SZ')
             }
         )
         

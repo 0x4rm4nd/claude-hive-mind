@@ -37,7 +37,7 @@ Instruction docs (.md):
 - `state-management-protocol.md`
 - `queen-worker-coordination.md`
 
-Templates (.claude/protocols/templates):
+Templates (.claude/templates):
 - `logging-functions.py` — Canonical `log_event` and `log_debug` (Bash echo append).
 - `state-management-functions.py` — Atomic state helpers and validators.
 - `state-v2-template.json` — STATE.json template (v2).
@@ -46,7 +46,7 @@ Templates (.claude/protocols/templates):
 - `session-template.md`, `worker-notes-template.md`, `worker-selection-matrix.yaml`.
 
 ## Conventions
-- Event fields: `timestamp`, `event_type`, `worker`, `details`, optional `status`.
+- Event fields: `timestamp`, `type`, `agent`, `details`, optional `status`.
 - Debug fields: `timestamp`, `level`, `agent`, `message`, optional `context`.
 - Session ID is implicit from the directory path; NEVER include it in event objects.
 - Event types are standardized; NO worker-specific prefixes (use `analysis_started` not `backend_analysis_started`).
