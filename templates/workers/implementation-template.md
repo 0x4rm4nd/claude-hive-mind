@@ -30,8 +30,8 @@ log_event(session_id, "analysis_started", WORKER_TYPE, "Beginning domain analysi
 ```json
 {
   "timestamp": "2025-08-30T14:16:22Z",
-  "event_type": "analysis_started",  // NO worker-specific prefixes
-  "worker": "backend-worker",
+  "type": "analysis_started",  // NO worker-specific prefixes
+  "agent": "backend-worker",
   "details": {
     "action": "analysis_initialized",  // NO worker prefix here either
     "target": "crypto-data",
@@ -45,8 +45,8 @@ log_event(session_id, "analysis_started", WORKER_TYPE, "Beginning domain analysi
 // WRONG - includes session_id in event
 {
   "timestamp": "2025-08-30T14:16:22Z",
-  "event_type": "task_started",
-  "worker": "backend-worker",
+  "type": "task_started",
+  "agent": "backend-worker",
   "session_id": "2025-08-30-session",  // NEVER include this!
   "details": {...}
 }
@@ -54,16 +54,16 @@ log_event(session_id, "analysis_started", WORKER_TYPE, "Beginning domain analysi
 // WRONG - worker-specific event type prefix
 {
   "timestamp": "2025-08-30T14:16:22Z",
-  "event_type": "backend_analysis_started",  // NO worker prefixes!
-  "worker": "backend-worker",
+  "type": "backend_analysis_started",  // NO worker prefixes!
+  "agent": "backend-worker",
   "details": {...}
 }
 
 // WRONG - worker-specific action in details
 {
   "timestamp": "2025-08-30T14:16:22Z",
-  "event_type": "analysis_started",
-  "worker": "test-worker",
+  "type": "analysis_started",
+  "agent": "test-worker",
   "details": {
     "action": "test_analysis_initialized"  // NO worker prefixes!
   }
@@ -75,16 +75,16 @@ log_event(session_id, "analysis_started", WORKER_TYPE, "Beginning domain analysi
 // CORRECT - worker_spawned (first event)
 {
   "timestamp": "2025-08-30T14:16:22Z",
-  "event_type": "worker_spawned",
-  "worker": "backend-worker",
+  "type": "worker_spawned",
+  "agent": "backend-worker",
   "details": "backend-worker activated"
 }
 
 // CORRECT - analysis_started (no prefix)
 {
   "timestamp": "2025-08-30T14:16:22Z",
-  "event_type": "analysis_started",
-  "worker": "backend-worker",
+  "type": "analysis_started",
+  "agent": "backend-worker",
   "details": {
     "action": "analysis_initialized",
     "target": "crypto-data",
