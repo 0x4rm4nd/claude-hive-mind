@@ -25,6 +25,8 @@ Core implementations (.py):
 
 Instruction docs (.md):
 - `unified-logging-protocol.md` — Single source of truth for logging via Bash echo.
+- `spawn-protocol.md` — Worker selection and deployment guidelines.
+- `spawn-reference.md` — Quick decision guide for Queen orchestrator.
 - `coordination_protocol_instructions.md`
 - `startup_protocol_instructions.md`
 - `completion_protocol_instructions.md`
@@ -32,12 +34,7 @@ Instruction docs (.md):
 - `monitoring_protocol_instructions.md`
 - `worker_prompt_protocol_instructions.md`
 - `state-management-protocol.md`
-- `ENHANCED_SPAWN_PROTOCOL.md`
 - `queen-worker-coordination.md`
-- `queen-spawn-decision-guide.md`
-- `queen-spawn-quick-reference.md`
-- `intelligent-worker-selection.md`
-- `spawn-decision-tools.md`
 
 Templates (.claude/protocols/templates):
 - `logging-functions.py` — Canonical `log_event` and `log_debug` (Bash echo append).

@@ -1,5 +1,36 @@
 # Coordination Protocol Changelog
 
+## 2025-08-30: Spawn Protocol Simplification
+
+### Complete Replacement of Legacy Spawn System
+
+#### Change Summary
+Replaced complex "ENHANCED" and marketing-heavy spawn protocols with clean, simple protocol names following "no backwards compatibility" principle.
+
+#### Changes Made
+
+1. **New Clean Protocols**:
+   - `spawn-protocol.md` - Worker selection and deployment guidelines
+   - `spawn-reference.md` - Quick decision guide for Queen orchestrator
+   
+2. **Removed Legacy Files**:
+   - Deleted `ENHANCED_SPAWN_PROTOCOL.md` (replaced by spawn-protocol.md)
+   - Deleted `queen-spawn-decision-guide.md` (replaced by spawn-reference.md) 
+   - Deleted `queen-spawn-quick-reference.md` (consolidated into spawn-reference.md)
+   - Deleted `spawn-decision-tools.md` (integrated into spawn-protocol.md)
+   - Deleted `intelligent-worker-selection.md` (replaced by spawn-protocol.md)
+
+3. **Updated References**:
+   - Queen orchestrator now references clean protocol names
+   - coordination_protocol.py updated to use new protocol files
+   - README.md updated with new protocol list
+
+4. **Improvements**:
+   - Removed marketing terms ("ENHANCED", "SMART", "Intelligent")
+   - Simplified naming convention (spawn-protocol, spawn-reference)
+   - Complete replacement without backwards compatibility
+   - Cleaner, more professional documentation
+
 ## 2025-08-30: Major Template System Refactoring
 
 ### Template Extraction and Organization
