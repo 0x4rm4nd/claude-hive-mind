@@ -10,6 +10,7 @@ import re
 from datetime import datetime
 from typing import Dict, Any, Optional, List
 from .protocol_loader import BaseProtocol, ProtocolConfig
+from .session_management import SessionManagement
 
 class SessionProtocol(BaseProtocol):
     """Handles session creation, management, and state"""
@@ -82,6 +83,15 @@ class SessionProtocol(BaseProtocol):
     def read_state(self) -> Dict[str, Any]:
         """Read current session state"""
         if not self.config.session_id:
+            self.log_debug(
+                "read_state failed - Session ID not configured",
+                "ERROR",
+                details={
+                    "operation": "read_state",
+                    "config_state": str(self.config.__dict__ if hasattr(self.config, '__dict__') else 'N/A'),
+                    "error": "Session ID not configured"
+                }
+            )
             raise ValueError("Session ID not configured")
         
         session_path = f"Docs/hive-mind/sessions/{self.config.session_id}"
@@ -99,6 +109,16 @@ class SessionProtocol(BaseProtocol):
     def write_state(self, state: Dict[str, Any]) -> bool:
         """Write session state atomically"""
         if not self.config.session_id:
+            self.log_debug(
+                "write_state failed - Session ID not configured",
+                "ERROR",
+                details={
+                    "operation": "write_state",
+                    "state_to_write": state,
+                    "config_state": str(self.config.__dict__ if hasattr(self.config, '__dict__') else 'N/A'),
+                    "error": "Session ID not configured"
+                }
+            )
             raise ValueError("Session ID not configured")
         
         state["last_updated"] = datetime.now().isoformat()

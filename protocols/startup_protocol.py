@@ -35,6 +35,17 @@ class StartupProtocol(BaseProtocol):
             
             # Phase 2: Session validation using unified session management
             if not SessionManagement.ensure_session_exists(self.config.session_id):
+                self.log_debug(
+                    "Session structure validation failed",
+                    "ERROR",
+                    details={
+                        "session_id": self.config.session_id,
+                        "operation": "initialize",
+                        "phase": "session_validation",
+                        "checkpoints_completed": self.startup_metrics["checkpoints"],
+                        "error": f"Session {self.config.session_id} structure invalid"
+                    }
+                )
                 raise FileNotFoundError(f"Session {self.config.session_id} structure invalid")
             self.startup_metrics["checkpoints"]["session_validated"] = datetime.now().isoformat()
             

@@ -1,10 +1,18 @@
 # Worker Startup Protocol
 
-#worker-startup #mandatory #session-initialization
+#worker-startup #mandatory #session-initialization #output-enforcement
 
 ## Purpose
 
-Standardized startup sequence for all worker agents. This protocol ensures consistent session initialization, state verification, and coordination setup.
+Standardized startup sequence for all worker agents with MANDATORY output file generation. This protocol ensures consistent session initialization, state verification, coordination setup, and output validation.
+
+## 🚨 CRITICAL: Mandatory Output Requirements
+
+**ALL WORKERS MUST GENERATE TWO OUTPUT FILES:**
+1. **Analysis Markdown**: `workers/decisions/{worker-name}-analysis.md`
+2. **Structured JSON**: `workers/json/{worker-name}.json`
+
+**Failure to generate both files is a PROTOCOL VIOLATION that blocks session completion.**
 
 ## Mandatory Startup Sequence
 
@@ -50,72 +58,176 @@ log_debug(session_id, "INFO", WORKER_TYPE, "Starting task execution")
 # Save outputs to standardized locations
 ```
 
-### Step 5: Save Outputs
+### Step 5: Save Outputs (MANDATORY)
 ```python
-# Save detailed notes
-Write(f"{session_path}/workers/{worker_role}-notes.md", detailed_analysis)
+# MANDATORY: Save detailed analysis markdown
+# Path: workers/decisions/{worker-name}-analysis.md
+analysis_content = generate_detailed_analysis()  # Worker-specific analysis
+Write(f"{session_path}/workers/decisions/{WORKER_TYPE}-analysis.md", analysis_content)
 
-# Save JSON response
+# MANDATORY: Save structured JSON response
+# Path: workers/json/{worker-name}.json
 json_response = {
     "worker": WORKER_TYPE,
     "status": "completed",
-    "summary": {...},
-    "findings": [...],
-    "recommendations": [...]
+    "timestamp": datetime.now().isoformat(),
+    "session_id": session_id,
+    "summary": {
+        "overall_assessment": "string",
+        "critical_issues": 0,
+        "recommendations_count": 0
+    },
+    "findings": [
+        {
+            "category": "string",
+            "severity": "critical|high|medium|low",
+            "description": "string",
+            "evidence": "string"
+        }
+    ],
+    "recommendations": [
+        {
+            "priority": "immediate|short_term|long_term",
+            "action": "string",
+            "rationale": "string"
+        }
+    ],
+    "files_modified": [],
+    "implementation_details": {}
 }
-Write(f"{session_path}/workers/json/{worker_role}-response.json", json_response)
+Write(f"{session_path}/workers/json/{WORKER_TYPE}.json", json_response)
 
-# Log completion
-log_event(session_id, "worker_completed", WORKER_TYPE, "Task complete")
+# MANDATORY: Validate outputs exist
+if not exists(f"{session_path}/workers/decisions/{WORKER_TYPE}-analysis.md"):
+    raise Exception(f"PROTOCOL VIOLATION: Missing analysis file for {WORKER_TYPE}")
+if not exists(f"{session_path}/workers/json/{WORKER_TYPE}.json"):
+    raise Exception(f"PROTOCOL VIOLATION: Missing JSON file for {WORKER_TYPE}")
+
+# Log completion only after outputs validated
+log_event(session_id, "worker_completed", WORKER_TYPE, {
+    "status": "success",
+    "outputs_generated": [
+        f"workers/decisions/{WORKER_TYPE}-analysis.md",
+        f"workers/json/{WORKER_TYPE}.json"
+    ]
+})
 ```
 
 ## Output Standards
 
-### JSON Response Structure
+### JSON Response Structure (MANDATORY)
+**File Path**: `workers/json/{worker-name}.json`
+
 ```json
 {
   "worker": "worker-type",
+  "session_id": "session-id",
+  "timestamp": "ISO-8601 timestamp",
   "status": "completed",
   "summary": {
     "overall_assessment": "string",
+    "work_completed": "string",
     "critical_issues": 0,
-    "recommendations_count": 0
+    "recommendations_count": 0,
+    "files_modified": 0
   },
   "findings": [
     {
-      "category": "string",
+      "id": "finding-001",
+      "category": "security|performance|quality|architecture|implementation",
       "severity": "critical|high|medium|low",
+      "title": "string",
       "description": "string",
-      "evidence": "string"
+      "evidence": "string",
+      "location": "file:line or component"
     }
   ],
   "recommendations": [
     {
+      "id": "rec-001",
       "priority": "immediate|short_term|long_term",
+      "category": "string",
       "action": "string",
-      "rationale": "string"
+      "rationale": "string",
+      "effort": "low|medium|high",
+      "impact": "low|medium|high"
     }
-  ]
+  ],
+  "implementation": {
+    "files_modified": [],
+    "files_created": [],
+    "files_deleted": [],
+    "tests_added": [],
+    "dependencies_added": [],
+    "configuration_changes": []
+  },
+  "metrics": {
+    "execution_time_seconds": 0,
+    "tokens_used": 0,
+    "files_analyzed": 0,
+    "lines_modified": 0
+  },
+  "dependencies": {
+    "blocked_by": [],
+    "blocking": [],
+    "coordinated_with": []
+  }
 }
 ```
 
-### Notes File Structure
+### Analysis Markdown Structure (MANDATORY)
+**File Path**: `workers/decisions/{worker-name}-analysis.md`
+
 ```markdown
-# [Worker Type] Analysis
+# [Worker Type] Analysis Report
 **Session**: [session-id]
-**Date**: [timestamp]
+**Generated**: [ISO-8601 timestamp]
+**Worker**: [worker-name]
 
 ## Executive Summary
-[Brief overview]
+[High-level overview of work completed, findings, or analysis]
 
-## Detailed Findings
-[Comprehensive analysis]
+## Detailed Analysis
+### Primary Focus Area
+[Detailed examination of main task area]
+
+### Secondary Considerations
+[Additional findings or observations]
+
+### Technical Details
+[Implementation specifics, code changes, or technical decisions]
+
+## Findings
+### Critical Issues
+[Any critical problems identified]
+
+### Improvements Needed
+[Areas requiring attention]
+
+### Positive Observations
+[What's working well]
 
 ## Recommendations
-[Actionable items]
+### Immediate Actions
+[Things that need immediate attention]
 
-## Evidence
-[Supporting data]
+### Short-term Improvements
+[Changes to implement soon]
+
+### Long-term Considerations
+[Strategic improvements]
+
+## Evidence & References
+[Supporting data, code snippets, or references]
+
+## Files Modified
+[List of files changed during this worker's execution]
+
+## Metrics
+- Lines analyzed: [number]
+- Issues found: [number]
+- Recommendations made: [number]
+- Files modified: [number]
 ```
 
 ## Coordination Events
@@ -143,15 +255,115 @@ log_event(session_id, "decision", WORKER_TYPE, {
 })
 ```
 
+## Output Validation & Enforcement
+
+### Validation Checklist
+```python
+# Every worker MUST validate outputs before completion
+def validate_worker_outputs(session_path, worker_type):
+    """Validate mandatory output files exist and are non-empty"""
+    violations = []
+    
+    # Check analysis markdown
+    analysis_path = f"{session_path}/workers/decisions/{worker_type}-analysis.md"
+    if not exists(analysis_path):
+        violations.append(f"Missing analysis file: {analysis_path}")
+    elif file_size(analysis_path) < 100:  # Minimum 100 bytes
+        violations.append(f"Analysis file too small: {analysis_path}")
+    
+    # Check JSON output
+    json_path = f"{session_path}/workers/json/{worker_type}.json"
+    if not exists(json_path):
+        violations.append(f"Missing JSON file: {json_path}")
+    else:
+        try:
+            data = json.loads(Read(json_path))
+            # Validate required fields
+            required = ['worker', 'session_id', 'status', 'summary', 'findings']
+            for field in required:
+                if field not in data:
+                    violations.append(f"JSON missing required field: {field}")
+        except:
+            violations.append(f"Invalid JSON format: {json_path}")
+    
+    if violations:
+        raise Exception(f"OUTPUT VALIDATION FAILED:\n" + "\n".join(violations))
+    
+    return True
+```
+
+### Protocol Compliance Verification
+```python
+# Queen orchestrator verifies all workers generated outputs
+def verify_worker_compliance(session_path, workers_list):
+    """Verify all workers followed output protocol"""
+    compliance_report = {
+        "compliant": [],
+        "violations": {}
+    }
+    
+    for worker in workers_list:
+        try:
+            validate_worker_outputs(session_path, worker)
+            compliance_report["compliant"].append(worker)
+        except Exception as e:
+            compliance_report["violations"][worker] = str(e)
+    
+    # Log compliance report
+    log_event(session_id, "protocol_compliance_check", "queen-orchestrator", compliance_report)
+    
+    if compliance_report["violations"]:
+        # Protocol violation detected - require correction
+        raise Exception(f"PROTOCOL VIOLATIONS DETECTED: {compliance_report['violations']}")
+    
+    return compliance_report
+```
+
 ## Error Handling
 
 ```python
 try:
     # Main execution
     perform_task()
+    
+    # MANDATORY: Generate outputs
+    save_analysis(detailed_analysis)
+    save_json(structured_data)
+    
+    # MANDATORY: Validate outputs
+    validate_worker_outputs(session_path, WORKER_TYPE)
+    
 except Exception as e:
-    log_event(session_id, "worker_error", WORKER_TYPE, str(e))
-    # Save partial results if possible
-    Write(f"{session_path}/workers/{worker_role}-error.md", error_details)
+    log_event(session_id, "worker_error", WORKER_TYPE, {
+        "error": str(e),
+        "type": "protocol_violation" if "PROTOCOL" in str(e) else "execution_error"
+    })
+    
+    # Still try to save partial results
+    try:
+        Write(f"{session_path}/workers/decisions/{WORKER_TYPE}-error.md", f"""
+# Error Report: {WORKER_TYPE}
+## Session: {session_id}
+## Error: {str(e)}
+## Partial Results:
+{partial_results if exists else "No partial results available"}
+""")
+    except:
+        pass  # Best effort
+    
     raise
 ```
+
+## Enforcement & Consequences
+
+### Protocol Violations
+1. **Missing Analysis File**: Session cannot complete, worker marked as failed
+2. **Missing JSON File**: Session cannot complete, worker marked as failed
+3. **Invalid JSON Structure**: Worker must regenerate with correct structure
+4. **Incomplete Fields**: Worker must complete all required fields
+
+### Queen Orchestrator Enforcement
+- Queen checks for output files before marking workers complete
+- Missing outputs trigger worker re-execution or escalation
+- Session synthesis blocked until all workers have valid outputs
+- Protocol violations logged and tracked for system improvement

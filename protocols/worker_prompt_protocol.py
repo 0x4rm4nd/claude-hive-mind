@@ -105,6 +105,16 @@ class WorkerPromptProtocol(BaseProtocol):
         
         for field in required_fields:
             if field not in data or not data[field]:
+                self.log_debug(
+                    "Prompt validation failed - missing required field",
+                    "ERROR",
+                    details={
+                        "missing_field": field,
+                        "required_fields": required_fields,
+                        "available_fields": list(data.keys()),
+                        "validation_failure": True
+                    }
+                )
                 raise ValueError(f"Missing required field in prompt: {field}")
     
     def _extract_from_main_prompt(self) -> Dict[str, Any]:

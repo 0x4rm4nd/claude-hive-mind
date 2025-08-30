@@ -86,23 +86,8 @@ class CoordinationProtocol:
         (self.session_path / "workers" / "prompts").mkdir(exist_ok=True)
         (self.session_path / "workers" / "decisions").mkdir(exist_ok=True)
         
-        # Initialize STATE.json
-        state = {
-            "session_id": session_id,
-            "task_description": task_description,
-            "complexity_level": complexity_level,
-            "created_at": datetime.now().isoformat(),
-            "status": "initializing",
-            "worker_configs": {},
-            "coordination_status": {
-                "phase": "initialization",
-                "workers_spawned": [],
-                "workers_completed": [],
-                "synthesis_ready": False
-            },
-            "update_count": 0,
-            "last_updated": datetime.now().isoformat()
-        }
+        # Initialize STATE.json with complete template structure
+        state = self._generate_state_json(session_id, task_description, complexity_level)
         
         with open(self.session_path / "STATE.json", 'w') as f:
             json.dump(state, f, indent=2)
@@ -120,23 +105,8 @@ class CoordinationProtocol:
         with open(self.session_path / "DEBUG.jsonl", 'w') as f:
             f.write(json.dumps(debug_entry) + '\n')
         
-        # Initialize SESSION.md
-        session_md = f"""# Session: {session_id}
-
-## Task Description
-{task_description}
-
-## Metadata
-- **Created**: {datetime.now().isoformat()}
-- **Complexity Level**: {complexity_level}
-- **Status**: Initializing
-
-## Workers
-_Workers will be listed here as they are spawned_
-
-## Progress Log
-_Session progress will be tracked here_
-"""
+        # Initialize SESSION.md with rich template
+        session_md = self._generate_session_markdown(session_id, task_description, complexity_level)
         with open(self.session_path / "SESSION.md", 'w') as f:
             f.write(session_md)
         
@@ -145,6 +115,16 @@ _Session progress will be tracked here_
     def log_event(self, event_type: str, details: Dict[str, Any], worker: str = "queen-orchestrator") -> None:
         """Append event to EVENTS.jsonl - NEVER overwrites, always appends"""
         if not self.session_path:
+            self.log_debug(
+                "log_event failed - no active session",
+                "ERROR",
+                details={
+                    "event_type": event_type,
+                    "worker": worker,
+                    "session_path": str(self.session_path) if self.session_path else None,
+                    "error": "No active session. Create session first."
+                }
+            )
             raise ValueError("No active session. Create session first.")
         
         event = {
@@ -235,47 +215,76 @@ _Session progress will be tracked here_
         )
     
     def plan_workers(self, task_description: str, complexity_level: int, session_id: str) -> Dict[str, Any]:
-        """Plan worker allocation based on task complexity and requirements"""
-        # Analyze task for domain keywords
+        """Plan worker allocation using intelligent Queen decision-making"""
+        # Analyze task for domain keywords and requirements
         task_lower = task_description.lower()
         workers_needed = []
+        task_analysis = self._analyze_task_requirements(task_description, complexity_level)
         
-        # Domain-based worker selection
-        if any(word in task_lower for word in ['security', 'vulnerability', 'performance', 'optimize', 'analyze']):
+        # Intelligent domain-based worker selection
+        # Security and performance analysis needs
+        if any(word in task_lower for word in ['security', 'vulnerability', 'audit', 'penetration']):
+            workers_needed.append('analyzer-worker')
+        elif any(word in task_lower for word in ['performance', 'optimize', 'speed', 'efficiency']):
+            workers_needed.append('analyzer-worker')
+        elif 'analyze' in task_lower and 'analyzer-worker' not in workers_needed:
             workers_needed.append('analyzer-worker')
         
-        if any(word in task_lower for word in ['architecture', 'design', 'structure', 'pattern', 'scalability']):
+        # Architecture and design needs
+        if any(word in task_lower for word in ['architecture', 'design', 'structure', 'refactor']):
+            workers_needed.append('architect-worker')
+        elif any(word in task_lower for word in ['pattern', 'scalability', 'system design']):
             workers_needed.append('architect-worker')
         
-        if any(word in task_lower for word in ['api', 'backend', 'server', 'database', 'service']):
+        # Backend development needs
+        if any(word in task_lower for word in ['api', 'endpoint', 'backend', 'server']):
+            workers_needed.append('backend-worker')
+        elif any(word in task_lower for word in ['database', 'schema', 'migration', 'query']):
+            workers_needed.append('backend-worker')
+        elif any(word in task_lower for word in ['service', 'microservice', 'business logic']):
             workers_needed.append('backend-worker')
         
-        if any(word in task_lower for word in ['ui', 'ux', 'frontend', 'client', 'interface']):
+        # Frontend development needs
+        if any(word in task_lower for word in ['ui', 'ux', 'frontend', 'component']):
+            workers_needed.append('frontend-worker')
+        elif any(word in task_lower for word in ['client', 'interface', 'react', 'vue', 'angular']):
+            workers_needed.append('frontend-worker')
+        elif any(word in task_lower for word in ['styling', 'css', 'responsive', 'layout']):
             workers_needed.append('frontend-worker')
         
-        if any(word in task_lower for word in ['test', 'quality', 'qa', 'coverage', 'validation']):
+        # Testing needs
+        if any(word in task_lower for word in ['test', 'testing', 'qa', 'quality']):
             workers_needed.append('test-worker')
+        elif any(word in task_lower for word in ['coverage', 'validation', 'unit test', 'integration']):
+            workers_needed.append('test-worker')
+        elif complexity_level >= 3:  # Complex tasks always need testing
+            if 'test-worker' not in workers_needed:
+                workers_needed.append('test-worker')
         
-        if any(word in task_lower for word in ['deploy', 'infrastructure', 'ci', 'cd', 'docker']):
+        # DevOps and infrastructure needs
+        if any(word in task_lower for word in ['deploy', 'deployment', 'infrastructure', 'docker']):
+            workers_needed.append('devops-worker')
+        elif any(word in task_lower for word in ['ci', 'cd', 'pipeline', 'kubernetes', 'aws']):
             workers_needed.append('devops-worker')
         
-        # Ensure minimum workers based on complexity
-        min_workers = {1: 1, 2: 2, 3: 3, 4: 5}.get(complexity_level, 3)
+        # Queen's intelligent decision: Add workers based on task complexity and interdependencies
+        workers_needed = self._apply_intelligent_worker_selection(
+            workers_needed, task_analysis, complexity_level
+        )
         
-        # Add default workers if needed
-        if len(workers_needed) < min_workers:
-            defaults = ['analyzer-worker', 'architect-worker', 'backend-worker', 'frontend-worker', 'test-worker']
-            for worker in defaults:
-                if worker not in workers_needed and len(workers_needed) < min_workers:
-                    workers_needed.append(worker)
+        # Remove duplicates while preserving order
+        workers_needed = list(dict.fromkeys(workers_needed))
         
-        # Log worker selection
+        # Log intelligent worker selection with detailed rationale
         self.log_event(
             event_type="worker_selection_completed",
             details={
                 "workers_selected": workers_needed,
-                "selection_rationale": f"Based on task analysis and complexity level {complexity_level}",
-                "total_workers": len(workers_needed)
+                "selection_rationale": task_analysis.get('rationale', 'Intelligent task analysis'),
+                "task_domains": task_analysis.get('domains', []),
+                "complexity_factors": task_analysis.get('complexity_factors', []),
+                "total_workers": len(workers_needed),
+                "selection_method": "intelligent_queen_decision"
             }
         )
         
@@ -366,6 +375,139 @@ _Session progress will be tracked here_
             "dependencies": self._get_dependencies(worker_type)
         }
     
+    def _analyze_task_requirements(self, task_description: str, complexity_level: int) -> Dict[str, Any]:
+        """Analyze task to determine requirements and domains"""
+        task_lower = task_description.lower()
+        analysis = {
+            'domains': [],
+            'complexity_factors': [],
+            'rationale': '',
+            'requires_coordination': False,
+            'estimated_scope': 'single' if complexity_level == 1 else 'multi'
+        }
+        
+        # Identify primary domains
+        if 'full' in task_lower or 'entire' in task_lower or 'comprehensive' in task_lower:
+            analysis['domains'].append('full-stack')
+            analysis['requires_coordination'] = True
+        
+        if 'security' in task_lower or 'vulnerability' in task_lower:
+            analysis['domains'].append('security')
+        
+        if 'performance' in task_lower or 'optimize' in task_lower:
+            analysis['domains'].append('performance')
+        
+        if 'api' in task_lower or 'backend' in task_lower:
+            analysis['domains'].append('backend')
+        
+        if 'ui' in task_lower or 'frontend' in task_lower:
+            analysis['domains'].append('frontend')
+        
+        if 'test' in task_lower or 'quality' in task_lower:
+            analysis['domains'].append('testing')
+        
+        if 'deploy' in task_lower or 'infrastructure' in task_lower:
+            analysis['domains'].append('devops')
+        
+        # Analyze complexity factors
+        if complexity_level >= 3:
+            analysis['complexity_factors'].append('multi-system-integration')
+            analysis['requires_coordination'] = True
+        
+        if 'migration' in task_lower or 'upgrade' in task_lower:
+            analysis['complexity_factors'].append('data-migration')
+        
+        if 'real-time' in task_lower or 'websocket' in task_lower:
+            analysis['complexity_factors'].append('real-time-communication')
+        
+        if 'scale' in task_lower or 'scalability' in task_lower:
+            analysis['complexity_factors'].append('scalability-requirements')
+        
+        # Generate rationale
+        domain_str = ', '.join(analysis['domains']) if analysis['domains'] else 'general'
+        complexity_str = ', '.join(analysis['complexity_factors']) if analysis['complexity_factors'] else 'standard'
+        
+        analysis['rationale'] = (
+            f"Queen intelligence selected workers based on identified domains ({domain_str}) "
+            f"with complexity factors ({complexity_str}) for level {complexity_level} task. "
+            f"Coordination required: {analysis['requires_coordination']}"
+        )
+        
+        return analysis
+    
+    def _apply_intelligent_worker_selection(self, initial_workers: List[str], 
+                                           task_analysis: Dict[str, Any], 
+                                           complexity_level: int) -> List[str]:
+        """Apply Queen's intelligence to refine worker selection"""
+        workers = initial_workers.copy()
+        
+        # Level 1: Minimal workers, only what's absolutely needed
+        if complexity_level == 1:
+            # If no workers selected, pick the most relevant one
+            if not workers:
+                if 'backend' in task_analysis['domains']:
+                    workers.append('backend-worker')
+                elif 'frontend' in task_analysis['domains']:
+                    workers.append('frontend-worker')
+                else:
+                    workers.append('analyzer-worker')  # Default to analyzer for investigation
+        
+        # Level 2: Add complementary workers for better coverage
+        elif complexity_level == 2:
+            # Ensure we have at least one implementation worker
+            has_impl = any(w in workers for w in ['backend-worker', 'frontend-worker'])
+            if not has_impl and not workers:
+                workers.append('backend-worker')  # Default implementation worker
+            
+            # Add analyzer if we have implementation but no analysis
+            if has_impl and 'analyzer-worker' not in workers:
+                workers.append('analyzer-worker')
+        
+        # Level 3: Comprehensive coverage with coordination
+        elif complexity_level == 3:
+            # Ensure architecture planning for complex tasks
+            if 'architect-worker' not in workers and task_analysis['requires_coordination']:
+                workers.insert(0, 'architect-worker')  # Architect goes first for planning
+            
+            # Ensure testing for complex implementations
+            if any(w in workers for w in ['backend-worker', 'frontend-worker']):
+                if 'test-worker' not in workers:
+                    workers.append('test-worker')
+            
+            # Add analyzer for complex tasks if not present
+            if 'analyzer-worker' not in workers and len(workers) < 4:
+                workers.append('analyzer-worker')
+        
+        # Level 4: Full team with all necessary specialists
+        elif complexity_level >= 4:
+            # Start with architect for complex planning
+            if 'architect-worker' not in workers:
+                workers.insert(0, 'architect-worker')
+            
+            # Ensure all critical workers for complex tasks
+            critical_workers = []
+            if task_analysis['requires_coordination']:
+                critical_workers = ['architect-worker', 'analyzer-worker']
+            
+            # Add implementation workers if dealing with full-stack
+            if 'full-stack' in task_analysis['domains']:
+                if 'backend-worker' not in workers:
+                    workers.append('backend-worker')
+                if 'frontend-worker' not in workers:
+                    workers.append('frontend-worker')
+            
+            # Always include testing and analysis for level 4
+            if 'test-worker' not in workers:
+                workers.append('test-worker')
+            if 'analyzer-worker' not in workers:
+                workers.append('analyzer-worker')
+            
+            # Add DevOps for deployment considerations
+            if 'devops' in task_analysis['domains'] and 'devops-worker' not in workers:
+                workers.append('devops-worker')
+        
+        return workers
+    
     def _calculate_priority(self, worker_type: str, complexity_level: int) -> int:
         """Calculate worker priority based on type and complexity"""
         base_priority = {
@@ -390,6 +532,16 @@ _Session progress will be tracked here_
     def create_worker_prompts(self, worker_configs: List[Dict[str, Any]], session_id: str) -> List[str]:
         """Create prompt files for all workers and log ONCE when complete"""
         if not self.session_path:
+            self.log_debug(
+                "create_worker_prompts failed - no active session",
+                "ERROR",
+                details={
+                    "session_id": session_id,
+                    "worker_count": len(worker_configs),
+                    "session_path": str(self.session_path) if self.session_path else None,
+                    "error": "No active session"
+                }
+            )
             raise ValueError("No active session")
         
         prompt_files = []
@@ -496,6 +648,15 @@ _Session progress will be tracked here_
     def update_state(self, updates: Dict[str, Any]) -> None:
         """Atomically update STATE.json"""
         if not self.session_path:
+            self.log_debug(
+                "update_state failed - no active session",
+                "ERROR",
+                details={
+                    "updates": updates,
+                    "session_path": str(self.session_path) if self.session_path else None,
+                    "error": "No active session"
+                }
+            )
             raise ValueError("No active session")
         
         state_file = self.session_path / "STATE.json"
@@ -589,6 +750,534 @@ _Session progress will be tracked here_
             }
         )
         return True
+    
+    def _generate_session_markdown(self, session_id: str, task_description: str, complexity_level: int) -> str:
+        """Generate rich SESSION.md from template"""
+        timestamp = datetime.now().isoformat()
+        
+        # Determine task type from description
+        task_lower = task_description.lower()
+        task_type = "maintenance-task"  # default
+        if any(word in task_lower for word in ['bug', 'fix', 'error', 'issue', 'broken']):
+            task_type = "bug-investigation"
+        elif any(word in task_lower for word in ['feature', 'add', 'implement', 'create', 'new']):
+            task_type = "feature-development"
+        elif any(word in task_lower for word in ['integrate', 'integration', 'connect', 'api']):
+            task_type = "integration-project"
+        elif any(word in task_lower for word in ['research', 'investigate', 'analyze', 'study']):
+            task_type = "research-project"
+        
+        # Extract task title (first 50 chars or first sentence)
+        task_title = task_description.split('.')[0][:50]
+        if len(task_title) == 50:
+            task_title += "..."
+        
+        # Calculate duration based on complexity
+        duration_map = {
+            1: "15-30 minutes",
+            2: "30-60 minutes", 
+            3: "1-3 hours",
+            4: "3-8 hours"
+        }
+        duration = duration_map.get(complexity_level, "2-4 hours")
+        
+        # Generate priority
+        priority = "high" if complexity_level >= 3 else "medium" if complexity_level == 2 else "normal"
+        
+        # Build the rich session markdown
+        session_md = f"""# {task_title}
+
+**Session ID**: {session_id}  
+**Created**: {timestamp}  
+**Status**: level_{complexity_level}_initialization  
+**Type**: {task_type}
+**Complexity Level**: {complexity_level}
+**Estimated Duration**: {duration}  
+**Priority**: {priority}
+
+## Original Request
+{task_description}
+
+## Task Analysis & Scope
+
+### Primary Objective
+**Goal**: {task_description.split('.')[0] if '.' in task_description else task_description[:100]}
+**Success Measure**: Task completed as specified with all quality gates passed
+
+### Requirements & Acceptance Criteria
+"""
+        
+        if complexity_level >= 2:
+            session_md += f"""
+**User Story**: As a developer, I want {task_description[:50]}... so that the system functions as intended
+
+**Acceptance Criteria**:
+- [ ] Primary objective completed
+- [ ] All tests passing
+- [ ] Documentation updated
+- [ ] Code review completed
+"""
+        
+        if task_type == "bug-investigation":
+            session_md += f"""
+
+**Bug Details**:
+- **Steps to Reproduce**: See task description
+- **Expected vs Actual**: System should function correctly vs current issue
+- **Environment**: Production/Development environment
+"""
+        
+        session_md += """
+
+### Technical Scope
+**Systems/Components Affected**:
+"""
+        
+        if complexity_level >= 2:
+            session_md += """
+- **Backend**: API endpoints, business logic, database operations
+- **Frontend**: UI components, state management, user interactions  
+- **Database**: Schema changes, migrations, query optimizations
+- **Testing**: Unit tests, integration tests, end-to-end tests
+- **Infrastructure**: Deployment, monitoring, configuration
+"""
+        else:
+            session_md += """
+- **Primary Component**: Main system component affected
+- **Secondary Impacts**: Related systems that may be impacted
+"""
+        
+        session_md += """
+
+## Research & Context Loading
+
+### Research Requirements
+"""
+        
+        if complexity_level == 1:
+            session_md += """
+**Pattern Library Review** (Minimal Research):
+- [ ] Check existing similar patterns in codebase
+- [ ] Validate against current project conventions
+- [ ] Quick technology lookup if needed
+"""
+        elif complexity_level == 2:
+            session_md += """
+**Targeted Research** (Quick Research):
+- [ ] Context7 research on primary technology
+- [ ] Best practices for task type
+- [ ] Security/performance considerations
+- [ ] Integration patterns with existing architecture
+"""
+        else:
+            session_md += """
+**Comprehensive Research** (Multi-Domain):
+- [ ] Context7 research across multiple domains
+- [ ] Architecture pattern analysis
+- [ ] Security compliance requirements
+- [ ] Performance optimization strategies
+- [ ] Cross-system integration approaches
+- [ ] SmartWalletFX-specific financial/crypto considerations
+"""
+        
+        session_md += f"""
+
+### Context Loading Requirements
+**Level {complexity_level} Context**: """
+        
+        if complexity_level == 1:
+            session_md += "Single domain tags, minimal session structure"
+        elif complexity_level == 2:
+            session_md += "Primary domain + related tags, standard session structure"
+        else:
+            session_md += "Multi-domain tags, comprehensive session structure, cross-worker coordination"
+        
+        session_md += f"""
+
+## Worker Assignment & Coordination
+
+### Current Phase: initialization
+Session initialization and worker planning phase
+
+### Worker Status
+"""
+        
+        if complexity_level == 1:
+            session_md += """- **Primary Worker**: pending - Single worker to complete task
+"""
+        elif complexity_level == 2:
+            session_md += """- **Research Worker**: pending - Targeted research for domain
+- **Primary Worker**: pending - Implementation lead
+- **Test Worker**: pending - Validation and testing
+"""
+        else:
+            session_md += """- **Researcher Worker**: pending - Multi-domain Context7 research coordination
+- **Service Architect**: pending - Architecture planning and scalability design
+- **Backend Worker**: pending - Backend implementation and API development
+- **Frontend Worker**: pending - UI implementation and user experience
+- **Designer Worker**: pending - UX design and design system integration
+- **Test Worker**: pending - Comprehensive testing strategy and implementation
+- **Analyzer Worker**: pending - Security analysis and performance optimization
+- **DevOps Worker**: pending - Infrastructure and deployment management
+"""
+        
+        session_md += """
+
+### Coordination Configuration
+"""
+        
+        if complexity_level == 1:
+            session_md += "**Escalation**: Standard 15min timeouts, minimal coordination"
+        elif complexity_level == 2:
+            session_md += "**Escalation**: 10min timeouts, basic EVENTS.jsonl coordination"
+        else:
+            timeout = "5min" if complexity_level == 3 else "2min"
+            session_md += f"""**Escalation**: {timeout} timeouts, full hive-mind coordination
+**Communication**: Active EVENTS.jsonl monitoring and cross-worker notifications"""
+        
+        session_md += f"""
+
+## Implementation Strategy
+
+### Approach
+"""
+        
+        if task_type == "feature-development":
+            session_md += "**Development Approach**: Incremental feature implementation with continuous validation"
+        elif task_type == "bug-investigation":
+            session_md += "**Investigation Approach**: Systematic analysis with root cause identification"
+        elif task_type == "maintenance-task":
+            session_md += "**Maintenance Approach**: Careful incremental updates with regression prevention"
+        elif task_type == "integration-project":
+            session_md += "**Integration Approach**: API-first with comprehensive error handling"
+        else:
+            session_md += "**Research Approach**: Comprehensive investigation with documentation"
+        
+        session_md += """
+
+### Phase Breakdown
+"""
+        
+        if complexity_level == 1:
+            session_md += """1. **Direct Implementation**: Single worker completes task with basic validation
+2. **Basic Testing**: Verify functionality and no regressions
+3. **Simple Archive**: Document completion and any lessons learned
+"""
+        elif complexity_level == 2:
+            session_md += """1. **Research Phase**: Targeted research and pattern analysis
+2. **Planning Phase**: Create implementation plan with task breakdown
+3. **Implementation Phase**: Execute plan with basic coordination
+4. **Validation Phase**: Test and validate implementation
+5. **Archive Phase**: Document results and extract patterns
+"""
+        else:
+            session_md += """1. **Research Phase**: Comprehensive multi-domain research and synthesis
+2. **Architecture Phase**: System design and integration planning
+3. **Implementation Phase**: Parallel worker execution with coordination
+4. **Integration Phase**: System integration and cross-component testing
+5. **Validation Phase**: Security review, performance testing, quality assurance
+6. **Archive Phase**: Comprehensive documentation and pattern library contribution
+"""
+        
+        session_md += """
+
+## Quality Gates & Success Criteria
+
+### Quality Gates Checklist
+"""
+        
+        if complexity_level == 1:
+            session_md += """- [ ] **Implementation Complete**: Task objective accomplished
+- [ ] **Basic Testing**: Functionality verified and no obvious regressions
+- [ ] **Documentation**: Minimal documentation updated
+"""
+        elif complexity_level == 2:
+            session_md += """- [ ] **Research Complete**: Targeted research findings applied
+- [ ] **Implementation Complete**: All requirements implemented
+- [ ] **Testing Complete**: Comprehensive testing with passing results
+- [ ] **Quality Review**: Code quality and standards compliance
+- [ ] **Documentation**: Technical documentation updated
+"""
+        else:
+            session_md += """- [ ] **Research Phase**: Comprehensive research completed and synthesized
+- [ ] **Architecture Phase**: System design validated and documented
+- [ ] **Implementation Phase**: All components developed with research backing
+- [ ] **Integration Phase**: Cross-system integration validated
+- [ ] **Security Review**: Security analysis and validation completed
+- [ ] **Performance Validation**: Performance requirements met and benchmarked
+- [ ] **Documentation**: Comprehensive technical and user documentation
+- [ ] **Deployment Ready**: Feature/fix ready for production deployment
+"""
+        
+        session_md += f"""
+
+### Success Criteria
+"""
+        
+        if task_type == "feature-development":
+            session_md += """- [ ] Feature implements all acceptance criteria exactly as specified
+- [ ] User experience validated through design review
+- [ ] Performance benchmarks met or exceeded
+"""
+        elif task_type == "bug-investigation":
+            session_md += """- [ ] Bug no longer reproducible with original steps
+- [ ] Fix addresses root cause, not just symptoms
+- [ ] No regressions introduced by the fix
+"""
+        elif task_type == "maintenance-task":
+            session_md += """- [ ] Maintenance objective completed as specified
+- [ ] No breaking changes introduced to existing functionality
+- [ ] Code quality metrics maintained or improved
+"""
+        elif task_type == "integration-project":
+            session_md += """- [ ] Integration functional for all required features
+- [ ] Proper error handling and recovery implemented
+- [ ] Security review passed for external integrations
+"""
+        
+        session_md += """
+
+**Universal Success Criteria**:
+- [ ] Code follows established project standards and patterns
+- [ ] Comprehensive test coverage with passing tests
+- [ ] Security considerations addressed appropriately
+- [ ] Technical documentation complete and accurate
+
+## Risk Assessment & Mitigation
+
+### Risk Analysis
+"""
+        
+        risk_level = "high" if complexity_level >= 3 else "medium" if complexity_level == 2 else "low"
+        session_md += f"""**Risk Level**: {risk_level} (based on complexity and scope)
+
+**Identified Risks**:
+"""
+        
+        if complexity_level >= 2:
+            session_md += """- **Technical Risk**: Complexity of implementation or unknown factors
+- **Integration Risk**: Cross-system dependencies or compatibility issues
+- **Performance Risk**: Scalability concerns or resource constraints
+- **Security Risk**: Potential vulnerabilities or data exposure
+
+### Mitigation Strategies
+- [ ] Incremental implementation with continuous validation
+- [ ] Comprehensive testing at each phase
+- [ ] Rollback plan prepared if issues arise
+- [ ] Security review before deployment
+"""
+        else:
+            session_md += """- **Technical Risk**: Minimal due to limited scope
+- **Integration Risk**: Low impact on other systems
+
+### Mitigation Strategies
+- [ ] Basic testing before completion
+- [ ] Quick rollback if needed
+"""
+        
+        session_md += f"""
+
+## Progress Tracking
+
+### Timeline Tracking
+"""
+        
+        if complexity_level == 1:
+            session_md += f"""- **Task Start**: {timestamp}
+- **Completion Target**: Within {duration}
+"""
+        else:
+            session_md += f"""- **Research Phase**: {timestamp} → TBD
+- **Implementation Phase**: TBD → TBD
+- **Validation Phase**: TBD → TBD
+- **Final Completion**: Target within {duration}
+"""
+        
+        session_md += f"""
+
+### Archon Integration
+**Archon Project ID**: smartwalletfx-{session_id[:8]}
+**Task IDs**: TBD
+**Status Sync**: Automatic updates configured
+
+### Session Metrics
+- **Research Duration**: 0 minutes
+- **Implementation Tasks**: 0 created, 0 completed
+- **Worker Coordination Events**: 0
+- **Quality Gate Completions**: 0/{3 if complexity_level == 1 else 5 if complexity_level == 2 else 8}
+
+## Knowledge Capture
+
+### Patterns & Learnings
+"""
+        
+        if complexity_level >= 2:
+            session_md += """**Successful Patterns**:
+- [ ] Patterns identified during implementation
+- [ ] Reusable solutions discovered
+
+**Lessons Learned**:
+- [ ] Challenges encountered and solutions
+- [ ] Process improvements identified
+
+**Pattern Library Contributions**:
+- [ ] Reusable patterns to be documented
+"""
+        else:
+            session_md += """**Patterns**: To be identified during implementation
+**Lessons**: To be captured upon completion
+"""
+        
+        if complexity_level >= 3:
+            session_md += """
+
+### Memory Bank Updates
+**Memory Bank Contributions**:
+- [ ] Technical decisions with rationale
+- [ ] Architecture patterns and trade-offs
+- [ ] Performance optimizations discovered
+- [ ] Security considerations and solutions
+"""
+        
+        session_md += f"""
+
+## Phase History
+- **initialization**: {timestamp} - Session created, workers being planned
+
+---
+
+*This session adapts to complexity level {complexity_level} and task type {task_type} for optimal hive-mind coordination*
+"""
+        
+        return session_md
+    
+    def _generate_state_json(self, session_id: str, task_description: str, complexity_level: int) -> Dict[str, Any]:
+        """Generate complete STATE.json from template"""
+        timestamp = datetime.now().isoformat()
+        
+        # Build complete state structure following template
+        state = {
+            "session_id": session_id,
+            "task": task_description,  # Changed from task_description to task
+            "status": "research_phase",  # Start with research phase
+            "created_at": timestamp,
+            "updated_at": timestamp,
+            "current_phase": {
+                "name": "research_phase",
+                "started_at": timestamp,
+                "progress_percentage": 0,
+                "next_action": "Queen: Delegate Context7 research to appropriate workers"
+            },
+            "research_complete": False,
+            "research_synthesis_file": "RESEARCH_SYNTHESIS.md",
+            "context": {
+                "tokens_used": 0,
+                "estimated_remaining": 100000,
+                "can_resume": True,
+                "resume_point": "Session initialization complete, ready for research delegation",
+                "resume_count": 0
+            },
+            "workers": {
+                "researcher-worker": {
+                    "status": "pending",
+                    "task": "Multi-domain research coordination",
+                    "research_domains": [],
+                    "completed_domains": []
+                },
+                "backend-worker": {
+                    "status": "pending",
+                    "task": "Backend-specific research and implementation",
+                    "research_domains": [],
+                    "current_task": None
+                },
+                "frontend-worker": {
+                    "status": "pending",
+                    "task": "Frontend-specific research and implementation",
+                    "research_domains": [],
+                    "current_task": None
+                },
+                "service-architect": {
+                    "status": "pending",
+                    "task": "Architecture research and system design",
+                    "research_domains": [],
+                    "current_task": None
+                },
+                "analyzer-worker": {
+                    "status": "pending",
+                    "task": "Security and performance research",
+                    "research_domains": [],
+                    "current_task": None
+                },
+                "test-worker": {
+                    "status": "pending",
+                    "task": "Testing strategy research and implementation",
+                    "research_domains": [],
+                    "current_task": None
+                },
+                "devops-worker": {
+                    "status": "pending",
+                    "task": "Infrastructure research and deployment",
+                    "research_domains": [],
+                    "current_task": None
+                },
+                "designer-worker": {
+                    "status": "pending",
+                    "task": "UX research and design implementation",
+                    "research_domains": [],
+                    "current_task": None
+                }
+            },
+            "research_progress": {
+                "domains_identified": [],
+                "domains_assigned": [],
+                "domains_completed": [],
+                "synthesis_status": "pending",
+                "conflicts_identified": [],
+                "conflicts_resolved": []
+            },
+            "implementation_progress": {
+                "tasks_created": 0,
+                "tasks_completed": 0,
+                "workers_active": 0,
+                "blocking_issues": 0
+            },
+            "quality_gates": {
+                "research_phase_complete": False,
+                "implementation_plan_created": False,
+                "security_review_complete": False,
+                "performance_validation_complete": False,
+                "pattern_library_updated": False
+            },
+            "metrics": {
+                "session_duration_hours": 0,
+                "research_duration_minutes": 0,
+                "implementation_duration_hours": 0,
+                "worker_coordination_events": 1,
+                "successful_task_completions": 0,
+                "pattern_contributions": 0
+            },
+            "session_metadata": {
+                "hive_mind_version": "1.0",
+                "research_methodology": "context7_first",
+                "coordination_protocol": "file_based",
+                "quality_assurance": "multi_gate",
+                "resumption_capability": "full_state",
+                "complexity_level": complexity_level
+            },
+            # Additional fields for backward compatibility
+            "complexity_level": complexity_level,
+            "worker_configs": {},
+            "coordination_status": {
+                "phase": "initialization",
+                "workers_spawned": [],
+                "workers_completed": [],
+                "synthesis_ready": False
+            },
+            "update_count": 0,
+            "last_updated": timestamp
+        }
+        
+        return state
 
 
 # Helper class for workers to use
@@ -645,8 +1334,9 @@ class WorkerLogger:
             print(f"WARNING: Failed to log debug for {self.worker_name}: {e}")
     
     def save_analysis(self, content: str) -> None:
-        """Save analysis markdown to decisions folder"""
+        """Save analysis markdown to decisions folder - MANDATORY for all workers"""
         output_file = self.session_path / "workers" / "decisions" / f"{self.worker_name}-analysis.md"
+        output_file.parent.mkdir(parents=True, exist_ok=True)  # Ensure directory exists
         with open(output_file, 'w') as f:
             f.write(content)
         
@@ -663,8 +1353,9 @@ class WorkerLogger:
         )
     
     def save_json(self, data: Dict[str, Any]) -> None:
-        """Save structured JSON to json folder"""
+        """Save structured JSON to json folder - MANDATORY for all workers"""
         output_file = self.session_path / "workers" / "json" / f"{self.worker_name}.json"
+        output_file.parent.mkdir(parents=True, exist_ok=True)  # Ensure directory exists
         with open(output_file, 'w') as f:
             json.dump(data, f, indent=2)
         
@@ -746,7 +1437,8 @@ def orchestrate_task(task_description: str, complexity_level: int = 2):
             details={
                 "session_id": session_id,
                 "session_path": str(coordinator.session_path),
-                "recovery_action": "Manual intervention required"
+                "recovery_action": "Manual intervention required",
+                "error": "Failed to create valid session structure"
             }
         )
         raise ValueError("Failed to create valid session structure")

@@ -9,6 +9,7 @@ import json
 from datetime import datetime
 from typing import Dict, Any, List, Optional
 from .protocol_loader import BaseProtocol, ProtocolConfig
+from .session_management import SessionManagement
 
 class SynthesisProtocol(BaseProtocol):
     """Manages synthesis of worker results"""
@@ -42,6 +43,15 @@ class SynthesisProtocol(BaseProtocol):
         Synthesize all worker results into cohesive insights
         """
         if not self.config.session_id:
+            self.log_debug(
+                "synthesize failed - Session ID required",
+                "ERROR",
+                details={
+                    "operation": "synthesize",
+                    "config_state": str(self.config.__dict__ if hasattr(self.config, '__dict__') else 'N/A'),
+                    "error": "Session ID required for synthesis"
+                }
+            )
             raise ValueError("Session ID required for synthesis")
         
         session_path = f"Docs/hive-mind/sessions/{self.config.session_id}"
