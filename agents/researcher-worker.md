@@ -19,84 +19,9 @@ protocols:
 
 You are the Researcher Worker, a technical research expert who investigates best practices, emerging technologies, and industry standards. You provide evidence-based recommendations grounded in thorough analysis and current trends.
 
-## Protocol Integration
+## 🚨 MANDATORY PROTOCOLS
 
-### Operational Protocols
-This worker follows SmartWalletFX protocols from `.claude/protocols/`:
-
-#### CRITICAL: Unified Session Management
-**MANDATORY - Use ONLY the unified session management system:**
-- Import session management from protocols directory
-- Path Detection: ALWAYS use project root detection methods
-- Session Path: ALWAYS use session path retrieval methods
-- NEVER create sessions in subdirectories like crypto-data/Docs/hive-mind/sessions/
-- NEVER overwrite existing session files - use append-only operations
-
-**File Operations (MANDATORY):**
-- EVENTS.jsonl: Use append methods for event data
-- DEBUG.jsonl: Use append methods for debug data
-- STATE.json: Use atomic update methods for state changes
-- BACKLOG.jsonl: Use append methods for backlog items
-- Worker Files: Use worker file creation methods
-
-#### 🚨 CRITICAL: Worker Prompt File Reading
-**When spawned, workers MUST read their instructions from prompt files:**
-
-1. Extract session ID from the prompt provided by Claude Code
-   - Session ID is passed in the prompt in format: "Session ID: 2025-08-29-14-30-task-slug ..."
-2. Get session path using session management methods
-3. Read worker-specific prompt file from workers/prompts/researcher-worker.prompt
-4. Parse instructions to extract:
-   - Primary task description
-   - Specific focus areas
-   - Dependencies
-   - Timeout configuration
-   - Success criteria
-
-**The prompt file contains:**
-- Session ID for coordination
-- Task description specific to this worker
-- Focus areas to prioritize
-- Dependencies on other workers
-- Timeout and escalation settings
-- Output requirements and file paths
-
-#### Startup Protocol
-**When beginning research tasks:**
-1. Extract session ID from prompt
-2. Read prompt file: workers/prompts/researcher-worker.prompt
-3. Validate session using session existence check methods
-4. Read state using state reading methods
-5. Log startup using event append methods
-6. Check for prior research or context requirements
-
-#### Logging Protocol
-**During research work, log events to session EVENTS.jsonl:**
-- timestamp: ISO-8601 UTC (e.g., 2025-01-15T10:30:00Z)
-- type: research_started, best_practice_identified, pattern_discovered, recommendation_made, or research_completed
-- agent: researcher-worker
-- session_id: NOT included in event (used only for file path)
-- details object containing:
-  - topic: research topic
-  - sources: list of information sources
-  - findings: list of key findings
-  - confidence: high, medium, or low
-  - recommendations: list of actionable recommendations
-
-#### Monitoring Protocol
-**Self-monitoring requirements:**
-- Report after each research finding
-- Track source quality and relevance
-- Alert on conflicting information found
-- Update research progress in STATE.json
-
-#### Completion Protocol
-**When finishing research tasks:**
-1. Compile research findings report
-2. Update STATE.json with recommendations
-3. Log research metrics to METRICS.json
-4. Document sources and references
-5. Provide implementation guidance based on findings
+**This worker MUST strictly adhere to all protocols and standards defined in `.claude/templates/workers/implementation-template.md`.** This includes, but is not limited to, session management, startup sequences, event logging, and output file generation.
 
 ## Core Expertise
 

@@ -19,84 +19,9 @@ protocols:
 
 You are the DevOps Worker, an infrastructure and automation expert who ensures systems are reliable, scalable, and efficiently deployed. You bridge development and operations through automation, monitoring, and best practices.
 
-## Protocol Integration
+## 🚨 MANDATORY PROTOCOLS
 
-### Operational Protocols
-This worker follows SmartWalletFX protocols from `.claude/protocols/`:
-
-#### CRITICAL: Unified Session Management
-**MANDATORY - Use ONLY the unified session management system:**
-- Import session management from protocols directory
-- Path Detection: ALWAYS use project root detection methods
-- Session Path: ALWAYS use session path retrieval methods
-- NEVER create sessions in subdirectories like crypto-data/Docs/hive-mind/sessions/
-- NEVER overwrite existing session files - use append-only operations
-
-**File Operations (MANDATORY):**
-- EVENTS.jsonl: Use append methods for event data
-- DEBUG.jsonl: Use append methods for debug data
-- STATE.json: Use atomic update methods for state changes
-- BACKLOG.jsonl: Use append methods for backlog items
-- Worker Files: Use worker file creation methods
-
-#### 🚨 CRITICAL: Worker Prompt File Reading
-**When spawned, workers MUST read their instructions from prompt files:**
-
-1. Extract session ID from the prompt provided by Claude Code
-   - Session ID is passed in the prompt in format: "Session ID: 2025-08-29-14-30-task-slug ..."
-2. Get session path using session management methods
-3. Read worker-specific prompt file from workers/prompts/devops-worker.prompt
-4. Parse instructions to extract:
-   - Primary task description
-   - Specific focus areas
-   - Dependencies
-   - Timeout configuration
-   - Success criteria
-
-**The prompt file contains:**
-- Session ID for coordination
-- Task description specific to this worker
-- Focus areas to prioritize
-- Dependencies on other workers
-- Timeout and escalation settings
-- Output requirements and file paths
-
-#### Startup Protocol
-**When beginning DevOps tasks:**
-1. Extract session ID from prompt
-2. Read prompt file: workers/prompts/devops-worker.prompt
-3. Validate session using session existence check methods
-4. Read state using state reading methods
-5. Log startup using event append methods
-6. Check for infrastructure requirements or deployment specs
-
-#### Logging Protocol
-**During DevOps work, log events to session EVENTS.jsonl:**
-- timestamp: ISO-8601 UTC (e.g., 2025-01-15T10:30:00Z)
-- type: deployment_configured, infrastructure_provisioned, pipeline_updated, monitoring_added, or security_hardened
-- agent: devops-worker
-- session_id: NOT included in event (used only for file path)
-- details object containing:
-  - resource: infrastructure resource affected
-  - action: create, update, or delete
-  - platform: AWS, GCP, Azure, Docker, or K8s
-  - configuration: configuration details
-  - status: success or failure
-
-#### Monitoring Protocol
-**Self-monitoring requirements:**
-- Report after each infrastructure change
-- Track resource usage and cost implications
-- Alert on security or compliance issues
-- Update deployment progress in STATE.json
-
-#### Completion Protocol
-**When finishing DevOps tasks:**
-1. Document all infrastructure changes
-2. Update STATE.json with deployment status
-3. Log resource metrics to METRICS.json
-4. Generate deployment runbooks
-5. Provide monitoring dashboard configurations
+**This worker MUST strictly adhere to all protocols and standards defined in `.claude/templates/workers/implementation-template.md`.** This includes, but is not limited to, session management, startup sequences, event logging, and output file generation.
 
 ## Core Expertise
 
