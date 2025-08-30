@@ -23,6 +23,7 @@ class CoordinationProtocol:
         self.sessions_dir = self.project_root / "Docs" / "hive-mind" / "sessions"
         self.current_session = None
         self.session_path = None
+        self._dynamic_registry = {}  # Track only spawned workers
         
     def _find_project_root(self) -> Path:
         """Find project root by looking for key markers"""
@@ -86,7 +87,7 @@ class CoordinationProtocol:
         (self.session_path / "workers" / "prompts").mkdir(exist_ok=True)
         (self.session_path / "workers" / "decisions").mkdir(exist_ok=True)
         
-        # Initialize STATE.json with complete template structure
+        # Initialize STATE.json with minimal structure - workers added dynamically
         state = self._generate_state_json(session_id, task_description, complexity_level)
         
         with open(self.session_path / "STATE.json", 'w') as f:
@@ -132,10 +133,14 @@ class CoordinationProtocol:
             )
             raise ValueError("No active session. Create session first.")
         
+        # Use relative path for session reference
+        relative_path = str(self.session_path.relative_to(self.project_root))
+        
         event = {
             "timestamp": datetime.now().astimezone().isoformat(),
-            "type": event_type,
+            "type": event_type,  # Standardized field name
             "agent": worker,
+            "session_path": relative_path,  # Relative path
             "details": details
         }
         
@@ -152,11 +157,15 @@ class CoordinationProtocol:
         if not self.session_path:
             return  # Silent fail for debug logs before session creation
         
+        # Use relative path for session reference
+        relative_path = str(self.session_path.relative_to(self.project_root))
+        
         debug_entry = {
             "timestamp": datetime.now().astimezone().isoformat(),
             "level": level,
             "agent": agent,
             "message": message,
+            "session_path": relative_path,  # Relative path
             "details": details
         }
         
@@ -722,7 +731,7 @@ class CoordinationProtocol:
         return dependencies.get(worker_type, [])
     
     def create_worker_prompts(self, worker_configs: List[Dict[str, Any]], session_id: str) -> List[str]:
-        """Create prompt files for all workers and log ONCE when complete"""
+        """Create LLM-enhanced prompt files for all workers with nuanced task descriptions"""
         if not self.session_path:
             self.log_debug(
                 "create_worker_prompts failed - no active session",
@@ -743,43 +752,50 @@ class CoordinationProtocol:
             worker_type = config["worker_type"]
             prompt_file = prompts_dir / f"{worker_type}.prompt"
             
-            prompt_content = f"""# Worker: {worker_type}
-# Session: {session_id}
-# Generated: {datetime.now().isoformat()}
+            # Generate nuanced task description based on worker type and context
+            enhanced_task = self._generate_enhanced_task_description(
+                config['task_description'], 
+                worker_type, 
+                config['specific_focus']
+            )
+            
+            prompt_content = f"""# {worker_type.title().replace('-', ' ')} Task Assignment
+**Session ID**: {session_id}
+**Worker**: {worker_type}
+**Generated**: {datetime.now().isoformat()}
 
-## Task
-{config['task_description']}
+## Primary Task
+{enhanced_task}
 
 ## Focus Areas
-{json.dumps(config['specific_focus'], indent=2)}
+{self._format_focus_areas(config['specific_focus'], worker_type)}
 
-## Context
-- Session ID: {session_id}
-- Priority: {config['priority']}
-- Timeout: {config['timeout']} seconds
-- Dependencies: {json.dumps(config.get('dependencies', []))}
+## Success Criteria
+{self._generate_success_criteria(worker_type, config['specific_focus'])}
 
-## Instructions
-1. Analyze the assigned domain thoroughly
-2. Generate detailed notes and findings FIRST
-3. Create structured JSON output based on your analysis
-4. Ensure all findings are evidence-based
-5. Log progress to session DEBUG.jsonl
-6. Save outputs to:
-   - workers/decisions/{worker_type}-analysis.md (detailed notes)
-   - workers/json/{worker_type}.json (structured data)
+## Dependencies
+{self._format_dependencies(config.get('dependencies', []))}
+
+## Timeout
+{config['timeout']} seconds with escalation if critical issues found
 
 ## Output Requirements
-- Detailed markdown analysis in decisions folder
-- Structured JSON in json folder
-- Progress events in EVENTS.jsonl (append only)
-- Debug information in DEBUG.jsonl (append only)
+- Detailed analysis in workers/decisions/{worker_type}-analysis.md
+- Structured findings in workers/json/{worker_type}.json
+- Event logging throughout analysis process
 """
             
             with open(prompt_file, 'w') as f:
                 f.write(prompt_content)
             
-            prompt_files.append(str(prompt_file))
+            # Track in dynamic registry
+            self._dynamic_registry[worker_type] = {
+                "status": "assigned",
+                "assigned_at": datetime.now().isoformat(),
+                "focus_areas": config['specific_focus']
+            }
+            
+            prompt_files.append(str(prompt_file.relative_to(self.project_root)))
         
         # Log ONCE after ALL prompts are created
         self.log_event(
@@ -811,6 +827,106 @@ class CoordinationProtocol:
         )
         
         return prompt_files
+    
+    def _generate_enhanced_task_description(self, base_task: str, worker_type: str, focus_areas: List[str]) -> str:
+        """Generate LLM-enhanced task description with worker-specific nuances"""
+        enhancements = {
+            "analyzer-worker": f"Conduct a comprehensive security and performance analysis for: {base_task}. "
+                             f"Focus on identifying vulnerabilities, performance bottlenecks, and code quality issues. "
+                             f"Provide evidence-based recommendations with specific file locations and code examples.",
+            
+            "architect-worker": f"Review the architectural design patterns and scalability considerations for: {base_task}. "
+                              f"Analyze the system's structural integrity, identify design anti-patterns, and recommend "
+                              f"architectural improvements that align with industry best practices.",
+            
+            "backend-worker": f"Examine the backend implementation, API design, and data layer architecture for: {base_task}. "
+                            f"Focus on service boundaries, data consistency, error handling patterns, and integration points. "
+                            f"Ensure compliance with microservice and domain-driven design principles.",
+            
+            "frontend-worker": f"Analyze the user interface implementation and client-side architecture for: {base_task}. "
+                             f"Review component design, state management, performance optimization, and accessibility. "
+                             f"Evaluate user experience patterns and responsive design implementation.",
+            
+            "test-worker": f"Assess the testing strategy, coverage gaps, and quality assurance processes for: {base_task}. "
+                         f"Identify missing test scenarios, evaluate test architecture, and recommend improvements "
+                         f"for comprehensive quality validation.",
+            
+            "devops-worker": f"Evaluate the infrastructure, deployment pipelines, and operational readiness for: {base_task}. "
+                           f"Review CI/CD processes, monitoring capabilities, scalability infrastructure, and "
+                           f"production deployment strategies."
+        }
+        
+        return enhancements.get(worker_type, base_task)
+    
+    def _format_focus_areas(self, focus_areas: List[str], worker_type: str) -> str:
+        """Format focus areas with worker-specific context"""
+        if not focus_areas:
+            return "- General analysis and recommendations"
+        
+        formatted = []
+        for area in focus_areas:
+            if worker_type == "analyzer-worker" and area == "security":
+                formatted.append("- **Security vulnerability assessment**: OWASP compliance, authentication flaws, data protection")
+            elif worker_type == "analyzer-worker" and area == "performance":
+                formatted.append("- **Performance bottleneck identification**: Database queries, API response times, memory usage")
+            elif worker_type == "architect-worker" and area == "scalability":
+                formatted.append("- **Scalability pattern analysis**: Load balancing, caching strategies, horizontal scaling")
+            elif worker_type == "backend-worker" and area == "api":
+                formatted.append("- **API design and implementation**: RESTful principles, error handling, rate limiting")
+            else:
+                formatted.append(f"- **{area.replace('_', ' ').title()}**: Domain-specific analysis and recommendations")
+        
+        return '\n'.join(formatted)
+    
+    def _generate_success_criteria(self, worker_type: str, focus_areas: List[str]) -> str:
+        """Generate specific success criteria for each worker type"""
+        criteria_map = {
+            "analyzer-worker": [
+                "Complete security audit with vulnerability classifications",
+                "Performance analysis with specific bottlenecks identified",
+                "Code quality metrics with improvement recommendations",
+                "Detailed evidence for all findings",
+                "Prioritized action items with impact assessment"
+            ],
+            "architect-worker": [
+                "Comprehensive architectural assessment",
+                "Design pattern evaluation and recommendations", 
+                "Scalability analysis with growth projections",
+                "Integration point documentation",
+                "Technical debt identification and prioritization"
+            ],
+            "backend-worker": [
+                "API design and implementation review",
+                "Database schema and query optimization analysis",
+                "Service boundary and integration assessment", 
+                "Error handling and resilience evaluation",
+                "Performance and security recommendations"
+            ],
+            "test-worker": [
+                "Test coverage analysis with gap identification",
+                "Testing strategy evaluation and recommendations",
+                "Quality assurance process assessment",
+                "Test automation opportunities",
+                "Risk-based testing prioritization"
+            ],
+            "devops-worker": [
+                "Infrastructure assessment and optimization recommendations",
+                "CI/CD pipeline evaluation and improvements",
+                "Monitoring and observability gap analysis",
+                "Deployment strategy and rollback procedures",
+                "Security and compliance in operations"
+            ]
+        }
+        
+        criteria = criteria_map.get(worker_type, ["Complete assigned analysis", "Provide actionable recommendations"])
+        return '\n'.join(f"- {criterion}" for criterion in criteria)
+    
+    def _format_dependencies(self, dependencies: List[str]) -> str:
+        """Format worker dependencies with context"""
+        if not dependencies:
+            return "None - independent analysis task"
+        
+        return f"This task depends on: {', '.join(dependencies)}"
     
     def generate_spawn_instructions(self, worker_configs: List[Dict[str, Any]], prompt_files: List[str], 
                                    session_id: str, task_description: str, complexity_level: int) -> Dict[str, Any]:
@@ -1428,121 +1544,32 @@ Session initialization and worker planning phase
         return session_md
     
     def _generate_state_json(self, session_id: str, task_description: str, complexity_level: int) -> Dict[str, Any]:
-        """Generate complete STATE.json from template"""
+        """Generate minimal STATE.json - workers will be added dynamically as they are spawned"""
         timestamp = datetime.now().isoformat()
         
-        # Build complete state structure following template
+        # Build minimal state structure - workers populated dynamically
         state = {
             "session_id": session_id,
-            "task": task_description,  # Changed from task_description to task
-            "status": "research_phase",  # Start with research phase
+            "task": task_description,
+            "status": "active",
             "created_at": timestamp,
             "updated_at": timestamp,
             "current_phase": {
-                "name": "research_phase",
+                "name": "initialization",
                 "started_at": timestamp,
                 "progress_percentage": 0,
-                "next_action": "Queen: Delegate Context7 research to appropriate workers"
+                "next_action": "Queen: Plan and spawn appropriate workers"
             },
-            "research_complete": False,
-            "research_synthesis_file": "RESEARCH_SYNTHESIS.md",
-            "context": {
-                "tokens_used": 0,
-                "estimated_remaining": 100000,
-                "can_resume": True,
-                "resume_point": "Session initialization complete, ready for research delegation",
-                "resume_count": 0
-            },
-            "workers": {
-                "researcher-worker": {
-                    "status": "pending",
-                    "task": "Multi-domain research coordination",
-                    "research_domains": [],
-                    "completed_domains": []
-                },
-                "backend-worker": {
-                    "status": "pending",
-                    "task": "Backend-specific research and implementation",
-                    "research_domains": [],
-                    "current_task": None
-                },
-                "frontend-worker": {
-                    "status": "pending",
-                    "task": "Frontend-specific research and implementation",
-                    "research_domains": [],
-                    "current_task": None
-                },
-                "service-architect": {
-                    "status": "pending",
-                    "task": "Architecture research and system design",
-                    "research_domains": [],
-                    "current_task": None
-                },
-                "analyzer-worker": {
-                    "status": "pending",
-                    "task": "Security and performance research",
-                    "research_domains": [],
-                    "current_task": None
-                },
-                "test-worker": {
-                    "status": "pending",
-                    "task": "Testing strategy research and implementation",
-                    "research_domains": [],
-                    "current_task": None
-                },
-                "devops-worker": {
-                    "status": "pending",
-                    "task": "Infrastructure research and deployment",
-                    "research_domains": [],
-                    "current_task": None
-                },
-                "designer-worker": {
-                    "status": "pending",
-                    "task": "UX research and design implementation",
-                    "research_domains": [],
-                    "current_task": None
+            "workers": {},  # Populated dynamically as workers are spawned
+            "progress": {
+                "overall": 0,
+                "phases": {
+                    "analysis": 0,
+                    "recommendations": 0,
+                    "documentation": 0
                 }
             },
-            "research_progress": {
-                "domains_identified": [],
-                "domains_assigned": [],
-                "domains_completed": [],
-                "synthesis_status": "pending",
-                "conflicts_identified": [],
-                "conflicts_resolved": []
-            },
-            "implementation_progress": {
-                "tasks_created": 0,
-                "tasks_completed": 0,
-                "workers_active": 0,
-                "blocking_issues": 0
-            },
-            "quality_gates": {
-                "research_phase_complete": False,
-                "implementation_plan_created": False,
-                "security_review_complete": False,
-                "performance_validation_complete": False,
-                "pattern_library_updated": False
-            },
-            "metrics": {
-                "session_duration_hours": 0,
-                "research_duration_minutes": 0,
-                "implementation_duration_hours": 0,
-                "worker_coordination_events": 1,
-                "successful_task_completions": 0,
-                "pattern_contributions": 0
-            },
-            "session_metadata": {
-                "hive_mind_version": "1.0",
-                "research_methodology": "context7_first",
-                "coordination_protocol": "file_based",
-                "quality_assurance": "multi_gate",
-                "resumption_capability": "full_state",
-                "complexity_level": complexity_level
-            },
-            # Additional fields for backward compatibility
             "complexity_level": complexity_level,
-            "worker_configs": {},
             "coordination_status": {
                 "phase": "initialization",
                 "workers_spawned": [],
@@ -1554,6 +1581,80 @@ Session initialization and worker planning phase
         }
         
         return state
+    
+    def track_spawned_worker(self, worker_type: str, config: Dict[str, Any]) -> None:
+        """Track a worker that has been actually spawned"""
+        if not self.session_path:
+            raise ValueError("No active session")
+            
+        # Add to dynamic registry
+        self._dynamic_registry[worker_type] = {
+            "status": "spawned",
+            "spawned_at": datetime.now().isoformat(),
+            "focus_areas": config.get("specific_focus", []),
+            "task_description": config.get("task_description", ""),
+            "priority": config.get("priority", 2)
+        }
+        
+        # Update STATE.json with only spawned workers
+        self.update_state({
+            "workers": dict(self._dynamic_registry),
+            "coordination_status": {
+                "phase": "execution",
+                "workers_spawned": list(self._dynamic_registry.keys()),
+                "workers_completed": [w for w, data in self._dynamic_registry.items() 
+                                    if data.get("status") == "completed"],
+                "synthesis_ready": False
+            }
+        })
+        
+        # Log worker spawn
+        self.log_event(
+            event_type="worker_spawned",
+            details={
+                "worker_type": worker_type,
+                "focus_areas": config.get("specific_focus", []),
+                "task_description": config.get("task_description", "")[:100] + "..." if len(config.get("task_description", "")) > 100 else config.get("task_description", "")
+            }
+        )
+    
+    def create_synthesis_in_original_session(self, synthesis_content: str) -> str:
+        """Create RESEARCH_SYNTHESIS.md in the original session folder (not new session)"""
+        if not self.session_path:
+            raise ValueError("No active session")
+        
+        synthesis_file = self.session_path / "RESEARCH_SYNTHESIS.md"
+        
+        with open(synthesis_file, 'w') as f:
+            f.write(synthesis_content)
+        
+        # Update state to mark synthesis complete
+        self.update_state({
+            "coordination_status": {
+                "phase": "synthesis_complete",
+                "workers_spawned": list(self._dynamic_registry.keys()),
+                "workers_completed": list(self._dynamic_registry.keys()),
+                "synthesis_ready": True
+            },
+            "current_phase": {
+                "name": "synthesis_complete",
+                "started_at": datetime.now().isoformat(),
+                "progress_percentage": 100,
+                "next_action": "Session complete - synthesis available"
+            }
+        })
+        
+        # Log synthesis creation
+        self.log_event(
+            event_type="synthesis_created",
+            details={
+                "synthesis_file": str(synthesis_file.relative_to(self.project_root)),
+                "content_length": len(synthesis_content),
+                "workers_synthesized": list(self._dynamic_registry.keys())
+            }
+        )
+        
+        return str(synthesis_file.relative_to(self.project_root))
 
 
 # Helper class for workers to use
@@ -1567,11 +1668,14 @@ class WorkerLogger:
     
     def log_event(self, event_type: str, details: Dict[str, Any]) -> None:
         """Append event to EVENTS.jsonl - NEVER overwrite, always append"""
+        # Use relative path for consistency
+        relative_path = str(self.session_path.relative_to(Path.cwd()))
+        
         event = {
             "timestamp": datetime.now().isoformat(),
-            "event_type": event_type,
-            "worker": self.worker_name,
-            "session_id": self.session_id,
+            "type": event_type,  # Standardized field name
+            "agent": self.worker_name,  # Standardized field name
+            "session_path": relative_path,
             "details": details
         }
         
@@ -1589,11 +1693,15 @@ class WorkerLogger:
     
     def log_debug(self, message: str, level: str = "INFO", details: Any = None) -> None:
         """Append debug log to DEBUG.jsonl - NEVER overwrite, always append"""
+        # Use relative path for consistency
+        relative_path = str(self.session_path.relative_to(Path.cwd()))
+        
         debug_entry = {
             "timestamp": datetime.now().isoformat(),
             "level": level,
             "agent": self.worker_name,
             "message": message,
+            "session_path": relative_path,
             "details": details
         }
         
