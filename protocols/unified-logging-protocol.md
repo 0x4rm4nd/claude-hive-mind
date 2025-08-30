@@ -26,13 +26,14 @@
 ### Function: `log_event(session_id, event_type, agent_name, details, status=None)`
 - **Purpose**: ATOMIC APPEND to EVENTS.jsonl - Thread-safe implementation
 - **Parameters**:
-  - `session_id`: Active session identifier
-  - `event_type`: Type of event (see Event Types Reference)
+  - `session_id`: Active session identifier (used for file path only, NOT included in event)
+  - `event_type`: Type of event (see Event Types Reference) - standardized field name
   - `agent_name`: Name of the agent logging the event
   - `details`: Event details (max 500 chars)
   - `status`: Optional status field
 - **Returns**: True on successful logging
 - **Implementation**: Uses Bash echo for atomic append operations
+- **CRITICAL**: session_id is ONLY used to determine file path, never included in the event object
 
 ## 🐛 DEBUG.jsonl Logging Function (Universal)
 
@@ -73,15 +74,15 @@ log_event(session_id, "worker_configured", WORKER_TYPE, "Worker configuration co
 log_debug(session_id, "INFO", WORKER_TYPE, "Starting task execution")
 
 # Step 5: Begin Analysis
-log_event(session_id, "worker_analysis_started", WORKER_TYPE, "Beginning domain analysis")
+log_event(session_id, "analysis_started", WORKER_TYPE, "Beginning domain analysis")
 log_debug(session_id, "INFO", WORKER_TYPE, f"Complexity level: {worker_config.get('complexity_level', 'unknown')}")
 ```
 
 ## ✅ Mandatory Worker Completion Sequence
 
 ```python
-# Step 1: Save Notes
-notes_path = f"Docs/hive-mind/sessions/{session_id}/workers/{WORKER_TYPE.replace('-worker','')}-notes.md"
+# Step 1: Save Notes (Research Phase)
+notes_path = f"Docs/hive-mind/sessions/{session_id}/workers/{WORKER_TYPE.replace('-worker','')}_notes.md"
 Write(notes_path, detailed_notes)
 log_event(session_id, "worker_notes_created", WORKER_TYPE, f"Notes saved to {notes_path}")
 log_debug(session_id, "SUCCESS", WORKER_TYPE, "Notes file created")
@@ -94,7 +95,7 @@ json_response = {
     "findings": [...],
     "recommendations": [...]
 }
-json_path = f"Docs/hive-mind/sessions/{session_id}/workers/json/{WORKER_TYPE.replace('-worker','')}-response.json"
+json_path = f"Docs/hive-mind/sessions/{session_id}/workers/json/{WORKER_TYPE.replace('-worker','')}_response.json"
 Write(json_path, json.dumps(json_response, indent=2))
 log_event(session_id, "worker_json_provided", WORKER_TYPE, "JSON response saved")
 log_debug(session_id, "SUCCESS", WORKER_TYPE, "JSON response persisted")
@@ -107,9 +108,9 @@ log_debug(session_id, "SUCCESS", WORKER_TYPE, f"Worker completed successfully")
 ## 📝 Event Types Reference
 
 ### Mandatory Lifecycle Events (ALL WORKERS)
-- `worker_spawned` - Worker activated and joined session
+- `worker_spawned` - Worker activated and joined session (FIRST EVENT - REQUIRED)
 - `worker_configured` - Configuration loaded and validated
-- `worker_started` - Analysis/task execution begun
+- `analysis_started` - Analysis/task execution begun (no worker prefix)
 - `worker_progress` - Intermediate progress update (optional)
 - `worker_completed` - Task finished successfully
 - `worker_failed` - Task failed with error
@@ -118,6 +119,7 @@ log_debug(session_id, "SUCCESS", WORKER_TYPE, f"Worker completed successfully")
 - `queen_spawned` - Queen orchestrator activated (NOT queen_reactivated_for_synthesis)
 - `session_created` - Session structure initialized
 - `workers_planned` - Worker selection completed
+- `tasks_assigned` - All worker tasks assigned (single consolidated event)
 - `workers_deployed` - Worker prompts created
 - `synthesis_started` - Beginning result synthesis
 - `synthesis_completed` - Final synthesis complete

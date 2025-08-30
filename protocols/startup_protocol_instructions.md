@@ -28,7 +28,6 @@ startup = StartupProtocol(
 config = startup.initialize()
 
 # Config contains:
-# - session_path: Path to session directory
 # - context: Loaded context relevant to worker
 # - protocols: Available protocol instances
 # - state: Current session state
@@ -62,7 +61,6 @@ else:
 {
     "session_id": "2024-03-15-14-30-auth-implementation",
     "worker_type": "backend-worker",
-    "session_path": "Docs/hive-mind/sessions/2024-03-15-14-30-auth-implementation",
     "validation": {
         "passed": True,
         "session_exists": True,
@@ -92,12 +90,13 @@ else:
 
 ### Initialization Sequence
 1. **Session Validation**: Verify session exists and is active
-2. **Worker Authorization**: Confirm worker is assigned to session
-3. **Context Loading**: Load relevant context based on worker tags
-4. **Protocol Configuration**: Initialize required protocols
-5. **State Synchronization**: Load current session state
-6. **Event Registration**: Register worker in EVENTS.jsonl
-7. **Health Check**: Verify all systems operational
+2. **Worker Spawn Event**: Log `worker_spawned` event IMMEDIATELY (MANDATORY FIRST EVENT)
+3. **Worker Authorization**: Confirm worker is assigned to session
+4. **Context Loading**: Load relevant context based on worker tags
+5. **Protocol Configuration**: Initialize required protocols
+6. **State Synchronization**: Load current session state
+7. **Event Registration**: Log `worker_configured` event after setup
+8. **Health Check**: Verify all systems operational
 
 ### Context Loading Strategy
 ```python

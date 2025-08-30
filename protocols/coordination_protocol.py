@@ -101,10 +101,10 @@ class CoordinationProtocol:
         
         # Initialize DEBUG.jsonl with first entry
         debug_entry = {
-            "timestamp": datetime.now().astimezone().isoformat(),
-            "type": "debug_initialized",
+            "timestamp": datetime.utcnow().strftime("%Y-%m-%dT%H:%M:%SZ"),
+            "level": "INFO",  # Standardized level field
             "agent": "queen-orchestrator",
-            "details": "DEBUG.jsonl file created for session debugging"
+            "message": "DEBUG.jsonl file created for session debugging"
         }
         with open(self.session_path / "DEBUG.jsonl", 'w') as f:
             f.write(json.dumps(debug_entry) + '\n')
@@ -127,20 +127,15 @@ class CoordinationProtocol:
                 details={
                     "event_type": event_type,
                     "worker": worker,
-                    "session_path": str(self.session_path) if self.session_path else None,
                     "error": "No active session. Create session first."
                 }
             )
             raise ValueError("No active session. Create session first.")
         
-        # Use relative path for session reference
-        relative_path = str(self.session_path.relative_to(self.project_root))
-        
         event = {
-            "timestamp": datetime.now().astimezone().isoformat(),
+            "timestamp": datetime.utcnow().strftime("%Y-%m-%dT%H:%M:%SZ"),
             "type": event_type,  # Standardized field name
             "agent": worker,
-            "session_path": relative_path,  # Relative path
             "details": details
         }
         
@@ -157,17 +152,15 @@ class CoordinationProtocol:
         if not self.session_path:
             return  # Silent fail for debug logs before session creation
         
-        # Use relative path for session reference
-        relative_path = str(self.session_path.relative_to(self.project_root))
-        
         debug_entry = {
-            "timestamp": datetime.now().astimezone().isoformat(),
+            "timestamp": datetime.utcnow().strftime("%Y-%m-%dT%H:%M:%SZ"),
             "level": level,
             "agent": agent,
-            "message": message,
-            "session_path": relative_path,  # Relative path
-            "details": details
+            "message": message
         }
+        
+        if details:
+            debug_entry["details"] = details
         
         # CRITICAL: Append mode to prevent overwriting + ensure file exists
         debug_file = self.session_path / "DEBUG.jsonl"
@@ -313,13 +306,49 @@ class CoordinationProtocol:
             }
         )
         
-        # Create worker configurations
+        # Create worker configurations with comprehensive details
         worker_configs = []
         all_assignments = {}  # Track all assignments for consolidated logging
+        worker_configurations = {}  # For STATE.json
         
         for worker in workers_needed:
             config = self._create_worker_config(worker, task_description, complexity_level)
             worker_configs.append(config)
+            
+            # Create comprehensive worker configuration for STATE.json
+            worker_configurations[worker] = {
+                "tag_access": self._get_worker_tag_access(worker),
+                "escalation_timeout": config["timeout"],
+                "escalation_chain": ["queen-orchestrator"],
+                "complexity_level": complexity_level,
+                "task_description": config["task_description"],
+                "specific_focus": ', '.join(config.get("specific_focus", [])),
+                "priority": config["priority"],
+                "dependencies": config.get("dependencies", []),
+                "protocols": self._get_worker_protocols(worker),
+                "status": "planned",
+                "spawned_at": None,
+                "last_update": None,
+                "last_heartbeat": None,
+                "outputs": {
+                    "notes": None,
+                    "json": None,
+                    "artifacts": []
+                },
+                "metrics": {
+                    "events_logged": 0,
+                    "debug_entries": 0,
+                    "files_created": 0,
+                    "tokens_estimated": 0,
+                    "duration_seconds": 0
+                },
+                "protocol_compliance": {
+                    "startup_logged": False,
+                    "configuration_logged": False,
+                    "completion_logged": False,
+                    "debug_logging_active": False
+                }
+            }
             
             # Collect assignment details for consolidated logging
             all_assignments[worker] = {
@@ -330,9 +359,52 @@ class CoordinationProtocol:
                 "dependencies": config.get("dependencies", [])
             }
         
+        # Update STATE.json with comprehensive worker configurations
+        self.update_state({
+            "worker_configurations": worker_configurations,
+            "coordination_status": {
+                "phase": "worker_analysis",
+                "workers_planned": workers_needed,
+                "workers_spawned": [],
+                "workers_active": [],
+                "workers_completed": [],
+                "workers_pending": workers_needed,
+                "workers_failed": [],
+                "synthesis_ready": False,
+                "blocking_issues": []
+            },
+            "queen_decisions": {
+                "complexity_assessment": {
+                    "level": complexity_level,
+                    "factors": task_analysis.get('complexity_factors', []),
+                    "rationale": task_analysis.get('rationale', '')
+                },
+                "worker_selection_rationale": task_analysis.get('rationale', ''),
+                "coordination_strategy": "parallel" if complexity_level <= 2 else "phased",
+                "execution_plan": {
+                    "phases": self._generate_execution_phases(workers_needed, complexity_level)
+                },
+                "escalation_triggers": self._get_escalation_triggers(complexity_level)
+            },
+            "research_progress": {
+                "domains_identified": task_analysis.get('domains', []),
+                "domains_completed": [],
+                "synthesis_status": "pending",
+                "key_findings": [],
+                "synthesis_file": None
+            },
+            "quality_gates": {
+                "worker_selection_validated": True,
+                "all_workers_spawned": False,
+                "protocol_compliance_verified": False,
+                "outputs_validated": False,
+                "synthesis_complete": False
+            }
+        })
+        
         # Log ALL task assignments in a single consolidated event
         self.log_event(
-            event_type="all_tasks_assigned",
+            event_type="tasks_assigned",
             details={
                 "total_workers": len(workers_needed),
                 "workers": workers_needed,
@@ -730,6 +802,121 @@ class CoordinationProtocol:
         }
         return dependencies.get(worker_type, [])
     
+    def _get_worker_tag_access(self, worker_type: str) -> List[str]:
+        """Get memory bank tag access for worker type"""
+        tag_access_map = {
+            "analyzer-worker": ["security", "performance", "quality"],
+            "architect-worker": ["architecture", "patterns", "design"],
+            "backend-worker": ["backend", "database", "api"],
+            "frontend-worker": ["frontend", "ui", "ux"],
+            "test-worker": ["testing", "qa", "validation"],
+            "devops-worker": ["infrastructure", "deployment", "monitoring"],
+            "researcher-worker": ["research", "patterns", "best-practices"],
+            "designer-worker": ["design", "ux", "ui"]
+        }
+        return tag_access_map.get(worker_type, ["general"])
+    
+    def _get_worker_protocols(self, worker_type: str) -> List[str]:
+        """Get required protocols for worker type"""
+        # All workers follow these base protocols
+        base_protocols = [
+            "worker-startup-protocol",
+            "unified-logging-protocol"
+        ]
+        
+        # Worker-specific additional protocols
+        specific_protocols = {
+            "analyzer-worker": ["analysis-protocol", "security-protocol"],
+            "architect-worker": ["architecture-protocol", "design-protocol"],
+            "backend-worker": ["implementation-protocol", "api-protocol"],
+            "frontend-worker": ["implementation-protocol", "ui-protocol"],
+            "test-worker": ["testing-protocol", "validation-protocol"],
+            "devops-worker": ["deployment-protocol", "infrastructure-protocol"],
+            "researcher-worker": ["research-protocol", "context-protocol"]
+        }
+        
+        return base_protocols + specific_protocols.get(worker_type, [])
+    
+    def _generate_execution_phases(self, workers: List[str], complexity_level: int) -> List[Dict[str, Any]]:
+        """Generate execution phases based on worker dependencies and complexity"""
+        phases = []
+        
+        if complexity_level == 1:
+            # Simple single phase execution
+            phases.append({
+                "phase": "execution",
+                "workers": workers,
+                "strategy": "parallel",
+                "timeout": 900
+            })
+        elif complexity_level == 2:
+            # Two-phase execution
+            phases.append({
+                "phase": "analysis",
+                "workers": [w for w in workers if w in ["analyzer-worker", "architect-worker"]],
+                "strategy": "parallel",
+                "timeout": 600
+            })
+            phases.append({
+                "phase": "implementation",
+                "workers": [w for w in workers if w not in ["analyzer-worker", "architect-worker"]],
+                "strategy": "parallel",
+                "timeout": 600
+            })
+        else:
+            # Multi-phase execution for complex tasks
+            phases.append({
+                "phase": "planning",
+                "workers": [w for w in workers if w in ["architect-worker", "researcher-worker"]],
+                "strategy": "parallel",
+                "timeout": 300
+            })
+            phases.append({
+                "phase": "analysis",
+                "workers": [w for w in workers if w == "analyzer-worker"],
+                "strategy": "parallel",
+                "timeout": 300
+            })
+            phases.append({
+                "phase": "implementation",
+                "workers": [w for w in workers if w in ["backend-worker", "frontend-worker"]],
+                "strategy": "parallel",
+                "timeout": 300
+            })
+            phases.append({
+                "phase": "validation",
+                "workers": [w for w in workers if w in ["test-worker", "devops-worker"]],
+                "strategy": "sequential",
+                "timeout": 300
+            })
+        
+        return phases
+    
+    def _get_escalation_triggers(self, complexity_level: int) -> List[str]:
+        """Get escalation triggers based on complexity level"""
+        base_triggers = [
+            "worker_timeout",
+            "critical_error",
+            "resource_limit_exceeded"
+        ]
+        
+        if complexity_level >= 3:
+            base_triggers.extend([
+                "cross_worker_conflict",
+                "blocking_dependency",
+                "security_vulnerability_found",
+                "performance_threshold_exceeded"
+            ])
+        
+        if complexity_level == 4:
+            base_triggers.extend([
+                "architecture_violation",
+                "compliance_issue",
+                "data_integrity_concern"
+            ])
+        
+        return base_triggers
+    
     def create_worker_prompts(self, worker_configs: List[Dict[str, Any]], session_id: str) -> List[str]:
         """Create LLM-enhanced prompt files for all workers with nuanced task descriptions"""
         if not self.session_path:
@@ -762,7 +949,7 @@ class CoordinationProtocol:
             prompt_content = f"""# {worker_type.title().replace('-', ' ')} Task Assignment
 **Session ID**: {session_id}
 **Worker**: {worker_type}
-**Generated**: {datetime.now().isoformat()}
+**Generated**: {datetime.utcnow().strftime('%Y-%m-%dT%H:%M:%SZ')}
 
 ## Primary Task
 {enhanced_task}
@@ -791,7 +978,7 @@ class CoordinationProtocol:
             # Track in dynamic registry
             self._dynamic_registry[worker_type] = {
                 "status": "assigned",
-                "assigned_at": datetime.now().isoformat(),
+                "assigned_at": datetime.utcnow().strftime('%Y-%m-%dT%H:%M:%SZ'),
                 "focus_areas": config['specific_focus']
             }
             
@@ -976,7 +1163,7 @@ class CoordinationProtocol:
         
         # Ensure required fields
         if "timestamp" not in task_item:
-            task_item["timestamp"] = datetime.now().isoformat()
+            task_item["timestamp"] = datetime.utcnow().strftime('%Y-%m-%dT%H:%M:%SZ')
         if "id" not in task_item:
             task_item["id"] = f"task-{datetime.now().strftime('%Y%m%d%H%M%S')}"
         
@@ -1035,8 +1222,19 @@ class CoordinationProtocol:
         
         return tasks
     
+    def _deep_merge(self, target: Dict[str, Any], source: Dict[str, Any]) -> Dict[str, Any]:
+        """Deep merge source dictionary into target dictionary"""
+        for key, value in source.items():
+            if key in target and isinstance(target[key], dict) and isinstance(value, dict):
+                # Recursively merge nested dictionaries
+                target[key] = self._deep_merge(target[key], value)
+            else:
+                # Replace or add the value
+                target[key] = value
+        return target
+    
     def update_state(self, updates: Dict[str, Any]) -> None:
-        """Atomically update STATE.json"""
+        """Atomically update STATE.json with deep merge"""
         if not self.session_path:
             self.log_debug(
                 "update_state failed - no active session",
@@ -1055,10 +1253,10 @@ class CoordinationProtocol:
         with open(state_file, 'r') as f:
             state = json.load(f)
         
-        # Apply updates
-        state.update(updates)
+        # Apply updates with deep merge for nested dictionaries
+        state = self._deep_merge(state, updates)
         state["update_count"] = state.get("update_count", 0) + 1
-        state["last_updated"] = datetime.now().isoformat()
+        state["last_updated"] = datetime.utcnow().strftime('%Y-%m-%dT%H:%M:%SZ')
         
         # Write atomically
         temp_file = state_file.with_suffix('.tmp')
@@ -1144,7 +1342,7 @@ class CoordinationProtocol:
     
     def _generate_session_markdown(self, session_id: str, task_description: str, complexity_level: int) -> str:
         """Generate rich SESSION.md from template"""
-        timestamp = datetime.now().isoformat()
+        timestamp = datetime.utcnow().strftime('%Y-%m-%dT%H:%M:%SZ')
         
         # Determine task type from description
         task_lower = task_description.lower()
@@ -1544,23 +1742,116 @@ Session initialization and worker planning phase
         return session_md
     
     def _generate_state_json(self, session_id: str, task_description: str, complexity_level: int) -> Dict[str, Any]:
-        """Generate minimal STATE.json - workers will be added dynamically as they are spawned"""
-        timestamp = datetime.now().isoformat()
+        """Generate comprehensive STATE.json with proper structure for worker configurations"""
+        timestamp = datetime.utcnow().strftime('%Y-%m-%dT%H:%M:%SZ')
         
-        # Build minimal state structure - workers populated dynamically
+        # Analyze task to determine service and type
+        task_lower = task_description.lower()
+        
+        # Determine target service
+        target_service = "general"
+        if 'crypto-data' in task_lower or 'crypto' in task_lower:
+            target_service = "crypto-data"
+        elif 'api' in task_lower:
+            target_service = "api"
+        elif 'frontend' in task_lower or 'ui' in task_lower:
+            target_service = "frontend"
+        elif 'sara' in task_lower:
+            target_service = "sara"
+        
+        # Determine analysis type
+        analysis_type = "general_assessment"
+        if 'architecture' in task_lower:
+            analysis_type = "architecture_assessment"
+        elif 'security' in task_lower:
+            analysis_type = "security_audit"
+        elif 'performance' in task_lower:
+            analysis_type = "performance_analysis"
+        elif 'implement' in task_lower or 'build' in task_lower:
+            analysis_type = "implementation"
+        elif 'fix' in task_lower or 'bug' in task_lower:
+            analysis_type = "bug_fix"
+        
+        # Build comprehensive state structure
         state = {
             "session_id": session_id,
+            "created_at": timestamp,
+            "last_updated": timestamp,
+            "coordinator": "queen-orchestrator",
+            "target_service": target_service,
+            "analysis_type": analysis_type,
             "task": task_description,
             "status": "active",
-            "created_at": timestamp,
-            "updated_at": timestamp,
+            "complexity_level": complexity_level,
             "current_phase": {
                 "name": "initialization",
                 "started_at": timestamp,
                 "progress_percentage": 0,
                 "next_action": "Queen: Plan and spawn appropriate workers"
             },
-            "workers": {},  # Populated dynamically as workers are spawned
+            "coordination_status": {
+                "phase": "worker_planning",
+                "workers_planned": [],
+                "workers_spawned": [],
+                "workers_active": [],
+                "workers_completed": [],
+                "workers_pending": [],
+                "workers_failed": [],
+                "synthesis_ready": False,
+                "blocking_issues": []
+            },
+            "worker_configurations": {},  # Will be populated when workers are planned
+            "worker_states": {},  # Runtime state tracking
+            "queen_decisions": {
+                "complexity_assessment": {
+                    "level": complexity_level,
+                    "factors": [],
+                    "rationale": ""
+                },
+                "worker_selection_rationale": "",
+                "coordination_strategy": "parallel" if complexity_level <= 2 else "phased",
+                "execution_plan": {
+                    "phases": []
+                },
+                "escalation_triggers": []
+            },
+            "research_progress": {
+                "domains_identified": [],
+                "domains_completed": [],
+                "synthesis_status": "pending",
+                "key_findings": [],
+                "synthesis_file": None
+            },
+            "implementation_progress": {
+                "tasks_created": 0,
+                "tasks_assigned": 0,
+                "tasks_in_progress": 0,
+                "tasks_completed": 0,
+                "tasks_blocked": 0,
+                "blocking_issues": []
+            },
+            "quality_gates": {
+                "worker_selection_validated": False,
+                "all_workers_spawned": False,
+                "protocol_compliance_verified": False,
+                "outputs_validated": False,
+                "synthesis_complete": False
+            },
+            "metrics": {
+                "session_duration_seconds": 0,
+                "total_events_logged": 0,
+                "total_debug_entries": 0,
+                "worker_efficiency": {},
+                "token_usage_estimated": 0,
+                "coordination_overhead_seconds": 0
+            },
+            "session_metadata": {
+                "hive_mind_version": "2.0",
+                "protocol_version": "2.0",
+                "environment": "production",
+                "resumption_capability": "full",
+                "auto_recovery_enabled": True
+            },
             "progress": {
                 "overall": 0,
                 "phases": {
@@ -1569,44 +1860,62 @@ Session initialization and worker planning phase
                     "documentation": 0
                 }
             },
-            "complexity_level": complexity_level,
-            "coordination_status": {
-                "phase": "initialization",
-                "workers_spawned": [],
-                "workers_completed": [],
-                "synthesis_ready": False
-            },
-            "update_count": 0,
-            "last_updated": timestamp
+            "update_count": 0
         }
         
         return state
     
     def track_spawned_worker(self, worker_type: str, config: Dict[str, Any]) -> None:
-        """Track a worker that has been actually spawned"""
+        """Track a worker that has been actually spawned and update STATE.json"""
         if not self.session_path:
             raise ValueError("No active session")
-            
+        
+        timestamp = datetime.utcnow().strftime('%Y-%m-%dT%H:%M:%SZ')
+        
         # Add to dynamic registry
         self._dynamic_registry[worker_type] = {
             "status": "spawned",
-            "spawned_at": datetime.now().isoformat(),
+            "spawned_at": timestamp,
             "focus_areas": config.get("specific_focus", []),
             "task_description": config.get("task_description", ""),
             "priority": config.get("priority", 2)
         }
         
-        # Update STATE.json with only spawned workers
-        self.update_state({
-            "workers": dict(self._dynamic_registry),
-            "coordination_status": {
-                "phase": "execution",
-                "workers_spawned": list(self._dynamic_registry.keys()),
-                "workers_completed": [w for w, data in self._dynamic_registry.items() 
-                                    if data.get("status") == "completed"],
-                "synthesis_ready": False
-            }
+        # Read current state to update worker configurations
+        state_file = self.session_path / "STATE.json"
+        with open(state_file, 'r') as f:
+            state = json.load(f)
+        
+        # Update the specific worker configuration status
+        if "worker_configurations" in state and worker_type in state["worker_configurations"]:
+            state["worker_configurations"][worker_type]["status"] = "spawned"
+            state["worker_configurations"][worker_type]["spawned_at"] = timestamp
+            state["worker_configurations"][worker_type]["last_update"] = timestamp
+        
+        # Update coordination status
+        workers_spawned = list(self._dynamic_registry.keys())
+        workers_planned = state.get("coordination_status", {}).get("workers_planned", [])
+        workers_pending = [w for w in workers_planned if w not in workers_spawned]
+        workers_active = [w for w in workers_spawned if self._dynamic_registry[w].get("status") == "spawned"]
+        workers_completed = [w for w, data in self._dynamic_registry.items() if data.get("status") == "completed"]
+        
+        state["coordination_status"].update({
+            "phase": "worker_execution",
+            "workers_spawned": workers_spawned,
+            "workers_active": workers_active,
+            "workers_pending": workers_pending,
+            "workers_completed": workers_completed,
+            "synthesis_ready": False
         })
+        
+        state["last_updated"] = timestamp
+        state["update_count"] = state.get("update_count", 0) + 1
+        
+        # Write atomically
+        temp_file = state_file.with_suffix('.tmp')
+        with open(temp_file, 'w') as f:
+            json.dump(state, f, indent=2)
+        temp_file.replace(state_file)
         
         # Log worker spawn
         self.log_event(
@@ -1638,7 +1947,7 @@ Session initialization and worker planning phase
             },
             "current_phase": {
                 "name": "synthesis_complete",
-                "started_at": datetime.now().isoformat(),
+                "started_at": datetime.utcnow().strftime('%Y-%m-%dT%H:%M:%SZ'),
                 "progress_percentage": 100,
                 "next_action": "Session complete - synthesis available"
             }
@@ -1668,14 +1977,10 @@ class WorkerLogger:
     
     def log_event(self, event_type: str, details: Dict[str, Any]) -> None:
         """Append event to EVENTS.jsonl - NEVER overwrite, always append"""
-        # Use relative path for consistency
-        relative_path = str(self.session_path.relative_to(Path.cwd()))
-        
         event = {
-            "timestamp": datetime.now().isoformat(),
+            "timestamp": datetime.utcnow().strftime("%Y-%m-%dT%H:%M:%SZ"),
             "type": event_type,  # Standardized field name
             "agent": self.worker_name,  # Standardized field name
-            "session_path": relative_path,
             "details": details
         }
         
@@ -1693,17 +1998,15 @@ class WorkerLogger:
     
     def log_debug(self, message: str, level: str = "INFO", details: Any = None) -> None:
         """Append debug log to DEBUG.jsonl - NEVER overwrite, always append"""
-        # Use relative path for consistency
-        relative_path = str(self.session_path.relative_to(Path.cwd()))
-        
         debug_entry = {
-            "timestamp": datetime.now().isoformat(),
+            "timestamp": datetime.utcnow().strftime("%Y-%m-%dT%H:%M:%SZ"),
             "level": level,
             "agent": self.worker_name,
-            "message": message,
-            "session_path": relative_path,
-            "details": details
+            "message": message
         }
+        
+        if details:
+            debug_entry["details"] = details
         
         # CRITICAL: Append mode + ensure file exists + error handling
         debug_file = self.session_path / "DEBUG.jsonl"

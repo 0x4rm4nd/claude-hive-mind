@@ -126,7 +126,7 @@ Added comprehensive debug logging before all exception raises across protocol fi
 ### Consolidated Task Assignment Logging
 
 #### Change Summary
-Replaced multiple individual `task_assigned` events with a single consolidated `all_tasks_assigned` event.
+Replaced multiple individual `task_assigned` events with a single consolidated `tasks_assigned` event.
 
 #### Previous Behavior
 - One `task_assigned` event logged per worker in the loop
@@ -134,7 +134,7 @@ Replaced multiple individual `task_assigned` events with a single consolidated `
 - Difficult to see the complete task distribution at a glance
 
 #### New Behavior
-- Single `all_tasks_assigned` event after all workers configured
+- Single `tasks_assigned` event after all workers configured
 - Contains comprehensive details for all worker assignments in one event
 - Includes: total workers, worker list, and detailed assignments with:
   - Task descriptions
@@ -152,7 +152,7 @@ Replaced multiple individual `task_assigned` events with a single consolidated `
 #### Event Structure
 ```json
 {
-  "event_type": "all_tasks_assigned",
+  "event_type": "tasks_assigned",
   "details": {
     "total_workers": 3,
     "workers": ["worker1", "worker2", "worker3"],

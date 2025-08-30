@@ -25,6 +25,7 @@ Core implementations (.py):
 
 Instruction docs (.md):
 - `unified-logging-protocol.md` — Single source of truth for logging via Bash echo.
+- `worker-output-protocol.md` — Mandatory output file standards for all workers.
 - `spawn-protocol.md` — Worker selection and deployment guidelines.
 - `spawn-reference.md` — Quick decision guide for Queen orchestrator.
 - `coordination_protocol_instructions.md`
@@ -45,15 +46,19 @@ Templates (.claude/protocols/templates):
 - `session-template.md`, `worker-notes-template.md`, `worker-selection-matrix.yaml`.
 
 ## Conventions
-- Event fields: `timestamp`, `type`, `agent`, `details`, optional `status`.
+- Event fields: `timestamp`, `event_type`, `worker`, `details`, optional `status`.
 - Debug fields: `timestamp`, `level`, `agent`, `message`, optional `context`.
-- Session ID is implicit from the directory path; do not embed it in event lines.
+- Session ID is implicit from the directory path; NEVER include it in event objects.
+- Event types are standardized; NO worker-specific prefixes (use `analysis_started` not `backend_analysis_started`).
+- Worker output files: `{worker}_notes.md` and `{worker}_response.json` (no "-worker" suffix).
 - Appends only; do not overwrite or truncate log files.
 
 ## Usage Pattern
 1. Queen creates a session with `coordination_protocol.py`.
-2. Workers extract the session and log using `templates/logging-functions.py`.
-3. All events are appended to `EVENTS.jsonl` using Bash echo.
-4. State updates use atomic write (temp + rename) via `session_management.py`.
+2. Workers extract the session and IMMEDIATELY log `worker_spawned` event (MANDATORY first event).
+3. Workers use `templates/logging-functions.py` for all event/debug logging.
+4. All events are appended to `EVENTS.jsonl` using Bash echo (NO session_id in event).
+5. Workers create TWO output files: markdown notes and JSON response (see `worker-output-protocol.md`).
+6. State updates use atomic write (temp + rename) via `session_management.py`.
 
 Note: Keep it simple. We intentionally avoid lock-heavy concurrency. Append-only design minimizes risk of corruption and is sufficient for our needs.
