@@ -11,112 +11,43 @@
 
 ## 📋 Universal Session Extraction (Step 1 for ALL Agents)
 
-```python
-import re
-import json
-from datetime import datetime
+**Function Template**: `.claude/protocols/templates/logging-functions.py`
 
-# MANDATORY: Extract session ID at agent start
-def extract_session_id(prompt_text, worker_type):
-    """Universal session extraction - MUST be first operation"""
-    if "Session ID:" in prompt_text:
-        match = re.search(r"Session ID:\s*([^\s\n-]+)", prompt_text)
-        session_id = match.group(1).strip() if match else None
-    elif "session_id" in prompt_text.lower():
-        match = re.search(r"session[_\s]?id[:\s]+([^\s\n,]+)", prompt_text, re.IGNORECASE)
-        session_id = match.group(1).strip() if match else None
-    else:
-        # Fallback: Generate from context
-        task_slug = re.sub(r'[^a-zA-Z0-9]+', '-', prompt_text[:100].lower())[:50]
-        from datetime import datetime
-        timestamp = datetime.now().strftime('%Y-%m-%d-%H-%M')
-        session_id = f"{timestamp}-{task_slug}"
-    
-    # Validate session path exists
-    session_path = f"Docs/hive-mind/sessions/{session_id}"
-    try:
-        state_content = Read(f"{session_path}/STATE.json")
-        if not state_content:
-            raise Exception(f"Session {session_id} STATE.json is empty")
-    except:
-        raise Exception(f"FATAL: Session {session_id} not found at {session_path}")
-    
-    return session_id
-```
+### Function: `extract_session_id(prompt_text, worker_type)`
+- **Purpose**: Universal session extraction - MUST be first operation
+- **Returns**: Validated session ID from prompt or generates fallback
+- **Validates**: Session directory and STATE.json existence
+- **Raises**: Exception if session not found or invalid
 
 ## 🎯 EVENTS.jsonl Logging Function (Universal)
 
-```python
-def log_event(session_id, event_type, agent_name, details, status=None):
-    """ATOMIC APPEND to EVENTS.jsonl - Thread-safe implementation"""
-    from datetime import datetime
-    import json
-    
-    # Generate timestamp
-    timestamp = datetime.now().strftime('%Y-%m-%dT%H:%M:%S+02:00')
-    
-    # Build event
-    event = {
-        "timestamp": timestamp,
-        "type": event_type,
-        "agent": agent_name,
-        "details": str(details)[:500] if details else "No details provided"
-    }
-    
-    if status:
-        event["status"] = status
-    
-    # Serialize to JSON
-    json_line = json.dumps(event, ensure_ascii=False)
-    
-    # ATOMIC APPEND using Bash echo
-    events_file = f"Docs/hive-mind/sessions/{session_id}/EVENTS.jsonl"
-    
-    # Ensure directory exists
-    Bash(f"mkdir -p Docs/hive-mind/sessions/{session_id}", description="Ensure session dir")
-    
-    # Atomic append
-    escaped = json_line.replace("'", "'\"'\"'")
-    Bash(f"echo '{escaped}' >> {events_file}", description=f"Log {event_type} event")
-    
-    print(f"✅ Event logged: {agent_name} - {event_type}")
-    return True
-```
+**Function Template**: `.claude/protocols/templates/logging-functions.py`
+
+### Function: `log_event(session_id, event_type, agent_name, details, status=None)`
+- **Purpose**: ATOMIC APPEND to EVENTS.jsonl - Thread-safe implementation
+- **Parameters**:
+  - `session_id`: Active session identifier
+  - `event_type`: Type of event (see Event Types Reference)
+  - `agent_name`: Name of the agent logging the event
+  - `details`: Event details (max 500 chars)
+  - `status`: Optional status field
+- **Returns**: True on successful logging
+- **Implementation**: Uses Bash echo for atomic append operations
 
 ## 🐛 DEBUG.jsonl Logging Function (Universal)
 
-```python
-def log_debug(session_id, level, agent_name, message, context=None):
-    """ATOMIC APPEND to DEBUG.jsonl - Thread-safe implementation"""
-    from datetime import datetime
-    import json
-    
-    # Generate timestamp
-    timestamp = datetime.now().strftime('%Y-%m-%dT%H:%M:%S+02:00')
-    
-    # Build debug entry
-    debug_entry = {
-        "timestamp": timestamp,
-        "level": level,  # INFO, SUCCESS, WARNING, ERROR, COMPLIANCE
-        "agent": agent_name,
-        "message": str(message)[:1000]
-    }
-    
-    if context:
-        debug_entry["context"] = context
-    
-    # Serialize to JSON
-    json_line = json.dumps(debug_entry, ensure_ascii=False)
-    
-    # ATOMIC APPEND using Bash echo
-    debug_file = f"Docs/hive-mind/sessions/{session_id}/DEBUG.jsonl"
-    
-    # Atomic append
-    escaped = json_line.replace("'", "'\"'\"'")
-    Bash(f"echo '{escaped}' >> {debug_file}", description=f"Log {level} debug")
-    
-    return True
-```
+**Function Template**: `.claude/protocols/templates/logging-functions.py`
+
+### Function: `log_debug(session_id, level, agent_name, message, context=None)`
+- **Purpose**: ATOMIC APPEND to DEBUG.jsonl - Thread-safe implementation
+- **Parameters**:
+  - `session_id`: Active session identifier
+  - `level`: INFO, SUCCESS, WARNING, ERROR, DECISION, or COMPLIANCE
+  - `agent_name`: Name of the agent logging
+  - `message`: Debug message (max 1000 chars)
+  - `context`: Optional additional context data
+- **Returns**: True on successful logging
+- **Implementation**: Uses Bash echo for atomic append operations
 
 ## 🚀 Mandatory Worker Startup Sequence
 
@@ -176,20 +107,61 @@ log_debug(session_id, "SUCCESS", WORKER_TYPE, f"Worker completed successfully")
 ## 📝 Event Types Reference
 
 ### Mandatory Lifecycle Events (ALL WORKERS)
-- `worker_spawned` - Worker activated
-- `session_validated` - Session state verified
-- `worker_configured` - Configuration loaded
-- `worker_analysis_started` - Analysis begun
-- `worker_notes_created` - Notes file written
-- `worker_json_provided` - JSON response saved
-- `worker_completed` - Task finished
+- `worker_spawned` - Worker activated and joined session
+- `worker_configured` - Configuration loaded and validated
+- `worker_started` - Analysis/task execution begun
+- `worker_progress` - Intermediate progress update (optional)
+- `worker_completed` - Task finished successfully
+- `worker_failed` - Task failed with error
+
+### Queen-Specific Events
+- `queen_spawned` - Queen orchestrator activated (NOT queen_reactivated_for_synthesis)
+- `session_created` - Session structure initialized
+- `workers_planned` - Worker selection completed
+- `workers_deployed` - Worker prompts created
+- `synthesis_started` - Beginning result synthesis
+- `synthesis_completed` - Final synthesis complete
+
+### Coordination Events
+- `handoff_requested` - Worker needs input from another
+- `handoff_accepted` - Worker accepted handoff
+- `blocker_reported` - Worker blocked on dependency
+- `blocker_resolved` - Blocking issue resolved
+- `escalation_required` - Queen intervention needed
 
 ### Debug Levels
 - `INFO` - General information
 - `SUCCESS` - Successful operations
 - `WARNING` - Non-critical issues
 - `ERROR` - Critical errors
+- `DECISION` - Decision points and reasoning
 - `COMPLIANCE` - Protocol compliance status
+
+### Mandatory DEBUG Logging Points
+
+1. **Startup Phase** (ALL workers MUST log):
+   - Session ID extraction result
+   - Protocol loading status
+   - Configuration validation
+   - Tool availability check
+
+2. **Decision Points** (DECISION level):
+   - Task decomposition reasoning
+   - Research strategy selection
+   - Implementation approach chosen
+   - Error recovery decisions
+
+3. **Operations** (INFO/SUCCESS level):
+   - File operations (read/write)
+   - External tool calls
+   - Search/analysis operations
+   - Coordination events
+
+4. **Completion** (SUCCESS level):
+   - Output validation results
+   - Token usage summary
+   - Performance metrics
+   - Quality gate checks
 
 ## 🔒 Implementation Rules
 
@@ -208,37 +180,16 @@ Reference the protocol file for the exact functions - do not reimplement.
 ```
 
 ### For Queen Orchestrator
-```python
-# Verify worker compliance
-def verify_worker_compliance(session_id, worker_name):
-    """Check if worker properly logged lifecycle events"""
-    events = Read(f"Docs/hive-mind/sessions/{session_id}/EVENTS.jsonl")
-    
-    required_events = [
-        "worker_spawned",
-        "session_validated", 
-        "worker_configured",
-        "worker_analysis_started",
-        "worker_completed"
-    ]
-    
-    worker_events = []
-    for line in events.strip().split('\n'):
-        try:
-            event = json.loads(line)
-            if event.get("agent") == worker_name:
-                worker_events.append(event.get("type"))
-        except:
-            continue
-    
-    missing = [e for e in required_events if e not in worker_events]
-    
-    if missing:
-        log_debug(session_id, "WARNING", "queen-orchestrator", 
-                 f"Worker {worker_name} missing events: {missing}")
-    
-    return len(missing) == 0
-```
+
+**Function Template**: `.claude/protocols/templates/logging-functions.py`
+
+### Function: `verify_worker_compliance(session_id, worker_name)`
+- **Purpose**: Check if worker properly logged lifecycle events
+- **Parameters**:
+  - `session_id`: Active session identifier
+  - `worker_name`: Name of worker to verify
+- **Returns**: True if all required events present, False otherwise
+- **Logs**: WARNING to DEBUG.jsonl if events missing
 
 ## ⚠️ ENFORCEMENT
 
@@ -250,23 +201,15 @@ def verify_worker_compliance(session_id, worker_name):
 
 ## 🎯 Protocol Compliance Check
 
-```python
-# Quick compliance check for any agent
-def check_my_compliance(session_id, worker_type):
-    """Self-check for protocol compliance"""
-    try:
-        events = Read(f"Docs/hive-mind/sessions/{session_id}/EVENTS.jsonl")
-        my_events = [json.loads(line) for line in events.strip().split('\n') 
-                     if worker_type in line]
-        
-        print(f"📊 Total events logged: {len(my_events)}")
-        print(f"✅ Compliance status: {'PASS' if len(my_events) >= 5 else 'FAIL'}")
-        
-        return len(my_events) >= 5
-    except:
-        print("❌ Compliance check failed - no events found")
-        return False
-```
+**Function Template**: `.claude/protocols/templates/logging-functions.py`
+
+### Function: `check_my_compliance(session_id, worker_type)`
+- **Purpose**: Self-check for protocol compliance
+- **Parameters**:
+  - `session_id`: Active session identifier
+  - `worker_type`: Type of worker performing check
+- **Returns**: True if at least 5 events logged, False otherwise
+- **Output**: Prints compliance status to console
 
 ---
 

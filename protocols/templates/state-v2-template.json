@@ -1,0 +1,89 @@
+{
+  "version": "2.0",
+  "session_id": "{session-id}",
+  "task": "{task-description}",
+  "status": "initializing",
+  
+  "timestamps": {
+    "created_at": "{iso-8601-timestamp}",
+    "updated_at": "{iso-8601-timestamp}",
+    "last_heartbeat": "{iso-8601-timestamp}",
+    "phase_transitions": {
+      "planning_started": null,
+      "spawning_started": null,
+      "execution_started": null,
+      "synthesis_started": null,
+      "completed_at": null
+    }
+  },
+  
+  "coordination_status": {
+    "phase": "planning",
+    "workers_planned": [],
+    "workers_spawned": [],
+    "workers_active": [],
+    "workers_completed": [],
+    "workers_failed": [],
+    "spawn_attempts": {},
+    "synthesis_ready": false,
+    "blocking_issues": []
+  },
+  
+  "worker_states": {},
+  
+  "queen_decisions": {
+    "complexity_assessment": {
+      "level": 1,
+      "factors": [],
+      "rationale": ""
+    },
+    "worker_selection_rationale": "",
+    "coordination_strategy": "parallel",
+    "execution_plan": {
+      "phases": []
+    },
+    "escalation_triggers": []
+  },
+  
+  "research_progress": {
+    "domains_identified": [],
+    "domains_completed": [],
+    "synthesis_status": "pending",
+    "key_findings": [],
+    "synthesis_file": null
+  },
+  
+  "implementation_progress": {
+    "tasks_created": 0,
+    "tasks_assigned": 0,
+    "tasks_in_progress": 0,
+    "tasks_completed": 0,
+    "tasks_blocked": 0,
+    "blocking_issues": []
+  },
+  
+  "quality_gates": {
+    "worker_selection_validated": false,
+    "all_workers_spawned": false,
+    "protocol_compliance_verified": false,
+    "outputs_validated": false,
+    "synthesis_complete": false
+  },
+  
+  "metrics": {
+    "session_duration_seconds": 0,
+    "total_events_logged": 0,
+    "total_debug_entries": 0,
+    "worker_efficiency": {},
+    "token_usage_estimated": 0,
+    "coordination_overhead_seconds": 0
+  },
+  
+  "session_metadata": {
+    "hive_mind_version": "2.0",
+    "protocol_version": "2.0",
+    "environment": "production",
+    "resumption_capability": "full",
+    "auto_recovery_enabled": true
+  }
+}

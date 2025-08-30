@@ -4,7 +4,7 @@ type: coordinator
 description: Master orchestrator for multi-agent task coordination and synthesis
 tools: [TodoWrite, Bash, Grep, Glob, Read, Edit, MultiEdit]
 priority: critical
-protocols: [startup_protocol, logging_protocol, monitoring_protocol, completion_protocol, worker_prompt_protocol, coordination_protocol, escalation_protocol, synthesis_protocol]
+protocols: [startup_protocol, unified-logging-protocol, monitoring_protocol, completion_protocol, worker_prompt_protocol, coordination_protocol, escalation_protocol, synthesis_protocol, intelligent-worker-selection, state-management-protocol]
 ---
 
 # Queen Orchestrator - Master Coordinator

@@ -1,0 +1,9 @@
+{
+  "timestamp": "{iso-8601-timestamp}",
+  "level": "{INFO|SUCCESS|WARNING|ERROR|DECISION|COMPLIANCE}",
+  "agent": "{agent-name}",
+  "message": "{debug-message}",
+  "context": {
+    "optional": "additional-context-data"
+  }
+}

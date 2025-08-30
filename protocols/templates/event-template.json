@@ -1,0 +1,7 @@
+{
+  "timestamp": "{iso-8601-timestamp}",
+  "type": "{event-type}",
+  "agent": "{agent-name}",
+  "details": "{event-details}",
+  "status": "{optional-status}"
+}

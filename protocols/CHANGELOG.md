@@ -1,5 +1,60 @@
 # Coordination Protocol Changelog
 
+## 2025-08-30: Major Template System Refactoring
+
+### Template Extraction and Organization
+
+#### Change Summary
+Complete refactoring of protocol template system to extract all embedded templates into dedicated directory structure, eliminating file bloat and improving maintainability.
+
+#### Changes Made
+
+1. **Template Directory Structure**:
+   - Created organized `.claude/protocols/templates/` directory
+   - Categorized templates by type: JSON, Python, YAML, Markdown
+   - Added comprehensive README.md for template documentation
+
+2. **Extracted Templates**:
+   - **JSON Templates**:
+     - `state-v2-template.json` - STATE.json v2.0 structure
+     - `worker-state-template.json` - Worker state structure
+     - `event-template.json` - Event log entry structure
+     - `debug-entry-template.json` - Debug log entry structure
+   - **Python Templates**:
+     - `logging-functions.py` - All logging functions from unified-logging-protocol.md
+     - `state-management-functions.py` - State manipulation functions
+   - **YAML Templates**:
+     - `worker-selection-matrix.yaml` - Domain-to-worker mapping
+
+3. **Protocol File Updates**:
+   - **state-management-protocol.md**: Replaced embedded STATE.json and Python functions with template references
+   - **unified-logging-protocol.md**: Replaced all embedded Python functions with template references
+   - **intelligent-worker-selection.md**: Extracted YAML worker selection matrix
+
+4. **Legacy Cleanup**:
+   - **Deleted entire `.claude/protocols/deprecated/` directory** - Fresh start approach
+   - **Removed `state-template.json`** - Obsolete v1 template
+   - **Removed `state-enforcement-template.json`** - Legacy enforcement template
+   - **Eliminated all v1 to v2 migration logic** - Breaking backwards compatibility intentionally
+
+#### Benefits
+- **Reduced Protocol File Sizes**: 40-60% reduction in protocol file sizes
+- **Improved Maintainability**: Single source of truth for each template
+- **Cleaner Separation**: Logic and documentation separated from implementation templates
+- **No Legacy Debt**: Complete removal of obsolete patterns and migration code
+
+#### Breaking Changes
+- **No Backwards Compatibility**: Sessions created before this change are incompatible
+- **Migration Logic Removed**: No support for v1 to v2 state migration
+- **Deprecated Directory Deleted**: All legacy protocols permanently removed
+
+#### Technical Impact
+- Protocol files now reference templates via path: `.claude/protocols/templates/[template-name]`
+- Agents must load templates dynamically rather than copying embedded code
+- Template structure is now the authoritative source for all data formats
+
+---
+
 ## 2025-08-30: Protocol Enhancements
 
 ### Enhanced Debug Logging for Exception Handling
