@@ -72,10 +72,10 @@ This worker follows SmartWalletFX protocols from `.claude/protocols/`:
 
 #### Logging Protocol
 **During research work, log events to session EVENTS.jsonl:**
-- timestamp: ISO-8601 format (e.g., 2025-01-15T10:30:00Z)
-- event_type: research_started, best_practice_identified, pattern_discovered, recommendation_made, or research_completed
-- worker: researcher-worker
-- session_id: current session identifier
+- timestamp: ISO-8601 UTC (e.g., 2025-01-15T10:30:00Z)
+- type: research_started, best_practice_identified, pattern_discovered, recommendation_made, or research_completed
+- agent: researcher-worker
+- session_id: NOT included in event (used only for file path)
 - details object containing:
   - topic: research topic
   - sources: list of information sources

@@ -278,7 +278,7 @@ The Queen Orchestrator operates in conjunction with the SmartWalletFX protocol s
 #### Logging Protocol (`logging_protocol.py`)
 **Event logging format:**
 - timestamp: ISO-8601 format (e.g., 2025-01-15T10:30:00Z)
-- event_type: worker_spawned, task_assigned, result_received, or synthesis_complete
+- type: worker_spawned, task_assigned, result_received, or synthesis_complete
 - session_id: string identifier
 - worker_type: string identifier
 - details: object containing event-specific data

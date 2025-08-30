@@ -72,10 +72,10 @@ This worker follows SmartWalletFX protocols from `.claude/protocols/`:
 
 #### Logging Protocol
 **During testing work, log events to session EVENTS.jsonl:**
-- timestamp: ISO-8601 format (e.g., 2025-01-15T10:30:00Z)
-- event_type: test_created, test_executed, coverage_calculated, bug_found, or test_suite_updated
-- worker: test-worker
-- session_id: current session identifier
+- timestamp: ISO-8601 UTC (e.g., 2025-01-15T10:30:00Z)
+- type: test_created, test_executed, coverage_calculated, bug_found, or test_suite_updated
+- agent: test-worker
+- session_id: NOT included in event (used only for file path)
 - details object containing:
   - test_type: unit, integration, e2e, or performance
   - test_name: name of the test

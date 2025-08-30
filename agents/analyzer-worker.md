@@ -82,10 +82,10 @@ This worker follows SmartWalletFX protocols from `.claude/protocols/`:
 
 **During analysis, use append-safe logging:**
 
-- timestamp: ISO-8601 format (e.g., 2025-01-15T10:30:00Z)
-- event_type: analysis_started, security_issue_found, performance_bottleneck, code_smell_detected, or analysis_completed
-- worker: analyzer-worker
-- session_id: current session identifier
+- timestamp: ISO-8601 UTC (e.g., 2025-01-15T10:30:00Z)
+- type: analysis_started, security_issue_found, performance_bottleneck, code_smell_detected, or analysis_completed
+- agent: analyzer-worker
+- session_id: NOT included in event (used only for file path)
 - details object containing:
   - severity: critical, high, medium, or low
   - category: security, performance, or quality

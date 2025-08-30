@@ -72,10 +72,10 @@ This worker follows SmartWalletFX protocols from `.claude/protocols/`:
 
 #### Logging Protocol
 **During DevOps work, log events to session EVENTS.jsonl:**
-- timestamp: ISO-8601 format (e.g., 2025-01-15T10:30:00Z)
-- event_type: deployment_configured, infrastructure_provisioned, pipeline_updated, monitoring_added, or security_hardened
-- worker: devops-worker
-- session_id: current session identifier
+- timestamp: ISO-8601 UTC (e.g., 2025-01-15T10:30:00Z)
+- type: deployment_configured, infrastructure_provisioned, pipeline_updated, monitoring_added, or security_hardened
+- agent: devops-worker
+- session_id: NOT included in event (used only for file path)
 - details object containing:
   - resource: infrastructure resource affected
   - action: create, update, or delete

@@ -72,10 +72,10 @@ This worker follows SmartWalletFX protocols from `.claude/protocols/`:
 
 #### Logging Protocol
 **During frontend work, log events to session EVENTS.jsonl:**
-- timestamp: ISO-8601 format (e.g., 2025-01-15T10:30:00Z)
-- event_type: component_created, state_updated, ui_modified, style_applied, or route_configured
-- worker: frontend-worker
-- session_id: current session identifier
+- timestamp: ISO-8601 UTC (e.g., 2025-01-15T10:30:00Z)
+- type: component_created, state_updated, ui_modified, style_applied, or route_configured
+- agent: frontend-worker
+- session_id: NOT included in event (used only for file path)
 - details object containing:
   - component: affected UI component
   - action: specific action performed

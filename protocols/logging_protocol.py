@@ -31,7 +31,6 @@ class LoggingProtocol(BaseProtocol):
             "sequence": self.event_counter,
             "type": event_type,
             "agent": self.config.worker_type or "system",
-            "session_id": self.config.session_id,
             "details": details,
             "level": level,
             "protocol_version": self.config.version

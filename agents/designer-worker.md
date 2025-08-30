@@ -72,10 +72,10 @@ This worker follows SmartWalletFX protocols from `.claude/protocols/`:
 
 #### Logging Protocol
 **During design work, log events to session EVENTS.jsonl:**
-- timestamp: ISO-8601 format (e.g., 2025-01-15T10:30:00Z)
-- event_type: design_created, ux_flow_mapped, style_applied, accessibility_checked, or prototype_generated
-- worker: designer-worker
-- session_id: current session identifier
+- timestamp: ISO-8601 UTC (e.g., 2025-01-15T10:30:00Z)
+- type: design_created, ux_flow_mapped, style_applied, accessibility_checked, or prototype_generated
+- agent: designer-worker
+- session_id: NOT included in event (used only for file path)
 - details object containing:
   - design_element: element being designed
   - type: wireframe, mockup, prototype, or flow
