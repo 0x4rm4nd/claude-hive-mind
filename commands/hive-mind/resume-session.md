@@ -172,7 +172,7 @@ echo "**Context Restoration Strategy**: $CONTEXT_STRATEGY (${CACHE_DURATION} cac
 echo ""
 
 # Restore worker contexts based on complexity-adaptive approach
-for worker_file in workers/*.md; do
+for worker_file in notes/*_notes.md; do
   if [ -s "$worker_file" ]; then
     worker_name=$(basename "$worker_file" .md)
     echo "**${worker_name}**:"
@@ -221,13 +221,13 @@ fi
 echo "### 🔬 Research Status"
 echo ""
 
-if [ -s RESEARCH_SYNTHESIS.md ]; then
+if [ -s notes/RESEARCH_SYNTHESIS.md ]; then
   echo "**Research Synthesis Status**:"
-  echo "- File size: $(wc -l < RESEARCH_SYNTHESIS.md) lines"
-  echo "- Last updated: $(stat -f "%Sm" RESEARCH_SYNTHESIS.md 2>/dev/null || stat -c "%y" RESEARCH_SYNTHESIS.md 2>/dev/null)"
+  echo "- File size: $(wc -l < notes/RESEARCH_SYNTHESIS.md) lines"
+  echo "- Last updated: $(stat -f "%Sm" notes/RESEARCH_SYNTHESIS.md 2>/dev/null || stat -c "%y" notes/RESEARCH_SYNTHESIS.md 2>/dev/null)"
   echo ""
   echo "**Research Domains Covered**:"
-  grep "^###" RESEARCH_SYNTHESIS.md | sed 's/^### /- /'
+  grep "^###" notes/RESEARCH_SYNTHESIS.md | sed 's/^### /- /'
 else
   echo "Research synthesis not started"
 fi

@@ -30,12 +30,12 @@ Performing comprehensive analysis of session **$SESSION_ID**.
 **Analyze research completion status:**
 
 - Read research_complete flag from STATE.json
-- Check if RESEARCH_SYNTHESIS.md exists and analyze:
+- Check if notes/RESEARCH_SYNTHESIS.md exists and analyze:
   - File size in lines
   - Last modification time
   - Extract research domains from ## headers
 - For each worker type (researcher, backend, frontend, designer, test, devops, analyzer, service-architect):
-  - Check if worker notes file exists at `workers/{worker}-worker-notes.md`
+  - Check if worker notes file exists at `notes/{worker}_notes.md` (worker without "-worker")
   - Count lines of research notes
   - Report activity level per worker
 
@@ -55,7 +55,7 @@ Performing comprehensive analysis of session **$SESSION_ID**.
 
 - Extract worker states from STATE.json workers section
 - For each worker, display status and assigned task
-- For each worker notes file in `workers/*.md`:
+- For each worker notes file in `notes/*_notes.md`:
   - Count lines of activity
   - Show last modification time
   - Display recent activity (last 3 lines) if file has substantial content
@@ -116,7 +116,7 @@ Performing comprehensive analysis of session **$SESSION_ID**.
 
 **Research Phase (if research_complete = false):**
 1. Complete pending research: Ensure all Context7 research assignments are finished
-2. Synthesize findings: Update RESEARCH_SYNTHESIS.md with unified strategy
+2. Synthesize findings: Update notes/RESEARCH_SYNTHESIS.md with unified strategy
 3. Validate approach: Review research findings for conflicts or gaps
 4. Prepare transition: Ready to create research-informed task breakdown
 

@@ -25,7 +25,7 @@ Use Read and Write tools to synthesize session learnings:
 Read("Docs/hive-mind/sessions/{session-id}/SESSION.md") - Session overview
 Read("Docs/hive-mind/sessions/{session-id}/EVENTS.jsonl") - All coordination events  
 Read("Docs/hive-mind/sessions/{session-id}/BACKLOG.jsonl") - Task completion status
-Read("Docs/hive-mind/sessions/{session-id}/workers/*.md") - Worker notes and findings
+Read("Docs/hive-mind/sessions/{session-id}/notes/*_notes.md") - Worker notes and findings
 ```
 
 #### Generate Reflection Document Template
