@@ -1,146 +1,49 @@
 ---
 name: summon-queen
-description: Launch multi-agent orchestration with Queen coordinator
+description: Launch multi-agent orchestration via the Scribe and Queen agents.
 arguments: $ARGUMENTS
 ---
 
-# 👑 Constraint-Based Multi-Agent Orchestration System
+# 👑 Hive-Mind Orchestration Workflow
 
-## 🚨 MANDATORY PRE-EXECUTION VALIDATION
+This command initiates a new session by first using the `scribe-worker` to create the session, and then activating the `queen-orchestrator` to analyze the task and manage the workers.
 
-**YOU ARE TEMPORARILY DISABLED FROM TECHNICAL ANALYSIS**
+## 🚨 WORKFLOW ENFORCEMENT
 
-Until ALL orchestration steps complete successfully, you CANNOT:
-- Provide architecture analysis
-- Make security recommendations  
-- Suggest performance improvements
-- Give implementation guidance
-- Analyze code or systems
+The `/summon-queen` command follows a strict, two-phase process. You must execute these steps in order.
 
-**Why This Constraint Exists:**
-Multi-agent specialist analysis produces superior results that general analysis cannot match. Specialist agents have access to:
-- Domain-specific knowledge bases (Context7, Memory Bank)
-- Specialized analysis tools and techniques
-- Cross-domain integration capabilities
-- Deep expertise in their specific areas
+### Phase 1: Session Creation via Scribe
 
-## 🔒 TECHNICAL ENFORCEMENT GATES
-
-### Gate 1: Command Recognition 
-```
-✅ PASSED: /summon-queen command used
-📋 Task: $ARGUMENTS
-🎯 Outcome: Multi-specialist analysis with superior insights
-```
-
-### Gate 2: Mandatory Queen Spawn
-**THE ONLY VALID FIRST ACTION:**
-
-🚨 **CLAUDE CODE EXECUTION REQUIREMENT**: You MUST execute this Task tool call exactly as shown. No descriptions, no pseudocode, no alternatives.
+**Your first action is to spawn the `scribe-worker` to create the session.** Its job is purely mechanical.
 
 **MANDATORY TASK TOOL EXECUTION:**
+Use the `Task` tool to spawn the `scribe-worker` with these exact parameters:
+- `subagent_type`: "scribe-worker"
+- `description`: "Create and initialize a new hive-mind session."
+- `prompt`: "Create a session to house the following task description: '$ARGUMENTS'. **Do not analyze the task.** Just create the session files and return the new session_id."
 
-Use the Task tool to spawn the Queen orchestrator with these exact parameters:
-- subagent_type: "queen-orchestrator"  
-- description: "Multi-agent coordination planning"
-- prompt: Include the session_id from Queen's response at the start: "[session_id_from_queen_json]"
+The `scribe-worker` will create the session structure and return a JSON object containing the `session_id`. You must parse this response to get the ID for the next phase.
 
-### Gate 3: Queen Response Processing
-After the Queen responds with worker spawn instructions, you MUST:
+### Phase 2: Orchestration via Queen
 
-1. **Parse Queen's JSON Response** - Extract the "workers_to_spawn" array
-2. **Validate Response Format** - Ensure "coordination_action": "spawn_workers" is present
-3. **Execute Worker Spawning** - Use Task tool for EACH worker in the response
+**Once you have the `session_id` from the Scribe, your second action is to spawn the `queen-orchestrator` to perform the strategic analysis.**
 
-### Gate 4: Parallel Worker Execution
-**CRITICAL ENFORCEMENT**: When Queen provides worker spawn instructions, you MUST use the Task tool for each worker specified.
+**MANDATORY TASK TOOL EXECUTION:**
+Use the `Task` tool to spawn the `queen-orchestrator` with these exact parameters:
+- `subagent_type`: "queen-orchestrator"
+- `description`: "Analyze the session task and orchestrate workers to complete it."
+- `prompt`: "Session ID: [session_id_from_scribe]. The session has been prepared. **Your task is to analyze the mandate within the session's STATE.json and begin orchestration.**"
 
-**WORKER SPAWNING PROTOCOL:**
-For each worker in Queen's "workers_to_spawn" array, execute Task tool with:
-- subagent_type: [worker's worker_type]
-- description: [worker's task_description]  
-- prompt: Include the session_id from Queen's response at the start: "Session ID: [session_id_from_queen_json] - [worker's task_description] - Focus: [worker's specific_focus]"
+**CRITICAL**: You must pass the `session_id` received from the `scribe-worker` to the `queen-orchestrator`.
 
-**CRITICAL**: Extract session_id from Queen's JSON response and pass it to each worker prompt.
+---
 
-### Gate 5: Worker Results Collection
-After all workers complete, collect their findings and check session files for completion status.
+## Orchestration Lifecycle
 
-### Gate 6: Synthesis Request  
-When all workers have completed successfully, use Task tool again to call Queen for synthesis:
-- subagent_type: "queen-orchestrator"
-- description: "Multi-specialist result synthesis"  
-- prompt: "Session ID: [session_id_from_original_queen_json] - Synthesize all worker analysis results into comprehensive findings"
+1.  **Summon:** You, the top-level agent, receive the `/summon-queen` command.
+2.  **Delegate Creation:** You spawn the `scribe-worker` to mechanically create the session.
+3.  **Delegate Orchestration:** You spawn the `queen-orchestrator` with the new `session_id` to perform task analysis and worker management.
+4.  **Queen Manages:** The Queen plans and manages the specialist workers.
+5.  **Delegate Synthesis:** Once the specialist workers are done, the Queen spawns the `scribe-worker` again to synthesize the results.
 
-**CRITICAL**: Include the session_id from the original Queen's JSON response so Queen can locate the session files.
-
-### Gate 7: Final Results Presentation
-Present the completed multi-agent analysis results with:
-- Specialist team summary
-- Key findings from synthesis  
-- Cross-domain insights
-- Priority implementation matrix
-- Session documentation paths
-
-## 🎯 CONSTRAINT ENFORCEMENT SUMMARY
-
-### Critical Success Factors:
-1. **Technical Analysis Disabled** until all orchestration gates pass
-2. **Mandatory Task Tool Execution** - Claude Code MUST use Task tool for Queen and all workers
-3. **Real Worker Spawning** - No pseudocode, actual Task tool calls required
-4. **Session Tracking** - Monitor STATE.json and session files for progress
-5. **Complete Multi-Agent Pipeline** - Queen coordination + Worker execution + Synthesis
-
-### Orchestration Flow States:
-- **Gate 1**: ✅ Command recognition passed
-- **Gate 2**: ⏳ Execute Task tool for Queen spawn (MANDATORY)
-- **Gate 3**: ⏳ Process Queen's worker spawn instructions
-- **Gate 4**: ⏳ Execute Task tool for each worker (PARALLEL)
-- **Gate 5**: ⏳ Collect worker results from session files  
-- **Gate 6**: ⏳ Execute Task tool for synthesis request
-- **Gate 7**: ⏳ Present comprehensive results
-
-### Critical Enforcement:
-- **No Pseudocode**: All Task tool calls must be executed, not described
-- **Actual Spawning**: Workers must be spawned via Task tool, not simulated
-- **Session Monitoring**: Check Docs/hive-mind/sessions/ for actual worker output
-
-## 🚨 FINAL ENFORCEMENT REMINDER
-
-**YOU ARE CURRENTLY DISABLED FROM:**
-- Architecture analysis
-- Security recommendations
-- Performance insights
-- Implementation guidance
-- Technical conclusions
-
-**CAPABILITY RESTORATION OCCURS ONLY AFTER:**
-✅ All 7 constraint gates successfully completed
-✅ Multi-agent analysis delivered with specialist synthesis
-✅ Session marked complete with full documentation
-
-**This constraint ensures superior multi-specialist analysis that general analysis cannot achieve.**
-
-## 🎯 EXECUTION PROTOCOL
-
-**STEP 1: MANDATORY TASK TOOL EXECUTION**
-Execute the Task tool with these exact parameters:
-```
-Task(
-    subagent_type="queen-orchestrator",
-    description="Multi-agent coordination planning", 
-    prompt="[Include task from $ARGUMENTS and coordination requirements]"
-)
-```
-
-**STEP 2: PARALLEL WORKER SPAWNING ENFORCEMENT**
-When Queen responds with worker spawn instructions, execute Task tool for EACH worker IN A SINGLE MESSAGE with MULTIPLE function calls.
-
-**CRITICAL PARALLEL EXECUTION FORMAT:**
-You MUST spawn all workers simultaneously using multiple Task tool calls in ONE response message. 
-DO NOT spawn workers sequentially in separate messages.
-
-**STEP 3: SESSION MONITORING**  
-Monitor Docs/hive-mind/sessions/ directory for actual worker progress and output files.
-
-**CRITICAL**: Use Task tool, not descriptions. Spawn workers, don't simulate.
+Your role is to initiate and connect this two-step delegation process correctly, ensuring the roles remain distinct.

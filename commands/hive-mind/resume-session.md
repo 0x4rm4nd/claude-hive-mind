@@ -408,7 +408,7 @@ Based on the analysis above:
 - `STATE.json` - Machine-readable session state  
 - `Archon_Tasks_TodoWrite.jsonl` - Task management
 - `EVENTS.jsonl` - Complete activity log
-- `RESEARCH_SYNTHESIS.md` - Research findings
-- `workers/*.md` - Worker-specific progress notes
+- `notes/RESEARCH_SYNTHESIS.md` - Research findings
+- `notes/*_notes.md` - Worker-specific progress notes
 
 **Next Step**: Continue with the actions identified in the resume strategy above.
