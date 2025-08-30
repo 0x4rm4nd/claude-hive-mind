@@ -42,7 +42,7 @@ class MonitoringProtocol(BaseProtocol):
         
         heartbeat_data = {
             "timestamp": now.isoformat(),
-            "worker": self.config.worker_type,
+            "worker": self.config.agent_name,
             "status": self.monitoring_state["health_status"],
             "metadata": metadata or {}
         }
@@ -60,7 +60,7 @@ class MonitoringProtocol(BaseProtocol):
             duration = (now - start).total_seconds()
             
             # Stall detection based on timeout
-            if duration > self.config.escalation_timeout:
+            if self.config.timeout is not None and duration > self.config.timeout:
                 self.monitoring_state["stall_detected"] = True
                 heartbeat_data["alert"] = "stall_detected"
         
@@ -71,7 +71,7 @@ class MonitoringProtocol(BaseProtocol):
         """Check worker health status"""
         health_report = {
             "timestamp": datetime.utcnow().strftime('%Y-%m-%dT%H:%M:%SZ'),
-            "worker": self.config.worker_type,
+            "worker": self.config.agent_name,
             "health_status": self.monitoring_state["health_status"],
             "stall_detected": self.monitoring_state["stall_detected"],
             "last_heartbeat": self.monitoring_state["last_heartbeat"],
@@ -153,7 +153,7 @@ class MonitoringProtocol(BaseProtocol):
         
         progress = {
             "timestamp": datetime.utcnow().strftime('%Y-%m-%dT%H:%M:%SZ'),
-            "worker": self.config.worker_type,
+            "worker": self.config.agent_name,
             "checkpoints_completed": len(self.monitoring_state["checkpoints"]),
             "estimated_completion": self.estimate_completion(),
             "is_blocked": self.monitoring_state["stall_detected"]

@@ -27,10 +27,10 @@ class EscalationProtocol(BaseProtocol):
                          details: str, severity: str = "medium") -> Dict[str, Any]:
         """Create new escalation"""
         escalation = {
-            "id": f"esc_{datetime.utcnow().strftime('%Y%m%d%H%M%S')}_{self.config.worker_type}",
+            "id": f"esc_{datetime.utcnow().strftime('%Y%m%d%H%M%S')}_{self.config.agent_name}",
             "timestamp": datetime.utcnow().strftime('%Y-%m-%dT%H:%M:%SZ'),
             "type": escalation_type.value,
-            "worker": self.config.worker_type,
+            "worker": self.config.agent_name,
             "session_id": self.config.session_id,
             "details": details,
             "severity": severity,
@@ -91,7 +91,11 @@ class EscalationProtocol(BaseProtocol):
         
         if escalation["attempts"] <= 1:
             # First attempt: Extend timeout
-            response["details"]["new_timeout"] = self.config.escalation_timeout * 2
+            if self.config.timeout is not None:
+                response["details"]["new_timeout"] = self.config.timeout * 2
+                response["resolution"] = f"Extended timeout to {response['details']['new_timeout']}s"
+            else:
+                response["resolution"] = "No timeout configured; cannot extend"
             response["resolution"] = f"Extended timeout to {response['details']['new_timeout']}s"
         elif escalation["attempts"] <= 2:
             # Second attempt: Check for stall
@@ -113,7 +117,7 @@ class EscalationProtocol(BaseProtocol):
             "details": {}
         }
         
-        if escalation["attempts"] <= self.config.retry_attempts:
+        if escalation["attempts"] <= (self.config.retries or 0):
             # Retry with backoff
             backoff = 2 ** escalation["attempts"]  # Exponential backoff
             response["details"]["retry_after"] = backoff
@@ -240,7 +244,7 @@ class EscalationProtocol(BaseProtocol):
         # lines = Read(f"{session_path}/BACKLOG.jsonl").strip().split('\n')
         # for line in lines:
         #     item = json.loads(line)
-        #     if item.get("status") == "open" and item.get("worker") == self.config.worker_type:
+        #     if item.get("status") == "open" and item.get("worker") == self.config.agent_name:
         #         open_escalations.append(item)
         
         return open_escalations
@@ -252,7 +256,7 @@ class EscalationProtocol(BaseProtocol):
             "timestamp": datetime.utcnow().strftime('%Y-%m-%dT%H:%M:%SZ'),
             "status": "resolved",
             "resolution": resolution,
-            "resolved_by": self.config.worker_type
+            "resolved_by": self.config.agent_name
         }
         
         self.log_execution("resolve_escalation", resolution_record)

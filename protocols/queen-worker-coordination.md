@@ -425,7 +425,7 @@ Protocol: enhanced-v2"""
         synthesis_md = self.generate_synthesis_document(synthesis)
         
         Write(
-            file_path=f"Docs/hive-mind/sessions/{self.session_id}/RESEARCH_SYNTHESIS.md",
+            file_path=f"Docs/hive-mind/sessions/{self.session_id}/notes/RESEARCH_SYNTHESIS.md",
             content=synthesis_md
         )
         

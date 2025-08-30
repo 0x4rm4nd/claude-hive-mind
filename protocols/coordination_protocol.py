@@ -85,7 +85,7 @@ class CoordinationProtocol:
         (self.session_path / "workers").mkdir(exist_ok=True)
         (self.session_path / "workers" / "json").mkdir(exist_ok=True)
         (self.session_path / "workers" / "prompts").mkdir(exist_ok=True)
-        (self.session_path / "workers" / "decisions").mkdir(exist_ok=True)
+        (self.session_path / "notes").mkdir(exist_ok=True)
         
         # Initialize STATE.json with minimal structure - workers added dynamically
         state = self._generate_state_json(session_id, task_description, complexity_level)
@@ -1282,7 +1282,7 @@ class CoordinationProtocol:
             self.session_path / "workers",
             self.session_path / "workers" / "json",
             self.session_path / "workers" / "prompts",
-            self.session_path / "workers" / "decisions"
+            self.session_path / "notes"
         ]
         
         validation_errors = []
@@ -1928,11 +1928,11 @@ Session initialization and worker planning phase
         )
     
     def create_synthesis_in_original_session(self, synthesis_content: str) -> str:
-        """Create RESEARCH_SYNTHESIS.md in the original session folder (not new session)"""
+        """Create notes/RESEARCH_SYNTHESIS.md in the original session folder (not new session)"""
         if not self.session_path:
             raise ValueError("No active session")
         
-        synthesis_file = self.session_path / "RESEARCH_SYNTHESIS.md"
+        synthesis_file = self.session_path / "notes" / "RESEARCH_SYNTHESIS.md"
         
         with open(synthesis_file, 'w') as f:
             f.write(synthesis_content)
@@ -2021,8 +2021,9 @@ class WorkerLogger:
             print(f"WARNING: Failed to log debug for {self.worker_name}: {e}")
     
     def save_analysis(self, content: str) -> None:
-        """Save analysis markdown to decisions folder - MANDATORY for all workers"""
-        output_file = self.session_path / "workers" / "decisions" / f"{self.worker_name}-analysis.md"
+        """Save analysis markdown to notes folder as {worker}_notes.md"""
+        worker_clean = self.worker_name.replace('-worker', '')
+        output_file = self.session_path / "notes" / f"{worker_clean}_notes.md"
         output_file.parent.mkdir(parents=True, exist_ok=True)  # Ensure directory exists
         with open(output_file, 'w') as f:
             f.write(content)

@@ -392,9 +392,10 @@ class SessionManagement:
                 session_path, "workers", "prompts", f"{worker_type}.md"
             )
             content_str = content if isinstance(content, str) else str(content)
-        elif file_type == "decision":
+        elif file_type == "notes":
+            worker_clean = worker_type.replace('-worker', '')
             file_path = os.path.join(
-                session_path, "workers", "decisions", f"{worker_type}.md"
+                session_path, "notes", f"{worker_clean}_notes.md"
             )
             content_str = content if isinstance(content, str) else str(content)
         else:

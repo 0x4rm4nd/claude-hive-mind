@@ -94,7 +94,7 @@ class StartupProtocol(BaseProtocol):
         state = SessionManagement.read_state(self.config.session_id)
         
         if state and "worker_configs" in state:
-            worker_config = state.get("worker_configs", {}).get(self.config.worker_type, {})
+            worker_config = state.get("worker_configs", {}).get(self.config.agent_name, {})
             if worker_config:
                 return worker_config
         
@@ -102,7 +102,7 @@ class StartupProtocol(BaseProtocol):
         return {
             "task_focus": "Analysis task",
             "priority": "high",
-            "timeout": self.config.escalation_timeout,
+            "timeout": self.config.timeout,
             "specific_requirements": []
         }
     
@@ -150,8 +150,8 @@ class StartupProtocol(BaseProtocol):
             self.config.session_id,
             {
                 "type": "worker_compliance",
-                "agent": self.config.worker_type,
-                "compliance": compliance,
+                "agent": self.config.agent_name,
+                "details": {"compliance": compliance},
                 "timestamp": datetime.utcnow().strftime('%Y-%m-%dT%H:%M:%SZ')
             }
         )

@@ -44,7 +44,7 @@ class SessionProtocol(BaseProtocol):
             "last_updated": datetime.utcnow().strftime('%Y-%m-%dT%H:%M:%SZ'),
             "task": task,
             "complexity_level": complexity_level,
-            "coordinator": self.config.worker_type or "queen-orchestrator",
+            "coordinator": self.config.agent_name or "queen-orchestrator",
             "status": "initializing",
             "coordination_status": {
                 "phase": "planning",
@@ -201,8 +201,8 @@ class SessionProtocol(BaseProtocol):
 ## Metadata
 - **Created**: {datetime.utcnow().strftime('%Y-%m-%dT%H:%M:%SZ')}
 - **Complexity Level**: {complexity}/4
-- **Coordinator**: {self.config.worker_type or 'queen-orchestrator'}
-- **Protocol Version**: {self.config.version}
+- **Coordinator**: {self.config.agent_name or 'queen-orchestrator'}
+- **Protocol Version**: {self.config.protocol_version}
 
 ## Workers
 *Pending assignment*

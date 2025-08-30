@@ -19,11 +19,11 @@ class CompletionProtocol(BaseProtocol):
         """
         # Generate standardized output
         finalized_output = {
-            "worker": self.config.worker_type,
+            "worker": self.config.agent_name,
             "session_id": self.config.session_id,
             "timestamp": datetime.utcnow().strftime('%Y-%m-%dT%H:%M:%SZ'),
             "status": "completed",
-            "protocol_version": self.config.version,
+            "protocol_version": self.config.protocol_version,
             "summary": self.generate_summary(results),
             "findings": self.format_findings(results.get("findings", [])),
             "recommendations": self.format_recommendations(results.get("recommendations", [])),
@@ -38,7 +38,7 @@ class CompletionProtocol(BaseProtocol):
         self.update_completion_status()
         
         self.log_execution("finalize", {
-            "worker": self.config.worker_type,
+            "worker": self.config.agent_name,
             "status": "completed",
             "findings_count": len(finalized_output["findings"]),
             "recommendations_count": len(finalized_output["recommendations"])
@@ -171,23 +171,23 @@ class CompletionProtocol(BaseProtocol):
     
     def save_worker_outputs(self, output: Dict[str, Any]) -> None:
         """Save worker outputs to appropriate locations"""
-        if not self.config.session_id or not self.config.worker_type:
+        if not self.config.session_id or not self.config.agent_name:
             return
         
         session_path = f"Docs/hive-mind/sessions/{self.config.session_id}"
         
         # Save JSON response
-        json_path = f"{session_path}/workers/json/{self.config.worker_type}-response.json"
+        json_path = f"{session_path}/workers/json/{self.config.agent_name}-response.json"
         # Write(json_path, json.dumps(output, indent=2))
         
         # Save detailed notes
         notes = self.generate_detailed_notes(output)
-        notes_path = f"{session_path}/notes/{self.config.worker_type.replace('-worker','')}_notes.md"
+        notes_path = f"{session_path}/notes/{self.config.agent_name.replace('-worker','')}_notes.md"
         # Write(notes_path, notes)
     
     def generate_detailed_notes(self, output: Dict[str, Any]) -> str:
         """Generate detailed markdown notes"""
-        notes = f"""# {self.config.worker_type.replace('-', ' ').title()} Analysis
+        notes = f"""# {self.config.agent_name.replace('-', ' ').title()} Analysis
 
 ## Summary
 {output['summary'].get('overall_assessment', '')}
@@ -229,13 +229,13 @@ class CompletionProtocol(BaseProtocol):
     
     def update_completion_status(self) -> None:
         """Update session state with completion status"""
-        if not self.config.session_id or not self.config.worker_type:
+        if not self.config.session_id or not self.config.agent_name:
             return
         
         # Update worker status in session state (pseudo-code)
         # session_protocol = SessionProtocol(self.config)
         # session_protocol.update_worker_status(
-        #     self.config.worker_type, 
+        #     self.config.agent_name, 
         #     "completed",
         #     {"completed_at": datetime.now().isoformat()}
         # )
@@ -300,3 +300,4 @@ class CompletionProtocol(BaseProtocol):
         ])
         
         return validation
+ return validation

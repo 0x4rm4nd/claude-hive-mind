@@ -30,10 +30,10 @@ class LoggingProtocol(BaseProtocol):
             "timestamp": timestamp,
             "sequence": self.event_counter,
             "type": event_type,
-            "agent": self.config.worker_type or "system",
+            "agent": self.config.agent_name or "system",
             "details": details,
             "level": level,
-            "protocol_version": self.config.version
+            "protocol_version": self.config.protocol_version
         }
         
         # Use unified append-safe method - NEVER overwrites
@@ -58,7 +58,7 @@ class LoggingProtocol(BaseProtocol):
         debug_entry = {
             "timestamp": timestamp,
             "level": level,
-            "agent": self.config.worker_type or "system",
+            "agent": self.config.agent_name or "system",
             "message": message,
             "details": details
         }
@@ -77,7 +77,7 @@ class LoggingProtocol(BaseProtocol):
         
         backlog_entry = {
             "timestamp": timestamp,
-            "created_by": self.config.worker_type or "system",
+            "created_by": self.config.agent_name or "system",
             "item": item,
             "status": "pending",
             "priority": item.get("priority", "normal")

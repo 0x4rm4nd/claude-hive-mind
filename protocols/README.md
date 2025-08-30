@@ -24,18 +24,19 @@ Core implementations (.py):
 - `worker_prompt_protocol.py` — Worker prompt parsing utilities.
 
 Instruction docs (.md):
-- `unified-logging-protocol.md` — Single source of truth for logging via Bash echo.
-- `worker-output-protocol.md` — Mandatory output file standards for all workers.
+- `completion_protocol_instructions.md`
+- `coordination_protocol_instructions.md`
+- `escalation_protocol_instructions.md`
+- `logging_protocol_instructions.md`
+- `monitoring_protocol_instructions.md`
 - `spawn-protocol.md` — Worker selection and deployment guidelines.
 - `spawn-reference.md` — Quick decision guide for Queen orchestrator.
-- `coordination_protocol_instructions.md`
 - `startup_protocol_instructions.md`
-- `completion_protocol_instructions.md`
-- `escalation_protocol_instructions.md`
-- `monitoring_protocol_instructions.md`
-- `worker_prompt_protocol_instructions.md`
 - `state-management-protocol.md`
-- `queen-worker-coordination.md`
+- `synthesis_protocol_instructions.md`
+- `unified-logging-protocol.md` — Single source of truth for logging via Bash echo.
+- `worker-output-protocol.md` — Mandatory output file standards for all workers.
+- `worker_prompt_protocol_instructions.md`
 
 Templates (.claude/templates):
 - `logging-functions.py` — Canonical `log_event` and `log_debug` (Bash echo append).

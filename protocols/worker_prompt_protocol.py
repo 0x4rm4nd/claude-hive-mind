@@ -58,9 +58,12 @@ class WorkerPromptProtocol(BaseProtocol):
                 self.config.session_id,
                 {
                     "type": "prompt_file_read",
-                    "worker": worker_type,
-                    "status": "success",
-                    "file": prompt_file_path,
+                    "agent": self.config.agent_name or worker_type,
+                    "details": {
+                        "status": "success",
+                        "file": prompt_file_path,
+                        "worker": worker_type
+                    },
                     "timestamp": self._get_timestamp()
                 }
             )
@@ -123,7 +126,7 @@ class WorkerPromptProtocol(BaseProtocol):
         when prompt file is not available.
         """
         # Parse the original prompt passed to the worker
-        prompt = self.config.initial_prompt or ""
+        prompt = self.config.prompt_text or ""
         
         # Extract task description
         task_match = re.search(r"Task:\s*(.+?)(?:\n|$)", prompt, re.MULTILINE)
@@ -141,11 +144,11 @@ class WorkerPromptProtocol(BaseProtocol):
             "task_description": task_description,
             "focus_areas": focus_areas,
             "dependencies": [d.strip() for d in dependencies],
-            "timeout": self.config.escalation_timeout or 3600,
+            "timeout": self.config.timeout or 3600,
             "success_criteria": ["Complete assigned analysis"],
             "output_requirements": {
-                "notes_file": f"notes/{self.config.worker_type.replace('-worker','')}_notes.md",
-                "json_response": f"workers/json/{self.config.worker_type}-response.json",
+                "notes_file": f"notes/{self.config.agent_name.replace('-worker','')}_notes.md",
+                "json_response": f"workers/json/{self.config.agent_name}-response.json",
                 "additional_outputs": []
             }
         }
@@ -156,7 +159,7 @@ class WorkerPromptProtocol(BaseProtocol):
         Reads prompt file if not already loaded.
         """
         if not self.prompt_data:
-            self.prompt_data = self.read_prompt_file(self.config.worker_type)
+            self.prompt_data = self.read_prompt_file(self.config.agent_name)
         
         return self.prompt_data
     
