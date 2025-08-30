@@ -281,14 +281,14 @@ Structured best practice analysis should include:
 
 **Workers MUST generate outputs in this EXACT sequence:**
 
-1. **First: Detailed Research Notes** (workers/decisions/researcher-worker-research.md)
+1. **First: Detailed Research Notes** (researcher_notes.md)
    - Comprehensive research findings
    - Evidence and citations
    - Analysis and synthesis
    - Recommendations with rationale
    - Implementation guidance
 
-2. **Second: Structured JSON** (workers/json/researcher-worker.json)
+2. **Second: Structured JSON** (researcher_response.json)
    - Based on the research notes
    - Structured data for synthesis
    - Machine-readable format
@@ -296,7 +296,7 @@ Structured best practice analysis should include:
 
 ### Required Output Files
 
-#### Research Markdown (workers/decisions/researcher-worker-research.md)
+#### Research Markdown (researcher_notes.md)
 ```markdown
 # Researcher Worker Research Report
 ## Session: [session-id]
@@ -343,7 +343,7 @@ Structured best practice analysis should include:
 [Complete list of sources]
 ```
 
-#### Structured JSON (workers/json/researcher-worker.json)
+#### Structured JSON (researcher_response.json)
 ```json
 {
   "session_id": "string",
@@ -409,6 +409,50 @@ Structured best practice analysis should include:
 - Use save_json() for structured data
 
 Refer to the coordination protocol for implementation details.
+
+## 🚨 CRITICAL: Implementation Standards
+
+### MANDATORY Implementation Requirements
+
+**All researcher workers MUST follow these standards:**
+
+1. **Implementation Template**: Follow `.claude/templates/workers/implementation-template.md` for:
+   - Event logging standards (NO session_id in events)
+   - File naming conventions (`researcher_notes.md` not `researcher-worker-notes.md`)
+   - Startup sequence requirements
+   - Compliance checklist
+
+2. **Output Requirements**: Follow `.claude/protocols/worker-output-protocol.md` for:
+   - Two mandatory files: Markdown notes + JSON response
+   - Correct file naming and directory structure
+   - Content structure and formatting standards
+
+3. **Worker Standards**: Generate outputs in this EXACT sequence:
+   - **First**: `researcher_notes.md` - Detailed research findings
+   - **Second**: `researcher_response.json` - Structured data for synthesis
+
+### Output Structure
+
+**Researcher-specific outputs:**
+
+1. **First: Detailed Research Analysis** (researcher_notes.md)
+   - THIS FILE IS REQUIRED - YOU MUST CREATE IT
+   - Technical research findings and analysis
+   - Best practices and industry standards documentation
+   - Technology evaluation and recommendation matrix
+   - Risk assessment and mitigation strategies
+   - Implementation guidance and resource references
+
+2. **Second: Structured JSON** (researcher_response.json)
+   - THIS FILE IS REQUIRED - YOU MUST CREATE IT
+   - Based on the research analysis
+   - Structured data for synthesis
+   - Machine-readable format
+   - Research metrics and recommendation scores
+
+**IMPORTANT: Both files MUST be created before marking the task as complete. Use the Write tool to create these files in the session directory.**
+
+### Required Output Files
 
 ---
 

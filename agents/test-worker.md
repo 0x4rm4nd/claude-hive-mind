@@ -287,18 +287,37 @@ Structured bug report should include:
 
 ## 🚨 CRITICAL: Output Generation Requirements
 
-### MANDATORY Output Structure
+### MANDATORY Implementation Requirements
 
-**Workers MUST generate outputs in this EXACT sequence:**
+**All test workers MUST follow these standards:**
 
-1. **First: Detailed Test Strategy** (workers/decisions/test-worker-strategy.md)
+1. **Implementation Template**: Follow `.claude/templates/workers/implementation-template.md` for:
+   - Event logging standards (NO session_id in events)
+   - File naming conventions (`test_notes.md` not `test-worker-notes.md`)
+   - Startup sequence requirements
+   - Compliance checklist
+
+2. **Output Requirements**: Follow `.claude/protocols/worker-output-protocol.md` for:
+   - Two mandatory files: Markdown notes + JSON response
+   - Correct file naming and directory structure
+   - Content structure and formatting standards
+
+3. **Worker Standards**: Generate outputs in this EXACT sequence:
+   - **First**: `test_notes.md` - Detailed test analysis
+   - **Second**: `test_response.json` - Structured data for synthesis
+
+### Output Structure
+
+**Test-specific outputs:**
+
+1. **First: Detailed Test Strategy** (test_notes.md)
    - Comprehensive test planning
    - Test case specifications
    - Coverage analysis
    - Quality metrics
    - Bug reports and findings
 
-2. **Second: Structured JSON** (workers/json/test-worker.json)
+2. **Second: Structured JSON** (test_response.json)
    - Based on the test strategy
    - Structured data for synthesis
    - Machine-readable format
@@ -306,7 +325,7 @@ Structured bug report should include:
 
 ### Required Output Files
 
-#### Test Strategy Markdown (workers/decisions/test-worker-strategy.md)
+#### Test Strategy Markdown (test_notes.md)
 ```markdown
 # Test Worker Strategy Report
 ## Session: [session-id]
@@ -356,7 +375,7 @@ Structured bug report should include:
 [Guidelines for keeping tests updated]
 ```
 
-#### Structured JSON (workers/json/test-worker.json)
+#### Structured JSON (test_response.json)
 ```json
 {
   "session_id": "string",

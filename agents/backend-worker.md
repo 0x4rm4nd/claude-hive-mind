@@ -248,28 +248,51 @@ Structured service report should include:
 
 ---
 
-## 🚨 CRITICAL: Output Generation Requirements
+## 🚨 CRITICAL: Implementation Standards
 
-### MANDATORY Output Structure
+### MANDATORY Implementation Requirements
 
-**Workers MUST generate outputs in this EXACT sequence:**
+**All backend workers MUST follow these standards:**
 
-1. **First: Detailed Implementation Notes** (workers/decisions/backend-worker-implementation.md)
-   - Comprehensive implementation details
-   - API design decisions and rationale
-   - Database schema choices
-   - Business logic documentation
-   - Performance considerations
+1. **Implementation Template**: Follow `.claude/templates/workers/implementation-template.md` for:
+   - Event logging standards (NO session_id in events)
+   - File naming conventions (`backend_notes.md` not `backend-worker-notes.md`)
+   - Startup sequence requirements
+   - Compliance checklist
 
-2. **Second: Structured JSON** (workers/json/backend-worker.json)
-   - Based on the implementation notes
+2. **Output Requirements**: Follow `.claude/protocols/worker-output-protocol.md` for:
+   - Two mandatory files: Markdown notes + JSON response
+   - Correct file naming and directory structure
+   - Content structure and formatting standards
+
+3. **Worker Standards**: Generate outputs in this EXACT sequence:
+   - **First**: `backend_notes.md` - Detailed implementation analysis
+   - **Second**: `backend_response.json` - Structured data for synthesis
+
+### Output Structure
+
+**Backend-specific outputs:**
+
+1. **First: Detailed Implementation Analysis** (backend_notes.md)
+   - THIS FILE IS REQUIRED - YOU MUST CREATE IT
+   - API design decisions and implementation details
+   - Database schema and data modeling choices
+   - Business logic and service layer architecture
+   - Security and authentication implementation
+   - Performance optimization strategies
+
+2. **Second: Structured JSON** (backend_response.json)
+   - THIS FILE IS REQUIRED - YOU MUST CREATE IT
+   - Based on the implementation analysis
    - Structured data for synthesis
    - Machine-readable format
-   - API specifications and schemas
+   - Implementation metrics and API specifications
+
+**IMPORTANT: Both files MUST be created before marking the task as complete. Use the Write tool to create these files in the session directory.**
 
 ### Required Output Files
 
-#### Implementation Markdown (workers/decisions/backend-worker-implementation.md)
+#### Implementation Markdown (backend_notes.md)
 ```markdown
 # Backend Worker Implementation Report
 ## Session: [session-id]
@@ -306,7 +329,7 @@ Structured service report should include:
 [Unit tests, integration tests, API tests]
 ```
 
-#### Structured JSON (workers/json/backend-worker.json)
+#### Structured JSON (backend_response.json)
 ```json
 {
   "session_id": "string",

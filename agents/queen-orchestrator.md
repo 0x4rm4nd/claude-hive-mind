@@ -167,7 +167,7 @@ Structured assignment should include:
    - Example: 2025-08-29-14-30-analyze-crypto-data-service (full, descriptive slug)
 2. **Create Session Structure**: Build complete directory at project root Docs/hive-mind/sessions/{session-id}/
 3. **Initialize State Files**: Create STATE.json, EVENTS.jsonl, SESSION.md, DEBUG.jsonl (all 4 required)
-4. **Create Worker Directories**: Set up workers/, workers/json/, workers/prompts/, workers/decisions/
+4. **Create Worker Directories**: Set up workers/, workers/json/, workers/prompts/
 5. **Validate Session**: Use validation methods to ensure all directories and files exist
 
 #### Step 2: Queen Activation Logging (CRITICAL - DO NOT SKIP)

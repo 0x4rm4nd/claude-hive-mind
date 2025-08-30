@@ -272,11 +272,30 @@ Structured analysis summary should include:
 
 ## 🚨 CRITICAL: Output Generation Requirements
 
-### MANDATORY Output Structure
+### MANDATORY Implementation Requirements
 
-**Workers MUST generate outputs in this EXACT sequence:**
+**All analyzer workers MUST follow these standards:**
 
-1. **First: Detailed Analysis Notes** (workers/decisions/analyzer-worker-analysis.md)
+1. **Implementation Template**: Follow `.claude/templates/workers/implementation-template.md` for:
+   - Event logging standards (NO session_id in events)
+   - File naming conventions (`analyzer_notes.md` not `analyzer-worker-notes.md`)
+   - Startup sequence requirements
+   - Compliance checklist
+
+2. **Output Requirements**: Follow `.claude/protocols/worker-output-protocol.md` for:
+   - Two mandatory files: Markdown notes + JSON response
+   - Correct file naming and directory structure
+   - Content structure and formatting standards
+
+3. **Worker Standards**: Generate outputs in this EXACT sequence:
+   - **First**: `analyzer_notes.md` - Detailed security and performance analysis
+   - **Second**: `analyzer_response.json` - Structured data for synthesis
+
+### Output Structure
+
+**Analyzer-specific outputs:**
+
+1. **First: Detailed Analysis Notes** (analyzer_notes.md)
    - THIS FILE IS REQUIRED - YOU MUST CREATE IT
    - Comprehensive findings with evidence
    - Detailed reasoning and methodology
@@ -284,7 +303,7 @@ Structured analysis summary should include:
    - Metrics and measurements
    - Risk assessments and impacts
 
-2. **Second: Structured JSON** (workers/json/analyzer-worker.json)
+2. **Second: Structured JSON** (analyzer_response.json)
    - THIS FILE IS REQUIRED - YOU MUST CREATE IT
    - Based on the analysis notes
    - Structured data for synthesis
@@ -295,7 +314,7 @@ Structured analysis summary should include:
 
 ### Required Output Files
 
-#### Analysis Markdown (workers/decisions/analyzer-worker-analysis.md)
+#### Analysis Markdown (analyzer_notes.md)
 ```markdown
 # Analyzer Worker Analysis Report
 ## Session: [session-id]
@@ -331,7 +350,7 @@ Structured analysis summary should include:
 ...
 ```
 
-#### Structured JSON (workers/json/analyzer-worker.json)
+#### Structured JSON (analyzer_response.json)
 ```json
 {
   "session_id": "string",

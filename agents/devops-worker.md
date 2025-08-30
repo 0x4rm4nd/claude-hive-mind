@@ -278,14 +278,14 @@ Structured incident report should include:
 
 **Workers MUST generate outputs in this EXACT sequence:**
 
-1. **First: Detailed Infrastructure Notes** (workers/decisions/devops-worker-infrastructure.md)
+1. **First: Detailed Infrastructure Notes** (devops_notes.md)
    - Comprehensive infrastructure design
    - Deployment configurations
    - CI/CD pipeline definitions
    - Monitoring and alerting setup
    - Security and compliance measures
 
-2. **Second: Structured JSON** (workers/json/devops-worker.json)
+2. **Second: Structured JSON** (devops_response.json)
    - Based on the infrastructure notes
    - Structured data for synthesis
    - Machine-readable format
@@ -293,7 +293,7 @@ Structured incident report should include:
 
 ### Required Output Files
 
-#### Infrastructure Markdown (workers/decisions/devops-worker-infrastructure.md)
+#### Infrastructure Markdown (devops_notes.md)
 ```markdown
 # DevOps Worker Infrastructure Report
 ## Session: [session-id]
@@ -340,7 +340,7 @@ Structured incident report should include:
 [Backup and recovery procedures]
 ```
 
-#### Structured JSON (workers/json/devops-worker.json)
+#### Structured JSON (devops_response.json)
 ```json
 {
   "session_id": "string",
@@ -401,6 +401,50 @@ Structured incident report should include:
 - Use save_json() for structured data
 
 Refer to the coordination protocol for implementation details.
+
+## 🚨 CRITICAL: Implementation Standards
+
+### MANDATORY Implementation Requirements
+
+**All devops workers MUST follow these standards:**
+
+1. **Implementation Template**: Follow `.claude/templates/workers/implementation-template.md` for:
+   - Event logging standards (NO session_id in events)
+   - File naming conventions (`devops_notes.md` not `devops-worker-notes.md`)
+   - Startup sequence requirements
+   - Compliance checklist
+
+2. **Output Requirements**: Follow `.claude/protocols/worker-output-protocol.md` for:
+   - Two mandatory files: Markdown notes + JSON response
+   - Correct file naming and directory structure
+   - Content structure and formatting standards
+
+3. **Worker Standards**: Generate outputs in this EXACT sequence:
+   - **First**: `devops_notes.md` - Detailed infrastructure analysis
+   - **Second**: `devops_response.json` - Structured data for synthesis
+
+### Output Structure
+
+**DevOps-specific outputs:**
+
+1. **First: Detailed Infrastructure Analysis** (devops_notes.md)
+   - THIS FILE IS REQUIRED - YOU MUST CREATE IT
+   - Infrastructure architecture and deployment strategies
+   - CI/CD pipeline design and optimization
+   - Monitoring and observability setup
+   - Security and compliance considerations
+   - Scalability and reliability patterns
+
+2. **Second: Structured JSON** (devops_response.json)
+   - THIS FILE IS REQUIRED - YOU MUST CREATE IT
+   - Based on the infrastructure analysis
+   - Structured data for synthesis
+   - Machine-readable format
+   - Infrastructure metrics and deployment specifications
+
+**IMPORTANT: Both files MUST be created before marking the task as complete. Use the Write tool to create these files in the session directory.**
+
+### Required Output Files
 
 ---
 

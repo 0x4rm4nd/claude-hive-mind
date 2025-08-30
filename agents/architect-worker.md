@@ -280,7 +280,7 @@ Structured design decision should include:
 
 **Workers MUST generate outputs in this EXACT sequence:**
 
-1. **First: Detailed Architecture Analysis** (workers/decisions/architect-worker-analysis.md)
+1. **First: Detailed Architecture Analysis** (architect_notes.md)
    - THIS FILE IS REQUIRED - YOU MUST CREATE IT
    - Comprehensive architectural assessment
    - Design pattern evaluation
@@ -288,7 +288,7 @@ Structured design decision should include:
    - Technology recommendations
    - Migration paths and strategies
 
-2. **Second: Structured JSON** (workers/json/architect-worker.json)
+2. **Second: Structured JSON** (architect_response.json)
    - THIS FILE IS REQUIRED - YOU MUST CREATE IT
    - Based on the analysis notes
    - Structured data for synthesis
@@ -299,7 +299,7 @@ Structured design decision should include:
 
 ### Required Output Files
 
-#### Analysis Markdown (workers/decisions/architect-worker-analysis.md)
+#### Analysis Markdown (architect_notes.md)
 ```markdown
 # Architect Worker Analysis Report
 ## Session: [session-id]
@@ -338,7 +338,7 @@ Structured design decision should include:
 ...
 ```
 
-#### Structured JSON (workers/json/architect-worker.json)
+#### Structured JSON (architect_response.json)
 ```json
 {
   "session_id": "string",
@@ -365,6 +365,50 @@ Structured design decision should include:
   }
 }
 ```
+
+## 🚨 CRITICAL: Implementation Standards
+
+### MANDATORY Implementation Requirements
+
+**All architect workers MUST follow these standards:**
+
+1. **Implementation Template**: Follow `.claude/templates/workers/implementation-template.md` for:
+   - Event logging standards (NO session_id in events)
+   - File naming conventions (`architect_notes.md` not `architect-worker-notes.md`)
+   - Startup sequence requirements
+   - Compliance checklist
+
+2. **Output Requirements**: Follow `.claude/protocols/worker-output-protocol.md` for:
+   - Two mandatory files: Markdown notes + JSON response
+   - Correct file naming and directory structure
+   - Content structure and formatting standards
+
+3. **Worker Standards**: Generate outputs in this EXACT sequence:
+   - **First**: `architect_notes.md` - Detailed architecture analysis
+   - **Second**: `architect_response.json` - Structured data for synthesis
+
+### Output Structure
+
+**Architect-specific outputs:**
+
+1. **First: Detailed Architecture Analysis** (architect_notes.md)
+   - THIS FILE IS REQUIRED - YOU MUST CREATE IT
+   - System design patterns and architectural decisions
+   - Scalability analysis and performance considerations  
+   - Technology stack recommendations
+   - Integration patterns and service boundaries
+   - Security architecture considerations
+
+2. **Second: Structured JSON** (architect_response.json)
+   - THIS FILE IS REQUIRED - YOU MUST CREATE IT
+   - Based on the architecture analysis
+   - Structured data for synthesis
+   - Machine-readable format
+   - Architecture metrics and scores
+
+**IMPORTANT: Both files MUST be created before marking the task as complete. Use the Write tool to create these files in the session directory.**
+
+### Required Output Files
 
 ### Logging Requirements
 

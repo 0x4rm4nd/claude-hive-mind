@@ -273,14 +273,14 @@ Design review should verify:
 
 **Workers MUST generate outputs in this EXACT sequence:**
 
-1. **First: Detailed Design Documentation** (workers/decisions/designer-worker-design.md)
+1. **First: Detailed Design Documentation** (designer_notes.md)
    - Comprehensive design rationale
    - User experience decisions
    - Visual design choices
    - Accessibility considerations
    - Design system documentation
 
-2. **Second: Structured JSON** (workers/json/designer-worker.json)
+2. **Second: Structured JSON** (designer_response.json)
    - Based on the design documentation
    - Structured data for synthesis
    - Machine-readable format
@@ -288,7 +288,7 @@ Design review should verify:
 
 ### Required Output Files
 
-#### Design Markdown (workers/decisions/designer-worker-design.md)
+#### Design Markdown (designer_notes.md)
 ```markdown
 # Designer Worker Design Report
 ## Session: [session-id]
@@ -335,7 +335,7 @@ Design review should verify:
 [Implementation guidelines and specifications]
 ```
 
-#### Structured JSON (workers/json/designer-worker.json)
+#### Structured JSON (designer_response.json)
 ```json
 {
   "session_id": "string",
@@ -385,6 +385,50 @@ Design review should verify:
 - Use save_json() for structured data
 
 Refer to the coordination protocol for implementation details.
+
+## 🚨 CRITICAL: Implementation Standards
+
+### MANDATORY Implementation Requirements
+
+**All designer workers MUST follow these standards:**
+
+1. **Implementation Template**: Follow `.claude/templates/workers/implementation-template.md` for:
+   - Event logging standards (NO session_id in events)
+   - File naming conventions (`designer_notes.md` not `designer-worker-notes.md`)
+   - Startup sequence requirements
+   - Compliance checklist
+
+2. **Output Requirements**: Follow `.claude/protocols/worker-output-protocol.md` for:
+   - Two mandatory files: Markdown notes + JSON response
+   - Correct file naming and directory structure
+   - Content structure and formatting standards
+
+3. **Worker Standards**: Generate outputs in this EXACT sequence:
+   - **First**: `designer_notes.md` - Detailed design analysis
+   - **Second**: `designer_response.json` - Structured data for synthesis
+
+### Output Structure
+
+**Designer-specific outputs:**
+
+1. **First: Detailed Design Analysis** (designer_notes.md)
+   - THIS FILE IS REQUIRED - YOU MUST CREATE IT
+   - User experience design patterns and principles
+   - Visual design systems and component architecture
+   - Accessibility standards and compliance analysis
+   - Design token specifications and usage guidelines
+   - User interface optimization recommendations
+
+2. **Second: Structured JSON** (designer_response.json)
+   - THIS FILE IS REQUIRED - YOU MUST CREATE IT
+   - Based on the design analysis
+   - Structured data for synthesis
+   - Machine-readable format
+   - Design system metrics and component specifications
+
+**IMPORTANT: Both files MUST be created before marking the task as complete. Use the Write tool to create these files in the session directory.**
+
+### Required Output Files
 
 ---
 

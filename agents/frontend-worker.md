@@ -267,14 +267,14 @@ Structured performance metrics should include:
 
 **Workers MUST generate outputs in this EXACT sequence:**
 
-1. **First: Detailed Implementation Notes** (workers/decisions/frontend-worker-implementation.md)
+1. **First: Detailed Implementation Notes** (frontend_notes.md)
    - Comprehensive UI implementation details
    - Component architecture decisions
    - State management patterns
    - Performance optimizations
    - Accessibility considerations
 
-2. **Second: Structured JSON** (workers/json/frontend-worker.json)
+2. **Second: Structured JSON** (frontend_response.json)
    - Based on the implementation notes
    - Structured data for synthesis
    - Machine-readable format
@@ -282,7 +282,7 @@ Structured performance metrics should include:
 
 ### Required Output Files
 
-#### Implementation Markdown (workers/decisions/frontend-worker-implementation.md)
+#### Implementation Markdown (frontend_notes.md)
 ```markdown
 # Frontend Worker Implementation Report
 ## Session: [session-id]
@@ -326,7 +326,7 @@ Structured performance metrics should include:
 [Unit tests, integration tests, E2E tests]
 ```
 
-#### Structured JSON (workers/json/frontend-worker.json)
+#### Structured JSON (frontend_response.json)
 ```json
 {
   "session_id": "string",
@@ -386,6 +386,50 @@ Structured performance metrics should include:
 - Use save_json() for structured data
 
 Refer to the coordination protocol for implementation details.
+
+## 🚨 CRITICAL: Implementation Standards
+
+### MANDATORY Implementation Requirements
+
+**All frontend workers MUST follow these standards:**
+
+1. **Implementation Template**: Follow `.claude/templates/workers/implementation-template.md` for:
+   - Event logging standards (NO session_id in events)
+   - File naming conventions (`frontend_notes.md` not `frontend-worker-notes.md`)
+   - Startup sequence requirements
+   - Compliance checklist
+
+2. **Output Requirements**: Follow `.claude/protocols/worker-output-protocol.md` for:
+   - Two mandatory files: Markdown notes + JSON response
+   - Correct file naming and directory structure
+   - Content structure and formatting standards
+
+3. **Worker Standards**: Generate outputs in this EXACT sequence:
+   - **First**: `frontend_notes.md` - Detailed frontend analysis
+   - **Second**: `frontend_response.json` - Structured data for synthesis
+
+### Output Structure
+
+**Frontend-specific outputs:**
+
+1. **First: Detailed Frontend Analysis** (frontend_notes.md)
+   - THIS FILE IS REQUIRED - YOU MUST CREATE IT
+   - Component architecture and state management patterns
+   - Performance optimization and bundle analysis
+   - User interface implementation and responsive design
+   - Accessibility compliance and testing strategies
+   - Integration with backend APIs and data flows
+
+2. **Second: Structured JSON** (frontend_response.json)
+   - THIS FILE IS REQUIRED - YOU MUST CREATE IT
+   - Based on the frontend analysis
+   - Structured data for synthesis
+   - Machine-readable format
+   - Performance metrics and component specifications
+
+**IMPORTANT: Both files MUST be created before marking the task as complete. Use the Write tool to create these files in the session directory.**
+
+### Required Output Files
 
 ---
 
