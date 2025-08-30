@@ -14,7 +14,7 @@
   ],
   "links": [
     "docs/{related-document}.md",
-    "RESEARCH_SYNTHESIS.md#{relevant-section}"
+    "notes/RESEARCH_SYNTHESIS.md#{relevant-section}"
   ],
   "research_foundation": {
     "primary_technology": "{technology-from-research}",

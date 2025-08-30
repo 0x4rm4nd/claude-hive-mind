@@ -1,175 +1,101 @@
-# Worker Implementation Template - Event Logging Standards
+# Worker Implementation Template - Mandatory Standards
 
-## 🚨 CRITICAL: Mandatory Worker Startup Sequence
+## 🚨 CRITICAL: Protocol Integration
 
-### When Spawned, ALL Workers MUST:
-```python
-# Step 1: Extract Session ID (FIRST OPERATION)
-session_id = extract_session_id(prompt, WORKER_TYPE)
-log_debug(session_id, "INFO", WORKER_TYPE, f"Session ID extracted: {session_id}")
+This worker MUST follow all specified SmartWalletFX protocols from the `.claude/protocols/` directory.
 
-# Step 2: Log Worker Spawn Event (MANDATORY - MUST BE FIRST EVENT)
-log_event(session_id, "worker_spawned", WORKER_TYPE, f"{WORKER_TYPE} activated")
-log_debug(session_id, "INFO", WORKER_TYPE, "Worker spawn event logged")
+### 1. Unified Session Management (MANDATORY)
+- **Path Detection**: ALWAYS use `SessionManagement.detect_project_root()` for pathing. NEVER use relative paths.
+- **Session Path**: ALWAYS use `SessionManagement.get_session_path(session_id)`.
+- **File Operations**: NEVER overwrite session files. Use the append-safe and atomic update methods from `SessionManagement` for `EVENTS.jsonl`, `DEBUG.jsonl`, `STATE.json`, and `BACKLOG.jsonl`.
 
-# Step 3: Validate Session State
-state = json.loads(Read(f"Docs/hive-mind/sessions/{session_id}/STATE.json"))
-worker_config = state.get("worker_configs", {}).get(WORKER_TYPE, {})
-log_event(session_id, "session_validated", WORKER_TYPE, "Session state validated")
+### 2. Worker Prompt File Reading (MANDATORY)
+When spawned, you MUST read your instructions from your assigned prompt file:
+1. Extract `session_id` from the initial prompt.
+2. Construct the prompt file path: `Docs/hive-mind/sessions/{session_id}/workers/prompts/{worker_type}.prompt`.
+3. Read and parse the file to get your task description, focus areas, dependencies, and success criteria.
 
-# Step 4: Log Configuration Complete
-log_event(session_id, "worker_configured", WORKER_TYPE, "Worker configuration complete")
+### 3. Startup Protocol (MANDATORY)
+On startup, you MUST execute this sequence and log each step:
+1.  **Extract Session ID**: Use `extract_session_id()` from the logging functions template.
+2.  **Log Spawn Event**: This MUST be your first event. Use `log_event(session_id, "worker_spawned", ...)`
+3.  **Validate Session**: Use `SessionManagement.ensure_session_exists(session_id)`.
+4.  **Load Configuration**: Read `STATE.json` to get your configuration.
+5.  **Log Configuration Complete**: Log a `worker_configured` event.
+6.  **Begin Analysis**: Log an `analysis_started` event.
 
-# Step 5: Begin Analysis (NO WORKER PREFIX IN EVENT TYPE)
-log_event(session_id, "analysis_started", WORKER_TYPE, "Beginning domain analysis")
-```
+### 4. Event Logging Protocol (MANDATORY)
+- Use the functions from `.claude/templates/logging-functions.py` for all logging.
+- **Event Types**: Use standardized event types (e.g., `analysis_started`). DO NOT use worker-specific prefixes (e.g., `backend_analysis_started`).
+- **session_id**: The `session_id` parameter in logging functions is for determining the file path. It MUST NOT be included as a field within the logged JSON object itself.
 
-## 📝 CRITICAL: Event Logging Standards
+### 5. Completion Protocol (MANDATORY)
+When finishing your task, you MUST:
+1. Generate your two output files (see below).
+2. Update your status in `STATE.json` to "completed" via `SessionManagement.update_state_atomically()`.
+3. Log a `worker_completed` event.
 
-### Event Structure (NO session_id in event object)
-```json
-{
-  "timestamp": "2025-08-30T14:16:22Z",
-  "type": "analysis_started",  // NO worker-specific prefixes
-  "agent": "backend-worker",
-  "details": {
-    "action": "analysis_initialized",  // NO worker prefix here either
-    "target": "crypto-data",
-    "result": "success"
-  }
-}
-```
-
-### ❌ INCORRECT Event Examples (DO NOT USE)
-```json
-// WRONG - includes session_id in event
-{
-  "timestamp": "2025-08-30T14:16:22Z",
-  "type": "task_started",
-  "agent": "backend-worker",
-  "session_id": "2025-08-30-session",  // NEVER include this!
-  "details": {...}
-}
-
-// WRONG - worker-specific event type prefix
-{
-  "timestamp": "2025-08-30T14:16:22Z",
-  "type": "backend_analysis_started",  // NO worker prefixes!
-  "agent": "backend-worker",
-  "details": {...}
-}
-
-// WRONG - worker-specific action in details
-{
-  "timestamp": "2025-08-30T14:16:22Z",
-  "type": "analysis_started",
-  "agent": "test-worker",
-  "details": {
-    "action": "test_analysis_initialized"  // NO worker prefixes!
-  }
-}
-```
-
-### ✅ CORRECT Event Examples
-```json
-// CORRECT - worker_spawned (first event)
-{
-  "timestamp": "2025-08-30T14:16:22Z",
-  "type": "worker_spawned",
-  "agent": "backend-worker",
-  "details": "backend-worker activated"
-}
-
-// CORRECT - analysis_started (no prefix)
-{
-  "timestamp": "2025-08-30T14:16:22Z",
-  "type": "analysis_started",
-  "agent": "backend-worker",
-  "details": {
-    "action": "analysis_initialized",
-    "target": "crypto-data",
-    "result": "success"
-  }
-}
-```
-
-## 📄 CRITICAL: Output File Requirements
+## 📄 CRITICAL: Output Generation Requirements
 
 ### MANDATORY: Create TWO Output Files
 
-#### 1. Research Notes (Markdown)
-```python
-# CORRECT file naming (underscore, no "-worker")
-notes_path = f"Docs/hive-mind/sessions/{session_id}/notes/backend_notes.md"
-notes_path = f"Docs/hive-mind/sessions/{session_id}/notes/test_notes.md"
+#### 1. Detailed Analysis Notes (Markdown)
+- **Purpose**: Human-readable analysis, findings, and rationale.
+- **Path**: `Docs/hive-mind/sessions/{session_id}/notes/{worker_type_clean}_notes.md`
+- **Naming**: Use your worker type with the "-worker" suffix removed (e.g., `backend_notes.md`).
 
-# WRONG (do not use)
-notes_path = f"Docs/hive-mind/sessions/{session_id}/notes/backend-worker-notes.md"
-notes_path = f"Docs/hive-mind/sessions/{session_id}/notes/backend-notes.md"
-```
-
-#### 2. JSON Response
-```python
-# CORRECT file naming
-json_path = f"Docs/hive-mind/sessions/{session_id}/workers/json/backend_response.json"
-json_path = f"Docs/hive-mind/sessions/{session_id}/workers/json/test_response.json"
-
-# Helper for clean worker type
-worker_type_clean = WORKER_TYPE.replace('-worker', '')
-```
+#### 2. Structured Response (JSON)
+- **Purpose**: Machine-readable data for the Queen's synthesis.
+- **Path**: `Docs/hive-mind/sessions/{session_id}/workers/json/{worker_type_clean}_response.json`
+- **Naming**: Use your worker type with the "-worker" suffix removed (e.g., `backend_response.json`).
 
 ### Output Creation Sequence
-```python
-# Step 1: Create markdown notes FIRST
-notes_content = generate_markdown_report(findings)
-notes_path = f"Docs/hive-mind/sessions/{session_id}/notes/{WORKER_TYPE.replace('-worker','')}_notes.md"
-Write(notes_path, notes_content)
-log_event(session_id, "notes_created", WORKER_TYPE, f"Notes saved to {notes_path}")
+You MUST generate outputs in this exact order:
+1.  **First**: Create and write the detailed markdown notes file.
+2.  **Log Notes Creation**: Log a `notes_created` event.
+3.  **Second**: Create and write the structured JSON response file.
+4.  **Log JSON Creation**: Log a `json_created` event.
 
-# Step 2: Create JSON response SECOND  
-json_response = generate_json_response(findings)
-json_path = f"Docs/hive-mind/sessions/{session_id}/workers/json/{WORKER_TYPE.replace('-worker','')}_response.json"
-Write(json_path, json.dumps(json_response, indent=2))
-log_event(session_id, "json_created", WORKER_TYPE, "JSON response saved")
+### Generic Output Content Structure
 
-# Step 3: Log completion
-log_event(session_id, "worker_completed", WORKER_TYPE, f"Analysis complete - {len(findings)} findings")
+**Markdown Notes (`{worker_type_clean}_notes.md`)**
+```markdown
+# {Worker Name} Analysis Report
+## Session: {session_id}
+
+### Executive Summary
+[High-level findings and assessment]
+
+### Detailed Analysis
+[Your detailed analysis, findings,and evidence]
+
+### Recommendations
+[Your actionable recommendations]
 ```
 
-## 🔒 Compliance Checklist
-
-Before completing work, verify:
-- [ ] `worker_spawned` event logged as FIRST event
-- [ ] NO `session_id` field in any event objects
-- [ ] NO worker-specific prefixes in event types
-- [ ] Both output files created (markdown AND JSON)
-- [ ] Files use correct naming (underscore, no "-worker")
-- [ ] Files in correct directories (notes/ and workers/json/)
-- [ ] All mandatory lifecycle events logged
-
-## 📋 Event Type Reference
-
-### Standardized Event Types (NO worker prefixes)
-- `worker_spawned` - First event when worker starts
-- `session_validated` - Session validation complete
-- `worker_configured` - Configuration loaded
-- `analysis_started` - Analysis begun (NOT "backend_analysis_started")
-- `progress_update` - Progress milestone (NOT "test_progress_update")
-- `notes_created` - Markdown notes saved
-- `json_created` - JSON response saved
-- `worker_completed` - Work finished
-- `worker_failed` - Error occurred
-
-### Details Field Standards
+**JSON Response (`{worker_type_clean}_response.json`)**
 ```json
 {
-  "action": "analysis_initialized",  // NO worker prefix
-  "target": "component_name",
-  "result": "success|failure",
-  "metrics": {...}  // Optional
+  "worker": "{your-worker-type}",
+  "session_id": "{session_id}",
+  "timestamp": "ISO-8601",
+  "status": "completed",
+  "summary": {
+    "key_findings": [],
+    "critical_issues": [],
+    "recommendations": []
+  },
+  "analysis": {
+    // Your specific structured analysis data
+  },
+  "metrics": {}
 }
 ```
 
----
-
-**This template defines the MANDATORY standards for all worker implementations.**
+## 🔒 Compliance Checklist
+Before completing, verify you have followed all protocols:
+- [ ] Adhered to the full startup sequence.
+- [ ] Used only approved logging functions and event types.
+- [ ] Created both a markdown notes file and a JSON response file.
+- [ ] Used the correct file naming and directory structure for outputs.
+- [ ] Logged all required lifecycle events (`worker_spawned`, `worker_completed`, etc.).
