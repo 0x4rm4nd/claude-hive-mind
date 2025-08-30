@@ -36,18 +36,21 @@ def extract_session_id(prompt_text, worker_type):
     return session_id
 
 def log_event(session_id, event_type, agent_name, details, status=None):
-    """ATOMIC APPEND to EVENTS.jsonl - Thread-safe implementation"""
+    """ATOMIC APPEND to EVENTS.jsonl - Thread-safe implementation
+    
+    CRITICAL: session_id is ONLY used for file path, NOT included in event
+    """
     from datetime import datetime
     import json
     
-    # Generate timestamp in machine local time with offset
-    timestamp = datetime.now().astimezone().isoformat()
+    # Generate timestamp in UTC ISO format
+    timestamp = datetime.utcnow().strftime("%Y-%m-%dT%H:%M:%SZ")
     
-    # Build event
+    # Build event - NO session_id field in the event object
     event = {
         "timestamp": timestamp,
-        "type": event_type,
-        "agent": agent_name,
+        "event_type": event_type,  # Standardized field name
+        "worker": agent_name,  # Use 'worker' for consistency
         "details": str(details)[:500] if details else "No details provided"
     }
     
@@ -75,10 +78,10 @@ def log_debug(session_id, level, agent_name, message, context=None):
     from datetime import datetime
     import json
     
-    # Generate timestamp in machine local time with offset
-    timestamp = datetime.now().astimezone().isoformat()
+    # Generate timestamp in UTC ISO format
+    timestamp = datetime.utcnow().strftime("%Y-%m-%dT%H:%M:%SZ")
     
-    # Build debug entry
+    # Build debug entry - no session_path field
     debug_entry = {
         "timestamp": timestamp,
         "level": level,  # INFO, SUCCESS, WARNING, ERROR, COMPLIANCE
@@ -124,7 +127,7 @@ def verify_worker_compliance(session_id, worker_name):
         "worker_spawned",
         "session_validated", 
         "worker_configured",
-        "worker_analysis_started",
+        "analysis_started",  # No worker prefix
         "worker_completed"
     ]
     
@@ -132,8 +135,8 @@ def verify_worker_compliance(session_id, worker_name):
     for line in events.strip().split('\n'):
         try:
             event = json.loads(line)
-            if event.get("agent") == worker_name:
-                worker_events.append(event.get("type"))
+            if event.get("worker") == worker_name or event.get("agent") == worker_name:
+                worker_events.append(event.get("event_type", event.get("type")))  # Support both field names
         except:
             continue
     

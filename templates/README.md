@@ -1,9 +1,27 @@
-# Protocol Templates Directory
+# Claude Templates Directory
 
 ## Overview
-This directory contains all extracted templates from protocol files to reduce file sizes and improve maintainability. Templates are referenced by protocol files rather than embedded directly.
+This directory contains all templates for the Claude Code hive-mind system, including protocol templates, worker implementation guides, and system configuration templates.
 
-## Template Organization
+## Directory Structure
+```
+.claude/templates/
+├── workers/
+│   └── implementation-template.md  # Worker implementation standards
+├── state-v2-template.json         # Session state structure
+├── worker-state-template.json     # Worker state structure
+├── event-template.json            # Event logging structure  
+├── debug-entry-template.json      # Debug logging structure
+├── session-template.md            # Session initialization template
+├── worker-notes-template.md       # Worker output notes template
+├── logging-functions.py           # Universal logging functions
+└── README.md                      # This file
+```
+
+## Template Categories
+
+### Worker Implementation
+- **`workers/implementation-template.md`** - Mandatory implementation standards for all worker agents, including event logging, file naming conventions, and compliance requirements
 
 ### JSON Templates
 - **state-v2-template.json** - STATE.json v2.0 structure for session management
@@ -29,7 +47,7 @@ This directory contains all extracted templates from protocol files to reduce fi
 
 ### For Protocol Authors
 1. **Never embed templates** - Always reference template files
-2. **Use clear references** - Include path: `.claude/protocols/templates/[template-name]`
+2. **Use clear references** - Include path: `.claude/templates/[template-name]`
 3. **Document parameters** - Explain template placeholders and usage
 
 ### For Agent Implementers
