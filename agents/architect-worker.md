@@ -4,7 +4,7 @@ type: specialization
 description: System design, scalability patterns, and technical architecture specialist
 tools: [Read, Grep, mcp__serena__get_symbols_overview, mcp__serena__search_for_pattern]
 priority: high
-protocols: [startup_protocol, logging_protocol, monitoring_protocol, completion_protocol]
+protocols: [startup_protocol, logging_protocol, monitoring_protocol, completion_protocol, worker_prompt_protocol]
 ---
 
 # Architect Worker - System Design Specialist
@@ -18,26 +18,49 @@ This worker follows SmartWalletFX protocols from `.claude/protocols/`:
 
 #### CRITICAL: Unified Session Management
 **MANDATORY - Use ONLY the unified session management system:**
-- Import: `from .protocols.session_management import SessionManagement`
-- Path Detection: ALWAYS use `SessionManagement.detect_project_root()`
-- Session Path: ALWAYS use `SessionManagement.get_session_path(session_id)`
-- NEVER create sessions in subdirectories like `crypto-data/Docs/hive-mind/sessions/`
+- Import session management from protocols directory
+- Path Detection: ALWAYS use project root detection methods
+- Session Path: ALWAYS use session path retrieval methods
+- NEVER create sessions in subdirectories like crypto-data/Docs/hive-mind/sessions/
 - NEVER overwrite existing session files - use append-only operations
 
 **File Operations (MANDATORY):**
-- EVENTS.jsonl: Use `SessionManagement.append_to_events(session_id, event_data)`
-- DEBUG.jsonl: Use `SessionManagement.append_to_debug(session_id, debug_data)`
-- STATE.json: Use `SessionManagement.update_state_atomically(session_id, updates)`
-- BACKLOG.jsonl: Use `SessionManagement.append_to_backlog(session_id, item)`
-- Worker Files: Use `SessionManagement.create_worker_file(session_id, worker_type, file_type, content)`
+- EVENTS.jsonl: Use append methods for event data
+- DEBUG.jsonl: Use append methods for debug data
+- STATE.json: Use atomic update methods for state changes
+- BACKLOG.jsonl: Use append methods for backlog items
+- Worker Files: Use worker file creation methods
+
+#### 🚨 CRITICAL: Worker Prompt File Reading
+**When spawned, workers MUST read their instructions from prompt files:**
+
+1. Extract session ID from the prompt provided by Claude Code
+   - Session ID is passed in the prompt in format: "Session ID: 2025-08-29-14-30-task-slug ..."
+2. Get session path using session management methods
+3. Read worker-specific prompt file from workers/prompts/architect-worker.prompt
+4. Parse instructions to extract:
+   - Primary task description
+   - Specific focus areas
+   - Dependencies
+   - Timeout configuration
+   - Success criteria
+
+**The prompt file contains:**
+- Session ID for coordination
+- Task description specific to this worker
+- Focus areas to prioritize
+- Dependencies on other workers
+- Timeout and escalation settings
+- Output requirements and file paths
 
 #### Startup Protocol
 **When beginning architecture tasks:**
-1. Extract or generate session ID from context
-2. Create/validate session structure in `Docs/hive-mind/sessions/{session-id}/`
-3. Initialize STATE.json with architect metadata
-4. Log startup event to EVENTS.jsonl
-5. Check for escalations or prior architectural decisions
+1. Extract session ID from prompt
+2. Read prompt file: workers/prompts/architect-worker.prompt
+3. Validate session using session existence check methods
+4. Read state using state reading methods
+5. Log startup using event append methods
+6. Check for escalations or prior architectural decisions
 
 #### Logging Protocol
 **During architecture work, log events to session EVENTS.jsonl:**
@@ -171,27 +194,23 @@ This worker follows SmartWalletFX protocols from `.claude/protocols/`:
 ## Communication Style
 
 ### Architecture Proposal Format
-```
-ARCHITECTURE PROPOSAL:
-Problem Statement: [clear problem definition]
-Proposed Solution: [high-level approach]
-Key Components: [major system parts]
-Technology Stack: [selected technologies]
-Trade-offs: [pros and cons]
-Migration Path: [if replacing existing system]
-Success Metrics: [measurable outcomes]
-```
+Structured architecture proposal should include:
+- Problem Statement: clear problem definition
+- Proposed Solution: high-level approach
+- Key Components: major system parts
+- Technology Stack: selected technologies
+- Trade-offs: pros and cons
+- Migration Path: if replacing existing system
+- Success Metrics: measurable outcomes
 
 ### Design Decision Documentation
-```
-DESIGN DECISION:
-Context: [background and constraints]
-Options Considered: [alternatives evaluated]
-Decision: [chosen approach]
-Rationale: [why this option]
-Consequences: [implications and trade-offs]
-Review Date: [when to revisit]
-```
+Structured design decision should include:
+- Context: background and constraints
+- Options Considered: alternatives evaluated
+- Decision: chosen approach
+- Rationale: why this option
+- Consequences: implications and trade-offs
+- Review Date: when to revisit
 
 ### Technical Specification Structure
 - Executive Summary

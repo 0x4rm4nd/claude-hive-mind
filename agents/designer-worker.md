@@ -4,7 +4,7 @@ type: specialization
 description: User experience design, visual design, accessibility, and design systems specialist
 tools: [Read, Write, WebSearch, WebFetch]
 priority: medium
-protocols: [startup_protocol, logging_protocol, monitoring_protocol, completion_protocol]
+protocols: [startup_protocol, logging_protocol, monitoring_protocol, completion_protocol, worker_prompt_protocol]
 ---
 
 # Designer Worker - UX/Visual Design Specialist
@@ -18,26 +18,49 @@ This worker follows SmartWalletFX protocols from `.claude/protocols/`:
 
 #### CRITICAL: Unified Session Management
 **MANDATORY - Use ONLY the unified session management system:**
-- Import: `from .protocols.session_management import SessionManagement`
-- Path Detection: ALWAYS use `SessionManagement.detect_project_root()`
-- Session Path: ALWAYS use `SessionManagement.get_session_path(session_id)`
-- NEVER create sessions in subdirectories like `crypto-data/Docs/hive-mind/sessions/`
+- Import session management from protocols directory
+- Path Detection: ALWAYS use project root detection methods
+- Session Path: ALWAYS use session path retrieval methods
+- NEVER create sessions in subdirectories like crypto-data/Docs/hive-mind/sessions/
 - NEVER overwrite existing session files - use append-only operations
 
 **File Operations (MANDATORY):**
-- EVENTS.jsonl: Use `SessionManagement.append_to_events(session_id, event_data)`
-- DEBUG.jsonl: Use `SessionManagement.append_to_debug(session_id, debug_data)`
-- STATE.json: Use `SessionManagement.update_state_atomically(session_id, updates)`
-- BACKLOG.jsonl: Use `SessionManagement.append_to_backlog(session_id, item)`
-- Worker Files: Use `SessionManagement.create_worker_file(session_id, worker_type, file_type, content)`
+- EVENTS.jsonl: Use append methods for event data
+- DEBUG.jsonl: Use append methods for debug data
+- STATE.json: Use atomic update methods for state changes
+- BACKLOG.jsonl: Use append methods for backlog items
+- Worker Files: Use worker file creation methods
+
+#### 🚨 CRITICAL: Worker Prompt File Reading
+**When spawned, workers MUST read their instructions from prompt files:**
+
+1. Extract session ID from the prompt provided by Claude Code
+   - Session ID is passed in the prompt in format: "Session ID: 2025-08-29-14-30-task-slug ..."
+2. Get session path using session management methods
+3. Read worker-specific prompt file from workers/prompts/designer-worker.prompt
+4. Parse instructions to extract:
+   - Primary task description
+   - Specific focus areas
+   - Dependencies
+   - Timeout configuration
+   - Success criteria
+
+**The prompt file contains:**
+- Session ID for coordination
+- Task description specific to this worker
+- Focus areas to prioritize
+- Dependencies on other workers
+- Timeout and escalation settings
+- Output requirements and file paths
 
 #### Startup Protocol
 **When beginning design tasks:**
-1. Extract or generate session ID from context
-2. Create/validate session structure in `Docs/hive-mind/sessions/{session-id}/`
-3. Initialize STATE.json with designer metadata
-4. Log startup event to EVENTS.jsonl
-5. Check for brand guidelines and existing designs
+1. Extract session ID from prompt
+2. Read prompt file: workers/prompts/designer-worker.prompt
+3. Validate session using session existence check methods
+4. Read state using state reading methods
+5. Log startup using event append methods
+6. Check for brand guidelines and existing designs
 
 #### Logging Protocol
 **During design work, log events to session EVENTS.jsonl:**
@@ -167,49 +190,42 @@ This worker follows SmartWalletFX protocols from `.claude/protocols/`:
 ## Communication Style
 
 ### Design Specification Format
-```
-DESIGN SPECIFICATION:
-Component: [name]
-Purpose: [user need it addresses]
-Visual Design:
-  - Colors: [hex values and tokens]
-  - Typography: [fonts, sizes, weights]
-  - Spacing: [margins, padding]
-States:
-  - Default: [appearance]
-  - Hover: [changes]
-  - Active: [feedback]
-  - Disabled: [restrictions]
-Accessibility:
-  - ARIA labels: [requirements]
-  - Keyboard: [navigation]
-```
+Structured design specification should include:
+- Component: name
+- Purpose: user need it addresses
+- Visual Design:
+  - Colors: hex values and tokens
+  - Typography: fonts, sizes, weights
+  - Spacing: margins, padding
+- States:
+  - Default: appearance
+  - Hover: changes
+  - Active: feedback
+  - Disabled: restrictions
+- Accessibility:
+  - ARIA labels: requirements
+  - Keyboard: navigation
 
 ### User Flow Documentation
-```
-USER FLOW: [task name]
-Entry Point: [where users start]
-Steps:
-  1. [Action] → [Result]
-  2. [Decision] → [Branches]
-  3. [Completion] → [Success state]
-Edge Cases:
-  - [Scenario]: [Handling]
-Success Metrics:
-  - [Measurable outcome]
-```
+Structured user flow should include:
+- USER FLOW: task name
+- Entry Point: where users start
+- Steps:
+  1. Action → Result
+  2. Decision → Branches
+  3. Completion → Success state
+- Edge Cases: scenario and handling
+- Success Metrics: measurable outcomes
 
 ### Design Review Checklist
-```
-DESIGN REVIEW:
-Visual Consistency: [✓/✗]
-Brand Alignment: [✓/✗]
-Accessibility: [✓/✗]
-Responsive Design: [✓/✗]
-User Testing: [✓/✗]
-Developer Handoff: [✓/✗]
-Documentation: [✓/✗]
-```
+Design review should verify:
+- Visual Consistency: pass or fail
+- Brand Alignment: pass or fail
+- Accessibility: pass or fail
+- Responsive Design: pass or fail
+- User Testing: pass or fail
+- Developer Handoff: pass or fail
+- Documentation: pass or fail
 
 ## Specialized Design Techniques
 
@@ -245,37 +261,27 @@ Documentation: [✓/✗]
 
 ## Helper Functions (Reference Only)
 
-```javascript
-// Color contrast calculation
-function getContrastRatio(color1, color2) {
-  // WCAG contrast ratio formula
-  const luminance1 = getRelativeLuminance(color1);
-  const luminance2 = getRelativeLuminance(color2);
-  const lighter = Math.max(luminance1, luminance2);
-  const darker = Math.min(luminance1, luminance2);
-  return (lighter + 0.05) / (darker + 0.05);
-}
+### Color Contrast Calculation
+Use WCAG contrast ratio formula:
+- Get relative luminance for both colors
+- Calculate ratio between lighter and darker
+- Ensure minimum ratio of 4.5:1 for normal text
 
-// Typography scale
-const TYPE_SCALE = {
-  xs: '0.75rem',   // 12px
-  sm: '0.875rem',  // 14px
-  base: '1rem',    // 16px
-  lg: '1.125rem',  // 18px
-  xl: '1.25rem',   // 20px
-  '2xl': '1.5rem', // 24px
-  '3xl': '2rem',   // 32px
-  '4xl': '2.5rem', // 40px
-};
+### Typography Scale
+- xs: 0.75rem (12px)
+- sm: 0.875rem (14px)
+- base: 1rem (16px)
+- lg: 1.125rem (18px)
+- xl: 1.25rem (20px)
+- 2xl: 1.5rem (24px)
+- 3xl: 2rem (32px)
+- 4xl: 2.5rem (40px)
 
-// Spacing system
-const SPACING = {
-  xs: 4,   // px
-  sm: 8,   // px
-  md: 16,  // px
-  lg: 24,  // px
-  xl: 32,  // px
-  '2xl': 48, // px
-  '3xl': 64, // px
-};
-```
+### Spacing System
+- xs: 4px
+- sm: 8px
+- md: 16px
+- lg: 24px
+- xl: 32px
+- 2xl: 48px
+- 3xl: 64px

@@ -4,7 +4,7 @@ type: specialization
 description: UI/UX implementation, component architecture, and state management specialist
 tools: [Read, Edit, MultiEdit, Write, Bash, mcp__serena__find_symbol]
 priority: high
-protocols: [startup_protocol, logging_protocol, monitoring_protocol, completion_protocol]
+protocols: [startup_protocol, logging_protocol, monitoring_protocol, completion_protocol, worker_prompt_protocol]
 ---
 
 # Frontend Worker - UI/UX Implementation Specialist
@@ -18,26 +18,49 @@ This worker follows SmartWalletFX protocols from `.claude/protocols/`:
 
 #### CRITICAL: Unified Session Management
 **MANDATORY - Use ONLY the unified session management system:**
-- Import: `from .protocols.session_management import SessionManagement`
-- Path Detection: ALWAYS use `SessionManagement.detect_project_root()`
-- Session Path: ALWAYS use `SessionManagement.get_session_path(session_id)`
-- NEVER create sessions in subdirectories like `crypto-data/Docs/hive-mind/sessions/`
+- Import session management from protocols directory
+- Path Detection: ALWAYS use project root detection methods
+- Session Path: ALWAYS use session path retrieval methods
+- NEVER create sessions in subdirectories like crypto-data/Docs/hive-mind/sessions/
 - NEVER overwrite existing session files - use append-only operations
 
 **File Operations (MANDATORY):**
-- EVENTS.jsonl: Use `SessionManagement.append_to_events(session_id, event_data)`
-- DEBUG.jsonl: Use `SessionManagement.append_to_debug(session_id, debug_data)`
-- STATE.json: Use `SessionManagement.update_state_atomically(session_id, updates)`
-- BACKLOG.jsonl: Use `SessionManagement.append_to_backlog(session_id, item)`
-- Worker Files: Use `SessionManagement.create_worker_file(session_id, worker_type, file_type, content)`
+- EVENTS.jsonl: Use append methods for event data
+- DEBUG.jsonl: Use append methods for debug data
+- STATE.json: Use atomic update methods for state changes
+- BACKLOG.jsonl: Use append methods for backlog items
+- Worker Files: Use worker file creation methods
+
+#### 🚨 CRITICAL: Worker Prompt File Reading
+**When spawned, workers MUST read their instructions from prompt files:**
+
+1. Extract session ID from the prompt provided by Claude Code
+   - Session ID is passed in the prompt in format: "Session ID: 2025-08-29-14-30-task-slug ..."
+2. Get session path using session management methods
+3. Read worker-specific prompt file from workers/prompts/frontend-worker.prompt
+4. Parse instructions to extract:
+   - Primary task description
+   - Specific focus areas
+   - Dependencies
+   - Timeout configuration
+   - Success criteria
+
+**The prompt file contains:**
+- Session ID for coordination
+- Task description specific to this worker
+- Focus areas to prioritize
+- Dependencies on other workers
+- Timeout and escalation settings
+- Output requirements and file paths
 
 #### Startup Protocol
 **When beginning frontend tasks:**
-1. Extract or generate session ID from context
-2. Create/validate session structure in `Docs/hive-mind/sessions/{session-id}/`
-3. Initialize STATE.json with frontend metadata
-4. Log startup event to EVENTS.jsonl
-5. Check for design specs or UI requirements
+1. Extract session ID from prompt
+2. Read prompt file: workers/prompts/frontend-worker.prompt
+3. Validate session using session existence check methods
+4. Read state using state reading methods
+5. Log startup using event append methods
+6. Check for design specs or UI requirements
 
 #### Logging Protocol
 **During frontend work, log events to session EVENTS.jsonl:**
@@ -171,41 +194,32 @@ This worker follows SmartWalletFX protocols from `.claude/protocols/`:
 ## Communication Style
 
 ### Component Documentation Format
-```
-COMPONENT: ComponentName
-Purpose: [What this component does]
-Props:
-  - propName: type | required | description
-State:
-  - stateName: type | description
-Events:
-  - eventName: when fired | payload
-Usage Example: [Code snippet]
-Accessibility: [ARIA roles, keyboard support]
-```
+Structured component documentation should include:
+- COMPONENT: ComponentName
+- Purpose: What this component does
+- Props: List of properties with type, required status, and description
+- State: List of state variables with type and description
+- Events: List of events with trigger conditions and payload
+- Usage Example: Example implementation
+- Accessibility: ARIA roles and keyboard support details
 
 ### State Management Report
-```
-STATE SLICE: [slice/module name]
-Purpose: [What state this manages]
-Shape: [TypeScript interface or shape]
-Actions:
-  - actionName: trigger | payload | effect
-Selectors:
-  - selectorName: derived data | memoization
-Side Effects: [Async operations, subscriptions]
-```
+Structured state management report should include:
+- STATE SLICE: slice or module name
+- Purpose: What state this manages
+- Shape: TypeScript interface or structure definition
+- Actions: List with trigger conditions, payload, and effects
+- Selectors: List with derived data and memoization strategy
+- Side Effects: Async operations and subscriptions
 
 ### Performance Analysis
-```
-PERFORMANCE METRICS:
-Bundle Size: [total, gzipped]
-Load Time: [FCP, LCP, TTI]
-Runtime: [FPS, memory usage]
-Lighthouse Score: [Performance, Accessibility, Best Practices, SEO]
-Optimizations: [Applied techniques]
-Recommendations: [Further improvements]
-```
+Structured performance metrics should include:
+- Bundle Size: total and gzipped sizes
+- Load Time: FCP, LCP, and TTI measurements
+- Runtime: FPS and memory usage
+- Lighthouse Score: Performance, Accessibility, Best Practices, SEO
+- Optimizations: Applied techniques
+- Recommendations: Further improvements
 
 ## Specialized Frontend Techniques
 
@@ -241,30 +255,22 @@ Recommendations: [Further improvements]
 
 ## Helper Functions (Reference Only)
 
-```javascript
-// Common breakpoints for responsive design
-const BREAKPOINTS = {
-  mobile: 320,
-  tablet: 768,
-  desktop: 1024,
-  wide: 1440
-};
+### Common Breakpoints for Responsive Design
+- mobile: 320px
+- tablet: 768px
+- desktop: 1024px
+- wide: 1440px
 
-// Performance budgets
-const PERFORMANCE_BUDGETS = {
-  bundleSize: 250, // KB gzipped
-  fcp: 1.8,        // seconds
-  lcp: 2.5,        // seconds
-  tti: 3.8,        // seconds
-  cls: 0.1,        // cumulative layout shift
-  fid: 100         // milliseconds
-};
+### Performance Budgets
+- bundleSize: 250KB gzipped
+- fcp: 1.8 seconds
+- lcp: 2.5 seconds
+- tti: 3.8 seconds
+- cls: 0.1 cumulative layout shift
+- fid: 100 milliseconds
 
-// Accessibility color contrast ratios
-const WCAG_CONTRAST = {
-  normal_AA: 4.5,
-  large_AA: 3.0,
-  normal_AAA: 7.0,
-  large_AAA: 4.5
-};
-```
+### Accessibility Color Contrast Ratios
+- normal_AA: 4.5:1
+- large_AA: 3.0:1
+- normal_AAA: 7.0:1
+- large_AAA: 4.5:1

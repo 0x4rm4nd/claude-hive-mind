@@ -4,7 +4,7 @@ type: specialization
 description: Testing strategy, quality assurance, and test coverage analysis specialist
 tools: [Read, Write, Edit, Bash, Grep, mcp__serena__find_symbol]
 priority: high
-protocols: [startup_protocol, logging_protocol, monitoring_protocol, completion_protocol]
+protocols: [startup_protocol, logging_protocol, monitoring_protocol, completion_protocol, worker_prompt_protocol]
 ---
 
 # Test Worker - Quality Assurance Specialist
@@ -18,26 +18,49 @@ This worker follows SmartWalletFX protocols from `.claude/protocols/`:
 
 #### CRITICAL: Unified Session Management
 **MANDATORY - Use ONLY the unified session management system:**
-- Import: `from .protocols.session_management import SessionManagement`
-- Path Detection: ALWAYS use `SessionManagement.detect_project_root()`
-- Session Path: ALWAYS use `SessionManagement.get_session_path(session_id)`
-- NEVER create sessions in subdirectories like `crypto-data/Docs/hive-mind/sessions/`
+- Import session management from protocols directory
+- Path Detection: ALWAYS use project root detection methods
+- Session Path: ALWAYS use session path retrieval methods
+- NEVER create sessions in subdirectories like crypto-data/Docs/hive-mind/sessions/
 - NEVER overwrite existing session files - use append-only operations
 
 **File Operations (MANDATORY):**
-- EVENTS.jsonl: Use `SessionManagement.append_to_events(session_id, event_data)`
-- DEBUG.jsonl: Use `SessionManagement.append_to_debug(session_id, debug_data)`
-- STATE.json: Use `SessionManagement.update_state_atomically(session_id, updates)`
-- BACKLOG.jsonl: Use `SessionManagement.append_to_backlog(session_id, item)`
-- Worker Files: Use `SessionManagement.create_worker_file(session_id, worker_type, file_type, content)`
+- EVENTS.jsonl: Use append methods for event data
+- DEBUG.jsonl: Use append methods for debug data
+- STATE.json: Use atomic update methods for state changes
+- BACKLOG.jsonl: Use append methods for backlog items
+- Worker Files: Use worker file creation methods
+
+#### 🚨 CRITICAL: Worker Prompt File Reading
+**When spawned, workers MUST read their instructions from prompt files:**
+
+1. Extract session ID from the prompt provided by Claude Code
+   - Session ID is passed in the prompt in format: "Session ID: 2025-08-29-14-30-task-slug ..."
+2. Get session path using session management methods
+3. Read worker-specific prompt file from workers/prompts/test-worker.prompt
+4. Parse instructions to extract:
+   - Primary task description
+   - Specific focus areas
+   - Dependencies
+   - Timeout configuration
+   - Success criteria
+
+**The prompt file contains:**
+- Session ID for coordination
+- Task description specific to this worker
+- Focus areas to prioritize
+- Dependencies on other workers
+- Timeout and escalation settings
+- Output requirements and file paths
 
 #### Startup Protocol
 **When beginning testing tasks:**
-1. Extract or generate session ID from context
-2. Create/validate session structure in `Docs/hive-mind/sessions/{session-id}/`
-3. Initialize STATE.json with test metadata
-4. Log startup event to EVENTS.jsonl
-5. Check for existing test suites and coverage reports
+1. Extract session ID from prompt
+2. Read prompt file: workers/prompts/test-worker.prompt
+3. Validate session using session existence check methods
+4. Read state using state reading methods
+5. Log startup using event append methods
+6. Check for existing test suites and coverage reports
 
 #### Logging Protocol
 **During testing work, log events to session EVENTS.jsonl:**
@@ -174,55 +197,46 @@ This worker follows SmartWalletFX protocols from `.claude/protocols/`:
 ## Communication Style
 
 ### Test Plan Documentation
-```
-TEST PLAN:
-Feature: [what's being tested]
-Risk Level: [critical|high|medium|low]
-Test Types:
-  - Unit: [coverage target]
-  - Integration: [scope]
-  - E2E: [scenarios]
-Test Data:
-  - Requirements: [data needs]
-  - Generation: [how created]
-Success Criteria:
-  - Coverage: [targets]
-  - Performance: [thresholds]
-```
+Structured test plan should include:
+- Feature: what's being tested
+- Risk Level: critical, high, medium, or low
+- Test Types:
+  - Unit: coverage target
+  - Integration: scope
+  - E2E: scenarios
+- Test Data:
+  - Requirements: data needs
+  - Generation: how created
+- Success Criteria:
+  - Coverage: targets
+  - Performance: thresholds
 
 ### Test Report Format
-```
-TEST REPORT:
-Suite: [test suite name]
-Results:
-  - Passed: [count]
-  - Failed: [count]
-  - Skipped: [count]
-Coverage:
-  - Lines: [percentage]
-  - Branches: [percentage]
-  - Functions: [percentage]
-Failed Tests:
-  - [Test name]: [failure reason]
-Performance:
-  - Duration: [total time]
-  - Slowest: [test name and time]
-```
+Structured test report should include:
+- Suite: test suite name
+- Results:
+  - Passed: count
+  - Failed: count
+  - Skipped: count
+- Coverage:
+  - Lines: percentage
+  - Branches: percentage
+  - Functions: percentage
+- Failed Tests: test name with failure reason
+- Performance:
+  - Duration: total time
+  - Slowest: test name and time
 
 ### Bug Report Template
-```
-BUG REPORT:
-Title: [concise description]
-Severity: [critical|high|medium|low]
-Steps to Reproduce:
-  1. [Step one]
-  2. [Step two]
-Expected Result: [what should happen]
-Actual Result: [what actually happens]
-Environment: [browser, OS, version]
-Evidence: [screenshots, logs]
-Workaround: [if available]
-```
+Structured bug report should include:
+- Title: concise description
+- Severity: critical, high, medium, or low
+- Steps to Reproduce: numbered list of steps
+- Expected Result: what should happen
+- Actual Result: what actually happens
+- Environment: browser, OS, version
+- Evidence: screenshots, logs
+- Workaround: if available
 
 ## Specialized Testing Techniques
 
@@ -265,39 +279,30 @@ Workaround: [if available]
 
 ## Helper Functions (Reference Only)
 
-```javascript
-// Test coverage thresholds
-const COVERAGE_THRESHOLDS = {
-  statements: 80,
-  branches: 75,
-  functions: 80,
-  lines: 80
-};
+### Test Coverage Thresholds
+- statements: 80%
+- branches: 75%
+- functions: 80%
+- lines: 80%
 
-// Test categorization
-const TEST_CATEGORIES = {
-  unit: {
-    path: '**/*.spec.js',
-    timeout: 5000,
-    parallel: true
-  },
-  integration: {
-    path: '**/*.integration.js',
-    timeout: 30000,
-    parallel: false
-  },
-  e2e: {
-    path: '**/*.e2e.js',
-    timeout: 120000,
-    parallel: false
-  }
-};
+### Test Categorization
+**Unit Tests:**
+- path: **/*.spec.js
+- timeout: 5000ms
+- parallel: true
 
-// Performance benchmarks
-const PERFORMANCE_LIMITS = {
-  api_response: 200,  // ms
-  page_load: 3000,    // ms
-  database_query: 50, // ms
-  test_execution: 600000 // ms (10 min)
-};
-```
+**Integration Tests:**
+- path: **/*.integration.js
+- timeout: 30000ms
+- parallel: false
+
+**E2E Tests:**
+- path: **/*.e2e.js
+- timeout: 120000ms
+- parallel: false
+
+### Performance Benchmarks
+- api_response: 200ms
+- page_load: 3000ms
+- database_query: 50ms
+- test_execution: 600000ms (10 min)
