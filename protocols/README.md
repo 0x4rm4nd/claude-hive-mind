@@ -1,151 +1,62 @@
-# Hive-Mind Protocol Instructions
+# Hive-Mind Protocols
 
-These are **instruction protocols** that Queen and Workers should follow during coordination and implementation. They provide step-by-step guidance for using tools (Serena MCP, Read, Write, Edit) to maintain hive-mind coordination through structured files.
+Instruction protocols and light-weight implementations for Queen and Workers. These files define how agents coordinate, log, and manage sessions using append-only, file-based primitives.
 
-## 🎯 Complete Hive-Mind Enhancement System
+## What These Are
+- Step-by-step instructions and reference implementations.
+- Consistent conventions for session paths and file formats.
+- Append-only coordination via `EVENTS.jsonl`, `DEBUG.jsonl`, and `STATE.json`.
 
-### ✅ **Task Complexity Assessment with Tag Integration**
-- 4-level complexity classification with tag-enhanced analysis
-- Automated workflow selection prevents over-engineering simple tasks
-- Complexity-appropriate escalation timeout assignment
-- Worker context filtering based on tag access matrices
+## What These Are Not
+- Not auto-executed scripts; agents read and follow them.
+- Not a framework; no backward compatibility is maintained.
 
-### ✅ **Fast Worker Escalation System**
-- Priority-based escalation timeouts: 2min critical, 5min high, 10min medium, 15min low
-- Direct worker-to-worker coordination without Queen dependency
-- Auto-escalation chains route to domain experts
-- Session-integrated escalation state with resumption capability
+## Available Protocols (Current Set)
 
-### ✅ **Complexity-Adaptive Context Loading**
-- Single-tag (L1), related-tags (L2), multi-domain (L3-4) memory bank filtering
-- Worker-specific tag access matrices with strategic cross-domain access
-- 60-80% token efficiency through selective context loading
-- Intelligent context caching and sharing optimization
+Core implementations (.py):
+- `session_management.py` — Unified session paths, append helpers, state updates.
+- `coordination_protocol.py` — Session creation, event logging, worker planning.
+- `startup_protocol.py` — Startup flow for agents.
+- `completion_protocol.py` — Completion and handoff routines.
+- `escalation_protocol.py` — Escalation handling.
+- `monitoring_protocol.py` — Health and monitoring primitives.
+- `synthesis_protocol.py` — Synthesis and consolidation helpers.
+- `worker_prompt_protocol.py` — Worker prompt parsing utilities.
 
-### ✅ **Session Resumption with Memory Bank Context**
-- Complete memory bank context preservation and restoration
-- Worker context integrity validation across session interruptions
-- Conflict resolution for memory bank changes during downtime
-- Escalation state restoration with expired escalation handling
+Instruction docs (.md):
+- `unified-logging-protocol.md` — Single source of truth for logging via Bash echo.
+- `coordination_protocol_instructions.md`
+- `startup_protocol_instructions.md`
+- `completion_protocol_instructions.md`
+- `escalation_protocol_instructions.md`
+- `monitoring_protocol_instructions.md`
+- `worker_prompt_protocol_instructions.md`
+- `state-management-protocol.md`
+- `ENHANCED_SPAWN_PROTOCOL.md`
+- `queen-worker-coordination.md`
+- `queen-spawn-decision-guide.md`
+- `queen-spawn-quick-reference.md`
+- `intelligent-worker-selection.md`
+- `spawn-decision-tools.md`
 
-### ✅ **Override Persistence System**
-- Complexity level overrides persist across sessions with learning
-- Worker assignments remain ephemeral (session-only) for flexibility
-- Automated learning from override effectiveness with pattern matching
-- Task signature-based override application
+Templates (.claude/protocols/templates):
+- `logging-functions.py` — Canonical `log_event` and `log_debug` (Bash echo append).
+- `state-management-functions.py` — Atomic state helpers and validators.
+- `state-v2-template.json` — STATE.json template (v2).
+- `events.schema.json` — EVENTS.jsonl line schema (this repo).
+- `backlog-item-template.json`, `event-template.json`, `debug-entry-template.json`.
+- `session-template.md`, `worker-notes-template.md`, `worker-selection-matrix.yaml`.
 
-### ✅ **Enhanced Archive & Reflection System**
-- Automatic archive creation on task completion (all complexity levels)
-- Complexity-appropriate reflection generation (L2+ tasks)
-- Pattern extraction and pattern library contribution (L3+ tasks)
-- Session-to-memory-bank learning pipeline with tag integration
+## Conventions
+- Event fields: `timestamp`, `type`, `agent`, `details`, optional `status`.
+- Debug fields: `timestamp`, `level`, `agent`, `message`, optional `context`.
+- Session ID is implicit from the directory path; do not embed it in event lines.
+- Appends only; do not overwrite or truncate log files.
 
-## 🎯 IMPORTANT: These Are Instructions, Not Scripts
+## Usage Pattern
+1. Queen creates a session with `coordination_protocol.py`.
+2. Workers extract the session and log using `templates/logging-functions.py`.
+3. All events are appended to `EVENTS.jsonl` using Bash echo.
+4. State updates use atomic write (temp + rename) via `session_management.py`.
 
-When you see "commands" in this directory, understand them as:
-- **Instruction manuals** for Queen and Workers
-- **Protocols to follow** using real tools (Read, Write, Edit)
-- **NOT bash scripts** that will auto-execute
-
-## 📋 Available Protocol Instructions
-
-### Core Protocols (Essential)
-
-**session-coordination.md** - Unified session management protocol
-- Task complexity assessment (Level 1-4)
-- Worker coordination via EVENTS.jsonl
-- Escalation protocols and timeouts
-- Session resumption and memory bank integration
-- Context loading based on complexity
-
-**task-management.md** - Local task management
-- Creating tasks with complexity metadata in BACKLOG.jsonl
-- Task status monitoring and updates via STATE.json
-- Task completion workflows
-
-**research-synthesis.md** - Research coordination
-- Context7 research delegation
-- Multi-worker research synthesis
-- Knowledge base integration
-
-**notification-handler.md** - Worker coordination
-- Blocker/unblock event logging
-- Cross-worker communication
-- Escalation signaling
-
-**pattern-library.md** - Knowledge capture
-- Pattern identification and extraction
-- Reusable pattern documentation
-- Memory bank contribution
-
-### Supporting Protocols
-
-**conflict-resolution.md** - Decision conflicts
-**independent-decisions.md** - Worker autonomy
-**session-structure.md** - Session file organization
-
-## 🔄 How These Protocols Work
-
-### Example: When Queen needs to synthesize research
-
-1. **Queen reads** `research-synthesis.md` for instructions
-2. **Queen uses actual tools** to follow the protocol:
-   ```python
-   # Read research files
-   backend_research = Read("Docs/hive-mind/sessions/1/research/backend/auth.md")
-   frontend_research = Read("Docs/hive-mind/sessions/1/research/frontend/ui.md")
-   
-   # Synthesize findings
-   synthesis = combine_findings(backend_research, frontend_research)
-   
-   # Write synthesis
-   Write("Docs/hive-mind/sessions/1/research/README.md", synthesis)
-   
-   # Save to local memory bank
-   Write("Docs/hive-mind/memory-bank/synthesis.md", synthesis)
-   ```
-
-### Example: When Worker needs to signal blocker
-
-1. **Worker reads** `notification-handler.md` for instructions
-2. **Worker uses actual tools**:
-   ```python
-   # Append to EVENTS.jsonl
-   event = {"ts": timestamp, "type": "blocker", "event": "need_api_ready", "worker": "frontend"}
-   Append("Docs/hive-mind/sessions/1/EVENTS.jsonl", event)
-   ```
-
-## 🚫 What These Are NOT
-
-- ❌ **NOT executable bash scripts**
-- ❌ **NOT commands that run automatically**
-- ❌ **NOT something users directly invoke**
-
-## ✅ What These ARE
-
-- ✅ **Step-by-step instructions** for agents
-- ✅ **Protocols to ensure consistency** across workers
-- ✅ **Reference guides** for complex operations
-- ✅ **Documentation** of the hive-mind coordination patterns
-
-## 🎯 Usage Pattern
-
-```
-User: "Implement authentication"
-  ↓
-Queen: Reads summon-queen.md instructions
-  ↓
-Queen: Follows session creation protocol using local session management
-  ↓
-Queen: Assigns tasks to workers
-  ↓
-Workers: Read their agent file instructions
-  ↓
-Workers: Follow notification-handler.md protocol when blocked
-  ↓
-Workers: Follow pattern-library.md protocol when pattern found
-  ↓
-Queen: Follows research-synthesis.md protocol to combine findings
-```
-
-All "execution" happens through actual tools (Read, Write, Edit, Bash), not through these instruction files!
+Note: Keep it simple. We intentionally avoid lock-heavy concurrency. Append-only design minimizes risk of corruption and is sufficient for our needs.

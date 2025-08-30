@@ -40,8 +40,8 @@ def log_event(session_id, event_type, agent_name, details, status=None):
     from datetime import datetime
     import json
     
-    # Generate timestamp
-    timestamp = datetime.now().strftime('%Y-%m-%dT%H:%M:%S+02:00')
+    # Generate timestamp in machine local time with offset
+    timestamp = datetime.now().astimezone().isoformat()
     
     # Build event
     event = {
@@ -75,8 +75,8 @@ def log_debug(session_id, level, agent_name, message, context=None):
     from datetime import datetime
     import json
     
-    # Generate timestamp
-    timestamp = datetime.now().strftime('%Y-%m-%dT%H:%M:%S+02:00')
+    # Generate timestamp in machine local time with offset
+    timestamp = datetime.now().astimezone().isoformat()
     
     # Build debug entry
     debug_entry = {

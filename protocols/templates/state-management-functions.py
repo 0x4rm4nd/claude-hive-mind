@@ -28,8 +28,8 @@ def update_state(session_id, updates, merge_strategy="deep"):
             updated_state = {**current_state, **updates}
         
         # Update metadata
-        updated_state["timestamps"]["updated_at"] = datetime.now().isoformat()
-        updated_state["timestamps"]["last_heartbeat"] = datetime.now().isoformat()
+        updated_state["timestamps"]["updated_at"] = datetime.now().astimezone().isoformat()
+        updated_state["timestamps"]["last_heartbeat"] = datetime.now().astimezone().isoformat()
         
         # Write back
         f.seek(0)
@@ -76,17 +76,17 @@ def recover_state(session_id):
         for line in f:
             event = json.loads(line)
             
-            if event["event_type"] == "session_created":
+            if event.get("type") == "session_created":
                 rebuilt_state["created_at"] = event["timestamp"]
                 
-            elif event["event_type"] == "worker_spawned":
+            elif event.get("type") == "worker_spawned":
                 rebuilt_state["coordination_status"]["workers_spawned"].append(
-                    event["worker"]
+                    event.get("agent")
                 )
                 
-            elif event["event_type"] == "worker_completed":
+            elif event.get("type") == "worker_completed":
                 rebuilt_state["coordination_status"]["workers_completed"].append(
-                    event["worker"]
+                    event.get("agent")
                 )
     
     return rebuilt_state
@@ -96,7 +96,7 @@ def check_worker_health(session_id):
     Monitor worker health via heartbeat
     """
     state = read_state(session_id)
-    current_time = datetime.now()
+    current_time = datetime.now().astimezone()
     unhealthy_workers = []
     
     for worker_name, worker_state in state["worker_states"].items():

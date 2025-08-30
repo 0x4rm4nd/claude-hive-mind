@@ -1,0 +1,38 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "EVENTS.jsonl Line",
+  "type": "object",
+  "additionalProperties": true,
+  "required": ["timestamp", "type", "agent", "details"],
+  "properties": {
+    "timestamp": {
+      "type": "string",
+      "description": "UTC ISO-8601 timestamp",
+      "examples": [
+        "2025-01-15T10:30:00Z",
+        "2025-01-15T10:30:00+00:00"
+      ]
+    },
+    "type": {
+      "type": "string",
+      "description": "Event type per unified-logging-protocol.md"
+    },
+    "agent": {
+      "type": "string",
+      "description": "Agent name (e.g., queen-orchestrator, frontend-worker)"
+    },
+    "details": {
+      "description": "Event payload; truncated by logger to ~500 chars",
+      "oneOf": [
+        { "type": "string" },
+        { "type": "object" },
+        { "type": "array" }
+      ]
+    },
+    "status": {
+      "type": "string",
+      "description": "Optional status field"
+    }
+  }
+}
+

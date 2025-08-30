@@ -25,7 +25,7 @@ class BaseProtocol:
     def log_execution(self, action: str, data: Any):
         """Log protocol execution events"""
         self.execution_log.append({
-            "timestamp": datetime.now().isoformat(),
+            "timestamp": datetime.now().astimezone().isoformat(),
             "action": action,
             "data": data
         })
@@ -36,7 +36,7 @@ class BaseProtocol:
             return  # Silent fail if no session path available
         
         debug_entry = {
-            "timestamp": datetime.now().isoformat(),
+            "timestamp": datetime.now().astimezone().isoformat(),
             "level": level,
             "agent": getattr(self, 'worker_name', 'protocol'),
             "message": message,

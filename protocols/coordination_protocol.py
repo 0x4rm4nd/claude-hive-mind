@@ -43,7 +43,7 @@ class CoordinationProtocol:
     
     def generate_session_id(self, task_description: str) -> str:
         """Generate session ID in YYYY-MM-DD-HH-mm-TASKSLUG format"""
-        now = datetime.now()
+        now = datetime.now().astimezone()
         date_part = now.strftime("%Y-%m-%d-%H-%M")
         
         # Create task slug (min 15 chars)
@@ -100,7 +100,7 @@ class CoordinationProtocol:
         
         # Initialize DEBUG.jsonl with first entry
         debug_entry = {
-            "timestamp": datetime.now().isoformat(),
+            "timestamp": datetime.now().astimezone().isoformat(),
             "type": "debug_initialized",
             "agent": "queen-orchestrator",
             "details": "DEBUG.jsonl file created for session debugging"
@@ -116,7 +116,9 @@ class CoordinationProtocol:
         return state
     
     def log_event(self, event_type: str, details: Dict[str, Any], worker: str = "queen-orchestrator") -> None:
-        """Append event to EVENTS.jsonl - NEVER overwrites, always appends"""
+        """Append event to EVENTS.jsonl - NEVER overwrites, always appends.
+        Normalized to unified logging fields: timestamp, type, agent, details.
+        """
         if not self.session_path:
             self.log_debug(
                 "log_event failed - no active session",
@@ -131,10 +133,9 @@ class CoordinationProtocol:
             raise ValueError("No active session. Create session first.")
         
         event = {
-            "timestamp": datetime.now().isoformat(),
-            "event_type": event_type,
-            "worker": worker,
-            "session_id": self.current_session,
+            "timestamp": datetime.now().astimezone().isoformat(),
+            "type": event_type,
+            "agent": worker,
             "details": details
         }
         
@@ -152,7 +153,7 @@ class CoordinationProtocol:
             return  # Silent fail for debug logs before session creation
         
         debug_entry = {
-            "timestamp": datetime.now().isoformat(),
+            "timestamp": datetime.now().astimezone().isoformat(),
             "level": level,
             "agent": agent,
             "message": message,
@@ -219,7 +220,18 @@ class CoordinationProtocol:
         )
     
     def plan_workers(self, task_description: str, complexity_level: int, session_id: str) -> Dict[str, Any]:
-        """Plan worker allocation using intelligent Queen decision-making"""
+        """Plan worker allocation using intelligent Queen decision-making
+        
+        Implements the decision-making framework from:
+        - .claude/protocols/queen-spawn-decision-guide.md
+        - .claude/protocols/queen-spawn-quick-reference.md
+        
+        Core Principles Applied:
+        1. Coverage Over Count - Focus on perspectives, not numbers
+        2. Context Drives Selection - Task context determines expertise
+        3. Complexity Scales Depth - Complex tasks need deeper expertise
+        4. Dependencies Define Coordination - Understand sequence vs parallel
+        """
         # Analyze task for domain keywords and requirements
         task_lower = task_description.lower()
         workers_needed = []
@@ -380,14 +392,22 @@ class CoordinationProtocol:
         }
     
     def _analyze_task_requirements(self, task_description: str, complexity_level: int) -> Dict[str, Any]:
-        """Analyze task to determine requirements and domains"""
+        """Analyze task to determine requirements and domains
+        
+        Implements the Task Analysis Framework from queen-spawn-decision-guide.md:
+        - Step 1: Understand the Real Ask
+        - Step 2: Map Intent to Expertise
+        """
         task_lower = task_description.lower()
         analysis = {
+            'task_description': task_description,  # Store for reference
             'domains': [],
             'complexity_factors': [],
             'rationale': '',
             'requires_coordination': False,
-            'estimated_scope': 'single' if complexity_level == 1 else 'multi'
+            'estimated_scope': 'single' if complexity_level == 1 else 'multi',
+            'core_intent': '',  # From guide: exploration, implementation, or validation
+            'implicit_requirements': []  # From guide: security, performance, scalability, UX
         }
         
         # Identify primary domains
@@ -427,13 +447,44 @@ class CoordinationProtocol:
         if 'scale' in task_lower or 'scalability' in task_lower:
             analysis['complexity_factors'].append('scalability-requirements')
         
-        # Generate rationale
+        # Determine core intent (from Task Analysis Framework in guide)
+        if any(word in task_lower for word in ['explore', 'analyze', 'investigate', 'review', 'assess']):
+            analysis['core_intent'] = 'exploration'
+        elif any(word in task_lower for word in ['implement', 'build', 'create', 'add', 'develop']):
+            analysis['core_intent'] = 'implementation'
+        elif any(word in task_lower for word in ['test', 'validate', 'verify', 'check', 'ensure']):
+            analysis['core_intent'] = 'validation'
+        elif any(word in task_lower for word in ['fix', 'debug', 'resolve', 'repair']):
+            analysis['core_intent'] = 'debugging'
+        elif any(word in task_lower for word in ['optimize', 'improve', 'enhance', 'refactor']):
+            analysis['core_intent'] = 'optimization'
+        elif any(word in task_lower for word in ['design', 'architect', 'plan', 'structure']):
+            analysis['core_intent'] = 'design'
+        else:
+            analysis['core_intent'] = 'general'
+        
+        # Identify implicit requirements (from guide)
+        if any(word in task_lower for word in ['secure', 'security', 'vulnerability', 'safe']):
+            analysis['implicit_requirements'].append('security')
+        if any(word in task_lower for word in ['performance', 'fast', 'speed', 'efficient']):
+            analysis['implicit_requirements'].append('performance')
+        if any(word in task_lower for word in ['scale', 'scalability', 'growth', 'load']):
+            analysis['implicit_requirements'].append('scalability')
+        if any(word in task_lower for word in ['ui', 'ux', 'user', 'interface', 'experience']):
+            analysis['implicit_requirements'].append('user_experience')
+        
+        # Generate intelligent rationale based on guide principles
         domain_str = ', '.join(analysis['domains']) if analysis['domains'] else 'general'
         complexity_str = ', '.join(analysis['complexity_factors']) if analysis['complexity_factors'] else 'standard'
+        intent_str = analysis['core_intent']
+        implicit_str = ', '.join(analysis['implicit_requirements']) if analysis['implicit_requirements'] else 'none identified'
         
         analysis['rationale'] = (
-            f"Queen intelligence selected workers based on identified domains ({domain_str}) "
-            f"with complexity factors ({complexity_str}) for level {complexity_level} task. "
+            f"Queen applied spawn decision guidance for {intent_str} task. "
+            f"Identified domains: {domain_str}. "
+            f"Complexity factors: {complexity_str} (Level {complexity_level}). "
+            f"Implicit requirements: {implicit_str}. "
+            f"Applied patterns from queen-spawn-decision-guide.md for optimal coverage. "
             f"Coordination required: {analysis['requires_coordination']}"
         )
         
@@ -442,73 +493,210 @@ class CoordinationProtocol:
     def _apply_intelligent_worker_selection(self, initial_workers: List[str], 
                                            task_analysis: Dict[str, Any], 
                                            complexity_level: int) -> List[str]:
-        """Apply Queen's intelligence to refine worker selection"""
-        workers = initial_workers.copy()
+        """Apply Queen's intelligence to refine worker selection using spawn decision guidance
         
-        # Level 1: Minimal workers, only what's absolutely needed
+        This method implements the intelligent decision-making patterns from:
+        - .claude/protocols/queen-spawn-decision-guide.md
+        - .claude/protocols/queen-spawn-quick-reference.md
+        """
+        workers = initial_workers.copy()
+        task_lower = task_analysis.get('task_description', '').lower()
+        
+        # Apply Core Principle 1: Coverage Over Count
+        # "It's not about how many workers, but which perspectives you're covering"
+        
+        # Apply Core Principle 2: Context Drives Selection  
+        # "The task context tells you what expertise you need"
+        
+        # Check for comprehensive/detailed analysis requests (from spawn guide)
+        is_comprehensive = any(word in task_lower for word in 
+                             ['comprehensive', 'detailed', 'thorough', 'complete', 'full'])
+        
+        # Apply worker selection patterns from guide
+        if is_comprehensive:
+            # Pattern: The Comprehensive Analysis Team (from guide)
+            if 'analyze' in task_lower or 'analysis' in task_lower:
+                required_perspectives = [
+                    'architect-worker',  # Strategic overview and design patterns
+                    'analyzer-worker',   # Deep dive into code quality and issues
+                    'backend-worker',    # Implementation details and technical debt
+                    'test-worker'        # Coverage gaps and quality metrics
+                ]
+                # Add devops if infrastructure mentioned
+                if any(word in task_lower for word in ['infrastructure', 'deployment', 'devops']):
+                    required_perspectives.append('devops-worker')
+                    
+                # Ensure all perspectives are covered
+                for worker in required_perspectives:
+                    if worker not in workers:
+                        workers.append(worker)
+        
+        # Apply complexity-based patterns from guide
         if complexity_level == 1:
-            # If no workers selected, pick the most relevant one
+            # Level 1: Focused specialist + validator (from quick reference)
             if not workers:
+                # Pick the most relevant specialist
                 if 'backend' in task_analysis['domains']:
                     workers.append('backend-worker')
                 elif 'frontend' in task_analysis['domains']:
                     workers.append('frontend-worker')
+                elif 'security' in task_analysis['domains']:
+                    workers.append('analyzer-worker')
                 else:
-                    workers.append('analyzer-worker')  # Default to analyzer for investigation
-        
-        # Level 2: Add complementary workers for better coverage
-        elif complexity_level == 2:
-            # Ensure we have at least one implementation worker
-            has_impl = any(w in workers for w in ['backend-worker', 'frontend-worker'])
-            if not has_impl and not workers:
-                workers.append('backend-worker')  # Default implementation worker
+                    workers.append('analyzer-worker')  # Default for investigation
             
-            # Add analyzer if we have implementation but no analysis
-            if has_impl and 'analyzer-worker' not in workers:
-                workers.append('analyzer-worker')
-        
-        # Level 3: Comprehensive coverage with coordination
-        elif complexity_level == 3:
-            # Ensure architecture planning for complex tasks
-            if 'architect-worker' not in workers and task_analysis['requires_coordination']:
-                workers.insert(0, 'architect-worker')  # Architect goes first for planning
-            
-            # Ensure testing for complex implementations
+            # Add validator if implementation task
             if any(w in workers for w in ['backend-worker', 'frontend-worker']):
+                if 'test-worker' not in workers and len(workers) < 2:
+                    workers.append('test-worker')
+        
+        elif complexity_level == 2:
+            # Level 2: Specialist + supporter + validator (from quick reference)
+            # Apply Pattern: Implementation Squad (simplified)
+            if any(word in task_lower for word in ['implement', 'add', 'create', 'build']):
+                # Ensure implementation worker
+                has_impl = any(w in workers for w in ['backend-worker', 'frontend-worker'])
+                if not has_impl:
+                    if 'backend' in task_analysis['domains']:
+                        workers.append('backend-worker')
+                    elif 'frontend' in task_analysis['domains']:
+                        workers.append('frontend-worker')
+                    else:
+                        workers.append('backend-worker')  # Default
+                
+                # Add test worker for validation
                 if 'test-worker' not in workers:
                     workers.append('test-worker')
+                    
+                # Add analyzer for quality gates
+                if 'analyzer-worker' not in workers:
+                    workers.append('analyzer-worker')
             
-            # Add analyzer for complex tasks if not present
-            if 'analyzer-worker' not in workers and len(workers) < 4:
-                workers.append('analyzer-worker')
+            # Apply Pattern: Debug/Fix team (from guide)
+            elif any(word in task_lower for word in ['fix', 'bug', 'debug', 'issue']):
+                if 'analyzer-worker' not in workers:
+                    workers.append('analyzer-worker')  # Root cause analysis
+                
+                # Add domain expert
+                if 'backend' in task_analysis['domains'] and 'backend-worker' not in workers:
+                    workers.append('backend-worker')
+                elif 'frontend' in task_analysis['domains'] and 'frontend-worker' not in workers:
+                    workers.append('frontend-worker')
+                    
+                # Add test worker to verify fix
+                if 'test-worker' not in workers:
+                    workers.append('test-worker')
         
-        # Level 4: Full team with all necessary specialists
+        elif complexity_level == 3:
+            # Level 3: Multiple specialists + architect + validator (from quick reference)
+            # Apply Core Principle 3: Complexity Scales Depth, Not Just Breadth
+            
+            # Architect is critical for complex coordination
+            if 'architect-worker' not in workers:
+                workers.insert(0, 'architect-worker')  # Architect leads planning
+            
+            # Apply Coverage Assessment Checklist from guide
+            # Technical Coverage
+            if 'analyzer-worker' not in workers:
+                workers.append('analyzer-worker')  # Quality checking
+            
+            # Implementation Coverage
+            if any(word in task_lower for word in ['implement', 'build', 'develop']):
+                if 'backend' in task_analysis['domains'] and 'backend-worker' not in workers:
+                    workers.append('backend-worker')
+                if 'frontend' in task_analysis['domains'] and 'frontend-worker' not in workers:
+                    workers.append('frontend-worker')
+            
+            # Testing Coverage (mandatory for Level 3+)
+            if 'test-worker' not in workers:
+                workers.append('test-worker')
+            
+            # Infrastructure Coverage
+            if any(word in task_lower for word in ['deploy', 'infrastructure', 'scale']):
+                if 'devops-worker' not in workers:
+                    workers.append('devops-worker')
+            
+            # Apply Pattern: Performance Task Force if relevant
+            if any(word in task_lower for word in ['performance', 'optimize', 'speed']):
+                required_for_performance = ['analyzer-worker', 'backend-worker', 'devops-worker', 'architect-worker']
+                for worker in required_for_performance:
+                    if worker not in workers:
+                        workers.append(worker)
+        
         elif complexity_level >= 4:
+            # Level 4: Full team coverage (from quick reference: 5-7 workers)
+            # Apply Pattern: Security Audit Team or Comprehensive Analysis Team
+            
             # Start with architect for complex planning
             if 'architect-worker' not in workers:
                 workers.insert(0, 'architect-worker')
             
-            # Ensure all critical workers for complex tasks
-            critical_workers = []
-            if task_analysis['requires_coordination']:
-                critical_workers = ['architect-worker', 'analyzer-worker']
+            # Apply full Coverage Assessment Checklist
+            # Technical Coverage
+            if 'analyzer-worker' not in workers:
+                workers.append('analyzer-worker')
             
-            # Add implementation workers if dealing with full-stack
-            if 'full-stack' in task_analysis['domains']:
+            # Domain Coverage - ensure all relevant domains have experts
+            if 'full-stack' in task_analysis['domains'] or is_comprehensive:
+                # Full-stack requires both frontend and backend
                 if 'backend-worker' not in workers:
                     workers.append('backend-worker')
                 if 'frontend-worker' not in workers:
                     workers.append('frontend-worker')
+            elif 'backend' in task_analysis['domains'] and 'backend-worker' not in workers:
+                workers.append('backend-worker')
+            elif 'frontend' in task_analysis['domains'] and 'frontend-worker' not in workers:
+                workers.append('frontend-worker')
             
-            # Always include testing and analysis for level 4
+            # Risk Coverage - security, performance, scalability
             if 'test-worker' not in workers:
                 workers.append('test-worker')
-            if 'analyzer-worker' not in workers:
-                workers.append('analyzer-worker')
             
-            # Add DevOps for deployment considerations
-            if 'devops' in task_analysis['domains'] and 'devops-worker' not in workers:
+            # Infrastructure for complex deployments
+            if 'devops-worker' not in workers:
                 workers.append('devops-worker')
+            
+            # Apply Pattern: Security Audit Team if security mentioned
+            if any(word in task_lower for word in ['security', 'vulnerability', 'audit']):
+                security_team = ['analyzer-worker', 'backend-worker', 'devops-worker', 'test-worker', 'architect-worker']
+                for worker in security_team:
+                    if worker not in workers:
+                        workers.append(worker)
+            
+            # Add researcher for Level 4 complexity (best practices and standards)
+            if 'researcher-worker' not in workers and len(workers) < 7:
+                workers.append('researcher-worker')
+        
+        # Apply Pitfall Avoidance from guide
+        # Pitfall 3: No Validation Layer
+        if any(w in workers for w in ['backend-worker', 'frontend-worker']):
+            if 'test-worker' not in workers:
+                workers.append('test-worker')  # Every build needs verification
+        
+        # Pitfall 4: Architect Missing from Design Tasks
+        if any(word in task_lower for word in ['design', 'architecture', 'refactor']):
+            if 'architect-worker' not in workers:
+                workers.insert(0, 'architect-worker')  # Architect leads design
+        
+        # Log the intelligent decision rationale
+        self.log_debug(
+            "Intelligent worker selection applied",
+            "INFO",
+            details={
+                "initial_workers": initial_workers,
+                "final_workers": workers,
+                "is_comprehensive": is_comprehensive,
+                "complexity_level": complexity_level,
+                "guidance_applied": "queen-spawn-decision-guide.md patterns",
+                "coverage_checklist": {
+                    "architecture": 'architect-worker' in workers,
+                    "implementation": any(w in workers for w in ['backend-worker', 'frontend-worker']),
+                    "quality": 'analyzer-worker' in workers,
+                    "testing": 'test-worker' in workers,
+                    "infrastructure": 'devops-worker' in workers
+                }
+            }
+        )
         
         return workers
     

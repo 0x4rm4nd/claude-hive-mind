@@ -71,7 +71,7 @@ class SessionManagement:
             import tempfile
 
             temp_debug = {
-                "timestamp": datetime.now().isoformat(),
+                "timestamp": datetime.now().astimezone().isoformat(),
                 "level": "ERROR",
                 "agent": "session_management",
                 "message": "Failed to detect SmartWalletFX project root",
@@ -164,7 +164,7 @@ class SessionManagement:
 
         # Ensure event has required fields
         if "timestamp" not in event_data:
-            event_data["timestamp"] = datetime.now().isoformat()
+            event_data["timestamp"] = datetime.now().astimezone().isoformat()
 
         try:
             # CRITICAL: Use append mode, never write mode
@@ -192,7 +192,7 @@ class SessionManagement:
 
         # Ensure debug has timestamp
         if "timestamp" not in debug_data:
-            debug_data["timestamp"] = datetime.now().isoformat()
+            debug_data["timestamp"] = datetime.now().astimezone().isoformat()
 
         try:
             # CRITICAL: Use append mode, never write mode
@@ -228,7 +228,7 @@ class SessionManagement:
             merged_state = SessionManagement._deep_merge(current_state, updates)
 
             # Step 3: Add update metadata
-            merged_state["last_updated"] = datetime.now().isoformat()
+            merged_state["last_updated"] = datetime.now().astimezone().isoformat()
             if "update_count" in merged_state:
                 merged_state["update_count"] += 1
             else:
@@ -350,7 +350,7 @@ class SessionManagement:
             True if logging successful
         """
         event = {
-            "timestamp": datetime.now().isoformat(),
+            "timestamp": datetime.now().astimezone().isoformat(),
             "type": "worker_activity",
             "agent": worker_type,
             "activity": activity,
@@ -426,7 +426,7 @@ class SessionManagement:
 
         # Ensure item has timestamp
         if "timestamp" not in backlog_item:
-            backlog_item["timestamp"] = datetime.now().isoformat()
+            backlog_item["timestamp"] = datetime.now().astimezone().isoformat()
 
         try:
             # CRITICAL: Use append mode
