@@ -70,7 +70,7 @@ Report the error to EVENTS.jsonl and notify Queen immediately.
 ## Implementation Example
 
 ```python
-from .protocols.session_management import SessionManagement
+from .session_management import SessionManagement
 
 # At worker startup
 session_id = extract_session_id()  # From prompt or context

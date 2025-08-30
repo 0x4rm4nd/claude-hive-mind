@@ -700,6 +700,85 @@ class CoordinationProtocol(BaseProtocol):
             }
         }
     
+    def generate_worker_prompts(self, session_id: str, worker_configs: Dict[str, Any], task: str) -> Dict[str, str]:
+        """Generate and write prompt files for each selected worker"""
+        import os
+        from datetime import datetime
+        
+        # Get session path
+        session_path = SessionManagement.get_session_path(session_id)
+        prompts_dir = os.path.join(session_path, 'workers', 'prompts')
+        
+        # Ensure prompts directory exists
+        os.makedirs(prompts_dir, exist_ok=True)
+        
+        prompt_files = {}
+        
+        for worker_type, config in worker_configs.items():
+            # Generate worker-specific prompt content
+            prompt_content = f"""# Task Assignment for {worker_type}
+Session ID: {session_id}
+Generated: {datetime.now().isoformat()}
+
+## Primary Task
+{config.get('task_description', task)}
+
+## Specific Focus Areas
+{chr(10).join('- ' + area for area in config.get('specific_focus', []))}
+
+## Selection Rationale
+{config.get('selection_reason', 'Domain expertise required')}
+
+## Task Context
+Original Request: {task}
+
+## Dependencies
+{chr(10).join('- ' + dep for dep in config.get('dependencies', [])) if config.get('dependencies') else 'No dependencies - can proceed immediately'}
+
+## Timeout Configuration
+- Execution Timeout: {config.get('timeout', 300)} seconds
+- Escalation Timeout: {config.get('escalation_timeout', 10)} seconds
+
+## Success Criteria
+1. Complete analysis within assigned domain
+2. Generate structured JSON response
+3. Document all findings in session files
+4. Coordinate with dependent workers if applicable
+
+## Output Requirements
+- Primary output: workers/json/{worker_type}.json
+- Detailed notes: workers/decisions/{worker_type}-analysis.md
+- Update STATE.json with progress
+- Log all events to EVENTS.jsonl
+
+## Coordination Notes
+Priority Level: {config.get('priority', 5)}
+Session Path: Docs/hive-mind/sessions/{session_id}/
+"""
+            
+            # Write prompt file
+            prompt_file = os.path.join(prompts_dir, f"{worker_type}.prompt")
+            with open(prompt_file, 'w') as f:
+                f.write(prompt_content)
+            
+            prompt_files[worker_type] = prompt_file
+            
+            # Log prompt generation
+            prompt_event = {
+                "timestamp": datetime.now().isoformat(),
+                "type": "prompt_generated",
+                "agent": "queen-orchestrator",
+                "worker": worker_type,
+                "details": {
+                    "prompt_file": f"workers/prompts/{worker_type}.prompt",
+                    "task_description": config.get('task_description', task)[:100],
+                    "focus_areas": config.get('specific_focus', [])
+                }
+            }
+            SessionManagement.append_to_events(session_id, prompt_event)
+        
+        return prompt_files
+    
     def coordinate_execution(self, worker_configs: Dict[str, Any]) -> Dict[str, Any]:
         """Coordinate worker execution with monitoring"""
         execution_status = {
@@ -715,6 +794,51 @@ class CoordinationProtocol(BaseProtocol):
         
         self.log_execution("coordinate_execution", execution_status)
         return execution_status
+    
+    def generate_spawn_instructions(self, session_id: str, coordination_plan: Dict[str, Any], task: str) -> Dict[str, Any]:
+        """Generate JSON spawn instructions for Claude Code to execute"""
+        
+        # First generate prompt files for all workers
+        prompt_files = self.generate_worker_prompts(session_id, coordination_plan["worker_configs"], task)
+        
+        # Build spawn instructions
+        spawn_instructions = {
+            "coordination_action": "spawn_workers",
+            "session_id": session_id,
+            "task": task,
+            "complexity_level": coordination_plan.get("complexity_level", 2),
+            "workers_to_spawn": []
+        }
+        
+        # Add each worker to spawn list
+        for worker in coordination_plan["workers"]:
+            worker_type = worker["type"]
+            config = coordination_plan["worker_configs"][worker_type]
+            
+            spawn_instructions["workers_to_spawn"].append({
+                "worker_type": worker_type,
+                "task_description": config["task_description"],
+                "specific_focus": config["specific_focus"],
+                "priority": worker["priority"],
+                "prompt_file": f"workers/prompts/{worker_type}.prompt",
+                "timeout": config["timeout"]
+            })
+        
+        # Log spawn instructions generation
+        spawn_event = {
+            "timestamp": datetime.now().isoformat(),
+            "type": "spawn_instructions_generated",
+            "agent": "queen-orchestrator",
+            "details": {
+                "session_id": session_id,
+                "worker_count": len(spawn_instructions["workers_to_spawn"]),
+                "workers": [w["worker_type"] for w in spawn_instructions["workers_to_spawn"]],
+                "coordination_mode": coordination_plan.get("coordination_mode", "parallel_synthesis")
+            }
+        }
+        SessionManagement.append_to_events(session_id, spawn_event)
+        
+        return spawn_instructions
     
     def handle_escalation(self, worker_type: str, issue: str) -> Dict[str, Any]:
         """Handle worker escalation"""
