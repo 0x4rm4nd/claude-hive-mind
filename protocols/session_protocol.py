@@ -233,8 +233,7 @@ class SessionProtocol(BaseProtocol):
             "directories": {
                 "workers": False,
                 "workers/json": False,
-                "workers/prompts": False,
-                "workers/decisions": False
+                "workers/prompts": False
             },
             "files": {
                 "STATE.json": False,

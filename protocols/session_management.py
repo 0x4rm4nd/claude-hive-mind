@@ -128,7 +128,6 @@ class SessionManagement:
             "workers",
             "workers/json",
             "workers/prompts",
-            "workers/decisions",
         ]
 
         # Check directories
