@@ -42,7 +42,7 @@ Status: Not started
 
 ```
 Use Bash tool with proper description:
-Bash("mkdir -p Docs/hive-mind/sessions/{session-id}/workers/decisions", 
+Bash("mkdir -p Docs/hive-mind/sessions/{session-id}/workers/json Docs/hive-mind/sessions/{session-id}/workers/prompts Docs/hive-mind/sessions/{session-id}/notes", 
      description="Create session directory structure")
 ```
 

@@ -128,6 +128,7 @@ class SessionManagement:
             "workers",
             "workers/json",
             "workers/prompts",
+            "notes",
         ]
 
         # Check directories

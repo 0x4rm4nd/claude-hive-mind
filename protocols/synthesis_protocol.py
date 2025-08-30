@@ -406,4 +406,4 @@ class SynthesisProtocol(BaseProtocol):
         for worker, refs in synthesis["evidence_map"].items():
             doc += f"- **{worker}**: {', '.join(refs)}\n"
         
-        # Write(f"{session_path}/RESEARCH_SYNTHESIS.md", doc)
+        # Write(f"{session_path}/notes/RESEARCH_SYNTHESIS.md", doc)

@@ -36,7 +36,7 @@ priority: critical|high|medium|low
 
 All workers follow:
 
-1. **Mandatory Startup Protocol** (`.claude/protocols/worker-startup-protocol.md`)
+1. **Mandatory Startup Protocol** (`.claude/protocols/startup_protocol_instructions.md`)
 2. **Standardized Output Format** (JSON response + markdown notes)
 3. **Coordination Patterns** (blocking/unblocking events)
 4. **Research Integration** (Context7 for complexity >= 2)

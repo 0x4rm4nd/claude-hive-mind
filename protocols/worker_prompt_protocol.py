@@ -144,7 +144,7 @@ class WorkerPromptProtocol(BaseProtocol):
             "timeout": self.config.escalation_timeout or 3600,
             "success_criteria": ["Complete assigned analysis"],
             "output_requirements": {
-                "notes_file": f"workers/{self.config.worker_type}-notes.md",
+                "notes_file": f"notes/{self.config.worker_type.replace('-worker','')}_notes.md",
                 "json_response": f"workers/json/{self.config.worker_type}-response.json",
                 "additional_outputs": []
             }

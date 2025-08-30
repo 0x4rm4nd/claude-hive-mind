@@ -100,12 +100,12 @@ log_event(session_id, "analysis_started", WORKER_TYPE, "Beginning domain analysi
 #### 1. Research Notes (Markdown)
 ```python
 # CORRECT file naming (underscore, no "-worker")
-notes_path = f"Docs/hive-mind/sessions/{session_id}/workers/backend_notes.md"
-notes_path = f"Docs/hive-mind/sessions/{session_id}/workers/test_notes.md"
+notes_path = f"Docs/hive-mind/sessions/{session_id}/notes/backend_notes.md"
+notes_path = f"Docs/hive-mind/sessions/{session_id}/notes/test_notes.md"
 
 # WRONG (do not use)
-notes_path = f"Docs/hive-mind/sessions/{session_id}/workers/backend-worker-notes.md"
-notes_path = f"Docs/hive-mind/sessions/{session_id}/workers/backend-notes.md"
+notes_path = f"Docs/hive-mind/sessions/{session_id}/notes/backend-worker-notes.md"
+notes_path = f"Docs/hive-mind/sessions/{session_id}/notes/backend-notes.md"
 ```
 
 #### 2. JSON Response
@@ -122,7 +122,7 @@ worker_type_clean = WORKER_TYPE.replace('-worker', '')
 ```python
 # Step 1: Create markdown notes FIRST
 notes_content = generate_markdown_report(findings)
-notes_path = f"Docs/hive-mind/sessions/{session_id}/workers/{WORKER_TYPE.replace('-worker','')}_notes.md"
+notes_path = f"Docs/hive-mind/sessions/{session_id}/notes/{WORKER_TYPE.replace('-worker','')}_notes.md"
 Write(notes_path, notes_content)
 log_event(session_id, "notes_created", WORKER_TYPE, f"Notes saved to {notes_path}")
 
@@ -144,7 +144,7 @@ Before completing work, verify:
 - [ ] NO worker-specific prefixes in event types
 - [ ] Both output files created (markdown AND JSON)
 - [ ] Files use correct naming (underscore, no "-worker")
-- [ ] Files in correct directories (workers/ and workers/json/)
+- [ ] Files in correct directories (notes/ and workers/json/)
 - [ ] All mandatory lifecycle events logged
 
 ## 📋 Event Type Reference

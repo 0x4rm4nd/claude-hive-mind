@@ -50,7 +50,7 @@ Templates (.claude/templates):
 - Debug fields: `timestamp`, `level`, `agent`, `message`, optional `context`.
 - Session ID is implicit from the directory path; NEVER include it in event objects.
 - Event types are standardized; NO worker-specific prefixes (use `analysis_started` not `backend_analysis_started`).
-- Worker output files: `{worker}_notes.md` and `{worker}_response.json` (no "-worker" suffix).
+- Worker output files: `notes/{worker}_notes.md` and `workers/json/{worker}_response.json` (no "-worker" suffix).
 - Appends only; do not overwrite or truncate log files.
 
 ## Usage Pattern

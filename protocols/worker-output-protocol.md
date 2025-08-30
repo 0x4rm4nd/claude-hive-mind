@@ -8,7 +8,7 @@
 ### Every Worker MUST Create TWO Output Files
 
 #### 1. Research/Analysis Notes (Markdown)
-**Path Format**: `Docs/hive-mind/sessions/{session_id}/workers/{worker_type}_notes.md`
+**Path Format**: `Docs/hive-mind/sessions/{session_id}/notes/{worker_type}_notes.md`
 - **Naming**: Use worker type WITHOUT "-worker" suffix (e.g., `backend_notes.md`, `test_notes.md`)
 - **Format**: Detailed markdown documentation
 - **Purpose**: Human-readable analysis and findings
@@ -26,13 +26,13 @@
 ### Research Phase Files
 ```python
 # CORRECT naming pattern (use underscore, no "-worker")
-notes_path = f"Docs/hive-mind/sessions/{session_id}/workers/backend_notes.md"
-notes_path = f"Docs/hive-mind/sessions/{session_id}/workers/test_notes.md"
-notes_path = f"Docs/hive-mind/sessions/{session_id}/workers/frontend_notes.md"
+notes_path = f"Docs/hive-mind/sessions/{session_id}/notes/backend_notes.md"
+notes_path = f"Docs/hive-mind/sessions/{session_id}/notes/test_notes.md"
+notes_path = f"Docs/hive-mind/sessions/{session_id}/notes/frontend_notes.md"
 
 # INCORRECT (do not use)
-notes_path = f"Docs/hive-mind/sessions/{session_id}/workers/backend-worker-notes.md"  # Wrong!
-notes_path = f"Docs/hive-mind/sessions/{session_id}/workers/backend-notes.md"  # Wrong!
+notes_path = f"Docs/hive-mind/sessions/{session_id}/notes/backend-worker-notes.md"  # Wrong!
+notes_path = f"Docs/hive-mind/sessions/{session_id}/notes/backend-notes.md"  # Wrong!
 ```
 
 ### JSON Response Files
@@ -120,7 +120,7 @@ findings = perform_analysis()
 
 # Step 2: Create markdown notes FIRST
 notes_content = format_markdown_report(findings)
-notes_path = f"Docs/hive-mind/sessions/{session_id}/workers/{WORKER_TYPE.replace('-worker','')}_notes.md"
+notes_path = f"Docs/hive-mind/sessions/{session_id}/notes/{WORKER_TYPE.replace('-worker','')}_notes.md"
 Write(notes_path, notes_content)
 log_event(session_id, "notes_created", WORKER_TYPE, f"Analysis notes saved to {notes_path}")
 
@@ -166,7 +166,7 @@ log_event(session_id, "worker_completed", WORKER_TYPE, f"Analysis complete - {le
 ### File Path Templates
 ```python
 # Research notes (markdown)
-notes_path = f"Docs/hive-mind/sessions/{session_id}/workers/{worker_type}_notes.md"
+notes_path = f"Docs/hive-mind/sessions/{session_id}/notes/{worker_type}_notes.md"
 
 # Structured response (JSON)
 json_path = f"Docs/hive-mind/sessions/{session_id}/workers/json/{worker_type}_response.json"
@@ -187,7 +187,7 @@ log_event(session_id, "json_created", WORKER_TYPE, f"JSON saved: {filename}")
 ## 🎯 Validation Checklist
 
 Before marking task complete, verify:
-- [ ] Markdown notes file created in `workers/` directory
+- [ ] Markdown notes file created in `notes/` directory
 - [ ] JSON response file created in `workers/json/` directory
 - [ ] Both files use correct naming (no "-worker" suffix)
 - [ ] Markdown has all required sections

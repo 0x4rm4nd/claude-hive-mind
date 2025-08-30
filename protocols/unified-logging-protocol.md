@@ -11,7 +11,7 @@
 
 ## 📋 Universal Session Extraction (Step 1 for ALL Agents)
 
-**Function Template**: `.claude/protocols/templates/logging-functions.py`
+**Function Template**: `.claude/templates/logging-functions.py`
 
 ### Function: `extract_session_id(prompt_text, worker_type)`
 - **Purpose**: Universal session extraction - MUST be first operation
@@ -21,7 +21,7 @@
 
 ## 🎯 EVENTS.jsonl Logging Function (Universal)
 
-**Function Template**: `.claude/protocols/templates/logging-functions.py`
+**Function Template**: `.claude/templates/logging-functions.py`
 
 ### Function: `log_event(session_id, event_type, agent_name, details, status=None)`
 - **Purpose**: ATOMIC APPEND to EVENTS.jsonl - Thread-safe implementation
@@ -37,7 +37,7 @@
 
 ## 🐛 DEBUG.jsonl Logging Function (Universal)
 
-**Function Template**: `.claude/protocols/templates/logging-functions.py`
+**Function Template**: `.claude/templates/logging-functions.py`
 
 ### Function: `log_debug(session_id, level, agent_name, message, context=None)`
 - **Purpose**: ATOMIC APPEND to DEBUG.jsonl - Thread-safe implementation
@@ -82,7 +82,7 @@ log_debug(session_id, "INFO", WORKER_TYPE, f"Complexity level: {worker_config.ge
 
 ```python
 # Step 1: Save Notes (Research Phase)
-notes_path = f"Docs/hive-mind/sessions/{session_id}/workers/{WORKER_TYPE.replace('-worker','')}_notes.md"
+notes_path = f"Docs/hive-mind/sessions/{session_id}/notes/{WORKER_TYPE.replace('-worker','')}_notes.md"
 Write(notes_path, detailed_notes)
 log_event(session_id, "worker_notes_created", WORKER_TYPE, f"Notes saved to {notes_path}")
 log_debug(session_id, "SUCCESS", WORKER_TYPE, "Notes file created")
@@ -183,7 +183,7 @@ Reference the protocol file for the exact functions - do not reimplement.
 
 ### For Queen Orchestrator
 
-**Function Template**: `.claude/protocols/templates/logging-functions.py`
+**Function Template**: `.claude/templates/logging-functions.py`
 
 ### Function: `verify_worker_compliance(session_id, worker_name)`
 - **Purpose**: Check if worker properly logged lifecycle events
@@ -203,7 +203,7 @@ Reference the protocol file for the exact functions - do not reimplement.
 
 ## 🎯 Protocol Compliance Check
 
-**Function Template**: `.claude/protocols/templates/logging-functions.py`
+**Function Template**: `.claude/templates/logging-functions.py`
 
 ### Function: `check_my_compliance(session_id, worker_type)`
 - **Purpose**: Self-check for protocol compliance

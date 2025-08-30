@@ -36,7 +36,7 @@ Sessions track all coordination activity in `Docs/hive-mind/sessions/{session-id
 
 - **STATE.json**: Single source of truth for session state
 - **EVENTS.jsonl**: Immutable coordination event log
-- **RESEARCH_SYNTHESIS.md**: Cross-worker findings synthesis
+- **notes/RESEARCH_SYNTHESIS.md**: Cross-worker findings synthesis
 - **Worker outputs**: Individual worker notes and JSON responses
 
 ## Key Commands

@@ -182,7 +182,7 @@ class CompletionProtocol(BaseProtocol):
         
         # Save detailed notes
         notes = self.generate_detailed_notes(output)
-        notes_path = f"{session_path}/workers/{self.config.worker_type}-notes.md"
+        notes_path = f"{session_path}/notes/{self.config.worker_type.replace('-worker','')}_notes.md"
         # Write(notes_path, notes)
     
     def generate_detailed_notes(self, output: Dict[str, Any]) -> str:

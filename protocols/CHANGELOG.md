@@ -41,7 +41,7 @@ Complete refactoring of protocol template system to extract all embedded templat
 #### Changes Made
 
 1. **Template Directory Structure**:
-   - Created organized `.claude/protocols/templates/` directory
+   - Created organized `.claude/templates/` directory
    - Categorized templates by type: JSON, Python, YAML, Markdown
    - Added comprehensive README.md for template documentation
 
@@ -80,7 +80,7 @@ Complete refactoring of protocol template system to extract all embedded templat
 - **Deprecated Directory Deleted**: All legacy protocols permanently removed
 
 #### Technical Impact
-- Protocol files now reference templates via path: `.claude/protocols/templates/[template-name]`
+- Protocol files now reference templates via path: `.claude/templates/[template-name]`
 - Agents must load templates dynamically rather than copying embedded code
 - Template structure is now the authoritative source for all data formats
 

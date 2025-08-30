@@ -5,7 +5,7 @@ Defines the structure, update mechanisms, and accuracy requirements for STATE.js
 
 ## STATE.json Structure v2.0
 
-**Template Location**: `.claude/protocols/templates/state-v2-template.json`
+**Template Location**: `.claude/templates/state-v2-template.json`
 
 The STATE.json structure defines comprehensive session state tracking with the following key sections:
 - **Version & Identification**: Protocol version, session ID, and task description
@@ -21,7 +21,7 @@ The STATE.json structure defines comprehensive session state tracking with the f
 
 ### Atomic Update Function
 
-**Function Template**: `.claude/protocols/templates/state-management-functions.py`
+**Function Template**: `.claude/templates/state-management-functions.py`
 
 #### Function: `update_state(session_id, updates, merge_strategy="deep")`
 - **Purpose**: Atomically update STATE.json with conflict resolution
@@ -68,7 +68,7 @@ The STATE.json structure defines comprehensive session state tracking with the f
 
 4. **Worker State Validation**:
 
-   **Function Template**: `.claude/protocols/templates/state-management-functions.py`
+   **Function Template**: `.claude/templates/state-management-functions.py`
    
    #### Function: `validate_worker_state(worker_state)`
    - Validates required fields presence
@@ -81,7 +81,7 @@ The STATE.json structure defines comprehensive session state tracking with the f
 
 ### State Corruption Recovery
 
-**Function Template**: `.claude/protocols/templates/state-management-functions.py`
+**Function Template**: `.claude/templates/state-management-functions.py`
 
 #### Function: `recover_state(session_id)`
 - **Purpose**: Recover STATE.json from EVENTS.jsonl if corrupted
@@ -91,7 +91,7 @@ The STATE.json structure defines comprehensive session state tracking with the f
 
 ### Heartbeat Monitoring
 
-**Function Template**: `.claude/protocols/templates/state-management-functions.py`
+**Function Template**: `.claude/templates/state-management-functions.py`
 
 #### Function: `check_worker_health(session_id)`
 - **Purpose**: Monitor worker health via heartbeat
@@ -107,4 +107,3 @@ The STATE.json structure defines comprehensive session state tracking with the f
 4. **Regular Heartbeats**: Active workers should update heartbeat every 60 seconds
 5. **Fail Fast**: Mark workers as failed quickly to enable recovery
 6. **Preserve History**: Never delete old state, archive if needed
-

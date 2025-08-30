@@ -199,7 +199,7 @@ def verify_worker_compliance(session_id: str, worker_name: str) -> bool:
     # Output files check
     worker_type_clean = worker_name.replace("-worker", "")
     session_root = f"Docs/hive-mind/sessions/{session_id}"
-    notes_path = os.path.join(session_root, "workers", f"{worker_type_clean}_notes.md")
+    notes_path = os.path.join(session_root, "notes", f"{worker_type_clean}_notes.md")
     json_path = os.path.join(session_root, "workers", "json", f"{worker_type_clean}_response.json")
     notes_ok = os.path.exists(notes_path)
     json_ok = os.path.exists(json_path)

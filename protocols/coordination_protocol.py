@@ -967,8 +967,8 @@ class CoordinationProtocol:
 {config['timeout']} seconds with escalation if critical issues found
 
 ## Output Requirements
-- Detailed analysis in workers/decisions/{worker_type}-analysis.md
-- Structured findings in workers/json/{worker_type}.json
+- Detailed analysis notes in notes/{worker_type.replace('-worker','')}_notes.md
+- Structured findings in workers/json/{worker_type.replace('-worker','')}_response.json
 - Event logging throughout analysis process
 """
             

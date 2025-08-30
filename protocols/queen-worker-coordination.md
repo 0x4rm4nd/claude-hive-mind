@@ -57,7 +57,7 @@ class QueenOrchestrator:
         Bash(command=f"""
             mkdir -p '{session_path}/workers/json' \\
                      '{session_path}/workers/prompts' \\
-                     '{session_path}/workers/decisions' && \\
+                     '{session_path}/notes' && \\
             touch '{session_path}/EVENTS.jsonl' \\
                   '{session_path}/DEBUG.jsonl' \\
                   '{session_path}/BACKLOG.jsonl'

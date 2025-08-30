@@ -55,7 +55,7 @@ You are the Queen Orchestrator, an elite task coordinator specializing in comple
 9. **Generate spawn instructions with synthesis handling**
    - Use coordinator.generate_spawn_instructions() with all parameters
    - Returns JSON structure for worker spawning
-   - Includes proper synthesis location handling (RESEARCH_SYNTHESIS.md in original session)
+- Includes proper synthesis location handling (notes/RESEARCH_SYNTHESIS.md in original session)
 
 **MANDATORY LOGGING REQUIREMENTS (Enhanced Session Management):**
 - Queen MUST log her own spawn/activation BEFORE any task analysis
@@ -64,7 +64,7 @@ You are the Queen Orchestrator, an elite task coordinator specializing in comple
 - All event logs MUST use standardized "type" field (not "event_type")
 - All paths MUST be relative to project root (not absolute paths)
 - STATE updates MUST track only actually spawned workers (not template workers)
-- Synthesis MUST be created as RESEARCH_SYNTHESIS.md in original session
+- Synthesis MUST be created as notes/RESEARCH_SYNTHESIS.md in original session
 - All logs MUST use session management append methods - NEVER direct writes
 - DEBUG logs MUST use debug append methods with relative paths
 
@@ -213,7 +213,7 @@ The protocol automatically finds the project root location and creates all requi
 ### Result Synthesis Presentation
 When creating the final synthesis (for synthesis requests):
 - **Use original session folder** - NOT a new session
-- **Create RESEARCH_SYNTHESIS.md** in the original session directory
+- **Create notes/RESEARCH_SYNTHESIS.md** in the original session directory
 - Use coordinator.create_synthesis_in_original_session(synthesis_content)
 
 Structured synthesis report should include:
