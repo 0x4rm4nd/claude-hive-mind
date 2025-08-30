@@ -25,6 +25,7 @@ Core implementations (.py):
 
 Instruction docs (.md):
 - `completion_protocol_instructions.md`
+- `conflict-resolution.md`
 - `coordination_protocol_instructions.md`
 - `escalation_protocol_instructions.md`
 - `logging_protocol_instructions.md`
