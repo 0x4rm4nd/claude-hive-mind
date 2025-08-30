@@ -256,10 +256,11 @@
 - **Final Completion**: {target-date}
 {/if}
 
-### Archon Integration
-**Archon Project ID**: {archon-project-id}
-**Task IDs**: {comma-separated-task-ids}
-**Status Sync**: {automatic-updates-configured}
+### Local Session Management
+**Session ID**: {session-id}
+**State File**: STATE.json
+**Event Log**: EVENTS.jsonl
+**Task Backlog**: BACKLOG.jsonl
 
 ### Session Metrics
 - **Research Duration**: {time-spent-on-research}

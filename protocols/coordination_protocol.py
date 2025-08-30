@@ -95,6 +95,9 @@ class CoordinationProtocol:
         # Initialize EVENTS.jsonl (empty, will be appended to)
         (self.session_path / "EVENTS.jsonl").touch()
         
+        # Initialize BACKLOG.jsonl (empty, will be appended to)
+        (self.session_path / "BACKLOG.jsonl").touch()
+        
         # Initialize DEBUG.jsonl with first entry
         debug_entry = {
             "timestamp": datetime.now().isoformat(),
@@ -194,7 +197,7 @@ class CoordinationProtocol:
             details={
                 "session_path": str(self.session_path),
                 "structure_validated": True,
-                "files_initialized": ["STATE.json", "EVENTS.jsonl", "DEBUG.jsonl", "SESSION.md"]
+                "files_initialized": ["STATE.json", "EVENTS.jsonl", "BACKLOG.jsonl", "DEBUG.jsonl", "SESSION.md"]
             }
         )
         # Debug: Log generated paths and file sizes
@@ -208,6 +211,7 @@ class CoordinationProtocol:
                 "files_created": {
                     "STATE.json": os.path.getsize(self.session_path / "STATE.json") if (self.session_path / "STATE.json").exists() else 0,
                     "EVENTS.jsonl": os.path.getsize(self.session_path / "EVENTS.jsonl") if (self.session_path / "EVENTS.jsonl").exists() else 0,
+                    "BACKLOG.jsonl": os.path.getsize(self.session_path / "BACKLOG.jsonl") if (self.session_path / "BACKLOG.jsonl").exists() else 0,
                     "DEBUG.jsonl": os.path.getsize(self.session_path / "DEBUG.jsonl") if (self.session_path / "DEBUG.jsonl").exists() else 0,
                     "SESSION.md": os.path.getsize(self.session_path / "SESSION.md") if (self.session_path / "SESSION.md").exists() else 0
                 }
@@ -645,6 +649,88 @@ class CoordinationProtocol:
             "total_workers": len(workers_to_spawn)
         }
     
+    def append_to_backlog(self, task_item: Dict[str, Any]) -> None:
+        """
+        Append a task item to BACKLOG.jsonl
+        
+        Args:
+            task_item: Task dictionary with id, title, status, etc.
+        """
+        if not self.session_path:
+            self.log_debug(
+                "append_to_backlog failed - no active session",
+                "ERROR",
+                details={
+                    "task_item": task_item,
+                    "session_path": str(self.session_path) if self.session_path else None,
+                    "error": "No active session"
+                }
+            )
+            raise ValueError("No active session")
+        
+        backlog_file = self.session_path / "BACKLOG.jsonl"
+        
+        # Ensure required fields
+        if "timestamp" not in task_item:
+            task_item["timestamp"] = datetime.now().isoformat()
+        if "id" not in task_item:
+            task_item["id"] = f"task-{datetime.now().strftime('%Y%m%d%H%M%S')}"
+        
+        try:
+            # CRITICAL: Use append mode
+            with open(backlog_file, 'a') as f:
+                f.write(json.dumps(task_item, separators=(',', ':')) + '\n')
+            
+            # Log the backlog update
+            self.log_event(
+                event_type="backlog_updated",
+                details={
+                    "task_id": task_item.get("id"),
+                    "task_title": task_item.get("title"),
+                    "task_status": task_item.get("status", "pending"),
+                    "assigned_to": task_item.get("assigned_to")
+                }
+            )
+        except Exception as e:
+            self.log_debug(
+                f"Failed to append to BACKLOG.jsonl: {e}",
+                "ERROR",
+                details={
+                    "task_item": task_item,
+                    "error": str(e)
+                }
+            )
+            raise
+    
+    def read_backlog(self) -> List[Dict[str, Any]]:
+        """
+        Read all tasks from BACKLOG.jsonl
+        
+        Returns:
+            List of task dictionaries
+        """
+        if not self.session_path:
+            return []
+        
+        backlog_file = self.session_path / "BACKLOG.jsonl"
+        if not backlog_file.exists():
+            return []
+        
+        tasks = []
+        try:
+            with open(backlog_file, 'r') as f:
+                for line in f:
+                    if line.strip():
+                        tasks.append(json.loads(line))
+        except Exception as e:
+            self.log_debug(
+                f"Failed to read BACKLOG.jsonl: {e}",
+                "ERROR",
+                details={"error": str(e)}
+            )
+        
+        return tasks
+    
     def update_state(self, updates: Dict[str, Any]) -> None:
         """Atomically update STATE.json"""
         if not self.session_path:
@@ -685,6 +771,7 @@ class CoordinationProtocol:
         required_files = [
             self.session_path / "STATE.json",
             self.session_path / "EVENTS.jsonl",
+            self.session_path / "BACKLOG.jsonl",
             self.session_path / "DEBUG.jsonl",
             self.session_path / "SESSION.md"
         ]
@@ -1095,10 +1182,11 @@ Session initialization and worker planning phase
         
         session_md += f"""
 
-### Archon Integration
-**Archon Project ID**: smartwalletfx-{session_id[:8]}
-**Task IDs**: TBD
-**Status Sync**: Automatic updates configured
+### Local Session Management
+**Session ID**: {session_id}
+**State File**: STATE.json
+**Event Log**: EVENTS.jsonl
+**Task Backlog**: BACKLOG.jsonl
 
 ### Session Metrics
 - **Research Duration**: 0 minutes

@@ -44,7 +44,7 @@ These are **instruction protocols** that Queen and Workers should follow during 
 
 When you see "commands" in this directory, understand them as:
 - **Instruction manuals** for Queen and Workers
-- **Protocols to follow** using real tools (Read, Write, Archon MCP)
+- **Protocols to follow** using real tools (Read, Write, Edit)
 - **NOT bash scripts** that will auto-execute
 
 ## 📋 Available Protocol Instructions
@@ -58,9 +58,9 @@ When you see "commands" in this directory, understand them as:
 - Session resumption and memory bank integration
 - Context loading based on complexity
 
-**task-management.md** - Archon task management
-- Creating tasks with complexity metadata
-- Task status monitoring and updates
+**task-management.md** - Local task management
+- Creating tasks with complexity metadata in BACKLOG.jsonl
+- Task status monitoring and updates via STATE.json
 - Task completion workflows
 
 **research-synthesis.md** - Research coordination
@@ -101,8 +101,8 @@ When you see "commands" in this directory, understand them as:
    # Write synthesis
    Write("Docs/hive-mind/sessions/1/research/README.md", synthesis)
    
-   # Upload to Archon KB
-   archon:manage_document(action="add", content=synthesis, ...)
+   # Save to local memory bank
+   Write("Docs/hive-mind/memory-bank/synthesis.md", synthesis)
    ```
 
 ### Example: When Worker needs to signal blocker
@@ -135,7 +135,7 @@ User: "Implement authentication"
   ↓
 Queen: Reads summon-queen.md instructions
   ↓
-Queen: Follows archon-init.md protocol using Archon MCP tools
+Queen: Follows session creation protocol using local session management
   ↓
 Queen: Assigns tasks to workers
   ↓
@@ -148,4 +148,4 @@ Workers: Follow pattern-library.md protocol when pattern found
 Queen: Follows research-synthesis.md protocol to combine findings
 ```
 
-All "execution" happens through actual tools (Read, Write, Archon MCP), not through these instruction files!
+All "execution" happens through actual tools (Read, Write, Edit, Bash), not through these instruction files!

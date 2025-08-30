@@ -11,9 +11,9 @@
     "notification_displayed": "⚠️ COMPLEXITY OVERRIDE: Auto-detected Level 2, using Level 3"
   },
   "enforcement": {
-    "archon_required": true,
-    "archon_health_checked": false,
-    "archon_health_check_timestamp": null,
+    "session_management_required": true,
+    "session_validation_completed": false,
+    "session_validation_timestamp": null,
     "protocols_loaded": {
       "queen-orchestrator": true,
       "backend-worker": false,
@@ -36,25 +36,25 @@
       "worker_configuration": "pending",
       "context_loading": "pending",
       "events_check": "pending",
-      "archon_task_claim": "pending"
+      "task_assignment": "pending"
     }
   },
   "required_worker_protocols": {
     "backend-worker": {
       "assigned": true,
       "status": "not_started",
-      "archon_task_id": null,
+      "task_id": null,
       "protocol_compliance": {
         "startup_completed": false,
         "monitoring_active": false,
         "last_events_check": null,
-        "archon_updates_count": 0
+        "state_updates_count": 0
       },
       "must_complete": [
         "session_validation",
         "context_loading",
         "events_check",
-        "archon_task_claim"
+        "task_assignment"
       ],
       "completed": [],
       "tag_access": ["backend", "api", "database", "security"],
@@ -65,18 +65,18 @@
     "frontend-worker": {
       "assigned": true,
       "status": "not_started",
-      "archon_task_id": null,
+      "task_id": null,
       "protocol_compliance": {
         "startup_completed": false,
         "monitoring_active": false,
         "last_events_check": null,
-        "archon_updates_count": 0
+        "state_updates_count": 0
       },
       "must_complete": [
         "session_validation",
         "context_loading",
         "api_dependency_check",
-        "archon_task_claim"
+        "task_assignment"
       ],
       "completed": [],
       "tag_access": ["frontend", "ui", "react", "ux"],
@@ -98,12 +98,12 @@
       "note": "Available for architecture escalations"
     }
   },
-  "archon_integration": {
-    "project_id": "30565f01-937d-433c-b0f0-6960b0dffd93",
+  "local_session_management": {
+    "session_id": "{session_id}",
     "project_name": "SmartWalletFX",
     "feature": null,
     "task_ids": [],
-    "knowledge_base_uploads": []
+    "memory_bank_entries": []
   },
   "session_structure": {
     "base_path": "Docs/hive-mind/sessions/{session_id}/",

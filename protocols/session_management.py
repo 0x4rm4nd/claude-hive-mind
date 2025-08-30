@@ -9,7 +9,7 @@ Ensures all agents use consistent paths and never overwrite session data.
 import os
 import json
 from pathlib import Path
-from typing import Dict, Any, Optional, List
+from typing import Dict, Any, Optional
 from datetime import datetime
 
 
@@ -85,7 +85,7 @@ class SessionManagement:
             temp_file = Path(tempfile.gettempdir()) / "smartwalletfx_debug.jsonl"
             with open(temp_file, "a") as f:
                 f.write(json.dumps(temp_debug, separators=(",", ":")) + "\n")
-        except:
+        except Exception:
             pass  # Fail silently if debug logging fails
 
         raise ValueError(
@@ -121,7 +121,7 @@ class SessionManagement:
         """
         session_path = SessionManagement.get_session_path(session_id)
 
-        required_files = ["STATE.json", "EVENTS.jsonl", "DEBUG.jsonl", "SESSION.md"]
+        required_files = ["STATE.json", "EVENTS.jsonl", "BACKLOG.jsonl", "DEBUG.jsonl", "SESSION.md"]
 
         required_dirs = [
             "",  # Session root
