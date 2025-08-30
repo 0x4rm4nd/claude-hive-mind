@@ -223,8 +223,8 @@ class CoordinationProtocol:
         """Plan worker allocation using intelligent Queen decision-making
         
         Implements the decision-making framework from:
-        - .claude/protocols/queen-spawn-decision-guide.md
-        - .claude/protocols/queen-spawn-quick-reference.md
+        - .claude/protocols/spawn-protocol.md
+        - .claude/protocols/spawn-reference.md
         
         Core Principles Applied:
         1. Coverage Over Count - Focus on perspectives, not numbers
@@ -394,7 +394,7 @@ class CoordinationProtocol:
     def _analyze_task_requirements(self, task_description: str, complexity_level: int) -> Dict[str, Any]:
         """Analyze task to determine requirements and domains
         
-        Implements the Task Analysis Framework from queen-spawn-decision-guide.md:
+        Implements the Task Analysis Framework from spawn-protocol.md:
         - Step 1: Understand the Real Ask
         - Step 2: Map Intent to Expertise
         """
@@ -484,7 +484,7 @@ class CoordinationProtocol:
             f"Identified domains: {domain_str}. "
             f"Complexity factors: {complexity_str} (Level {complexity_level}). "
             f"Implicit requirements: {implicit_str}. "
-            f"Applied patterns from queen-spawn-decision-guide.md for optimal coverage. "
+            f"Applied patterns from spawn-protocol.md for optimal coverage. "
             f"Coordination required: {analysis['requires_coordination']}"
         )
         
@@ -496,8 +496,8 @@ class CoordinationProtocol:
         """Apply Queen's intelligence to refine worker selection using spawn decision guidance
         
         This method implements the intelligent decision-making patterns from:
-        - .claude/protocols/queen-spawn-decision-guide.md
-        - .claude/protocols/queen-spawn-quick-reference.md
+        - .claude/protocols/spawn-protocol.md
+        - .claude/protocols/spawn-reference.md
         """
         workers = initial_workers.copy()
         task_lower = task_analysis.get('task_description', '').lower()
@@ -687,7 +687,7 @@ class CoordinationProtocol:
                 "final_workers": workers,
                 "is_comprehensive": is_comprehensive,
                 "complexity_level": complexity_level,
-                "guidance_applied": "queen-spawn-decision-guide.md patterns",
+                "guidance_applied": "spawn-protocol.md patterns",
                 "coverage_checklist": {
                     "architecture": 'architect-worker' in workers,
                     "implementation": any(w in workers for w in ['backend-worker', 'frontend-worker']),
