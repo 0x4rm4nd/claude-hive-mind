@@ -11,7 +11,7 @@ from typing import Dict, Any
 
 # Environment setup  
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', '..', '..'))
-from protocols import load_project_env
+from ..shared.protocols import load_project_env
 load_project_env()
 
 from pydantic_ai import Agent
@@ -21,7 +21,7 @@ from .models import AnalyzerOutput
 
 # Analyzer worker agent with security and performance analysis capabilities
 analyzer_agent = Agent(
-    model="openai:gpt-4o-mini",
+    model="openai:gpt-5",
     output_type=AnalyzerOutput,
     system_prompt="""You are the Analyzer Worker, a meticulous code analysis specialist with deep expertise in security vulnerabilities, performance optimization, and code quality metrics.
 

@@ -8,10 +8,9 @@ import sys
 import os
 from pathlib import Path
 
-# Environment setup
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "..", ".."))
+# Environment setup - protocols now imported via relative imports
 
-from protocols import load_project_env
+from .protocols import load_project_env
 from datetime import datetime
 
 load_project_env()

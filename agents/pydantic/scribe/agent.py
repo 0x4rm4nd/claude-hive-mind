@@ -9,7 +9,7 @@ import os
 
 # Environment setup
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', '..', '..', '..'))
-from protocols import load_project_env
+from ..shared.protocols import load_project_env
 load_project_env()
 
 from pydantic_ai import Agent
@@ -18,7 +18,7 @@ from .models import TaskSummaryOutput
 
 # AI agent for generating task summaries
 task_summary_agent = Agent(
-    model="openai:gpt-4o-mini",
+    model="openai:gpt-5",
     output_type=TaskSummaryOutput,
     system_prompt=(
         "You analyze task descriptions and create concise session identifiers.\\n"

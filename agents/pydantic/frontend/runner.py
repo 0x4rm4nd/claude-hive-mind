@@ -16,7 +16,7 @@ import os
 # Environment setup
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', '..', '..'))
 
-from protocols import (
+from ..shared.protocols import (
     SessionManagement,
     LoggingProtocol,
     ProtocolConfig,

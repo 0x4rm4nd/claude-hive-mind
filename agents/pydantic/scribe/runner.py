@@ -17,7 +17,7 @@ import sys
 # Environment setup
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', '..', '..', '..'))
 
-from protocols import SessionManagement
+from ..shared.protocols import SessionManagement
 
 from .models import ScribeSynthesisOutput, ScribeSessionCreationOutput, TaskSummaryOutput
 from .agent import task_summary_agent

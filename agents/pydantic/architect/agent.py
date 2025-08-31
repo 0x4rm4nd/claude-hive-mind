@@ -11,7 +11,7 @@ from typing import Dict, Any
 
 # Environment setup
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', '..', '..'))
-from protocols import load_project_env
+from ..shared.protocols import load_project_env
 load_project_env()
 
 from pydantic_ai import Agent
