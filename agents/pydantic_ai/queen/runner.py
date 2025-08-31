@@ -49,14 +49,14 @@ def log_event(session_id: str, event_type: str, agent: str, details: Any):
         print(f"Logging failed: {e}")
 
 
-def log_debug(session_id: str, message: str, details: Any):
+def log_debug(session_id: str, message: str, details: Any, level: str = "DEBUG"):
     """Log debug message using protocol infrastructure"""
     try:
         cfg = ProtocolConfig(
             {"session_id": session_id, "agent_name": "queen-orchestrator"}
         )
         logger = LoggingProtocol(cfg)
-        logger.log_debug(message, details)
+        logger.log_debug(message, details, level)
     except Exception as e:
         print(f"Debug logging failed: {e}")
 
@@ -69,7 +69,7 @@ def update_session_state(session_id: str, state_update: Dict[str, Any]):
             session_id, "Session state updated", {"keys": list(state_update.keys())}
         )
     except Exception as e:
-        log_debug(session_id, "Session state update failed", {"error": str(e)})
+        log_debug(session_id, "Session state update failed", {"error": str(e)}, "ERROR")
 
 
 def run_orchestration(
@@ -235,6 +235,7 @@ def run_orchestration(
                 "retry_count": retry_count,
                 "original_model": model,
             },
+            "ERROR"
         )
 
         # Check if we should retry with different parameters
@@ -280,7 +281,7 @@ def run_orchestration(
 
         # Max retries exceeded, re-raise the exception
         log_debug(
-            session_id, "Max retries exceeded, giving up", {"max_retries": max_retries}
+            session_id, "Max retries exceeded, giving up", {"max_retries": max_retries}, "ERROR"
         )
         raise e
 
@@ -349,7 +350,7 @@ def update_session_summary(
         return True
 
     except Exception as e:
-        log_debug(session_id, "SESSION.md update failed", {"error": str(e)})
+        log_debug(session_id, "SESSION.md update failed", {"error": str(e)}, "ERROR")
         return False
 
 
@@ -612,19 +613,19 @@ Follow the hive-mind coordination protocols and ensure proper session management
                 {"worker_type": worker_type, "error": str(e)},
             )
 
-    # Log the Claude Worker spawn
-    log_event(
-        session_id,
-        "claude_workers_spawned",
-        worker_type,
-        {
-            "task_focus": assignment.task_focus,
-            "priority": assignment.priority,
-            "strategic_value": assignment.strategic_value,
-            "spawned_by": "queen-orchestrator",
-            "next_step": "claude_worker_will_spawn_pydantic_ai_worker",
-        },
-    )
+    # Log all Claude Workers spawned (after the loop)
+    if spawned_workers:
+        log_event(
+            session_id,
+            "claude_workers_spawned",
+            "queen-orchestrator", 
+            {
+                "worker_types": spawned_workers,
+                "total_workers": len(spawned_workers),
+                "spawned_by": "queen-orchestrator",
+                "next_step": "claude_workers_will_spawn_pydantic_ai_workers",
+            },
+        )
 
     # Execute all worker tasks (this spawns the Claude Worker agents)
     if worker_tasks:
@@ -661,10 +662,11 @@ Follow the hive-mind coordination protocols and ensure proper session management
         log_event(
             session_id,
             "worker_tasks_prepared",
-            worker_task["worker_type"],
+            "queen-orchestrator",
             {
                 "preparation_status": "ready_for_execution",
-                "task_description": worker_task["assignment"].task_focus,
+                "worker_types": [wt["worker_type"] for wt in worker_tasks],
+                "total_tasks": len(worker_tasks),
                 "next_step": "awaiting_main_claude_agent_task_execution",
             },
         )

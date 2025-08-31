@@ -40,7 +40,7 @@ class PromptGenerator:
     def __init__(self, session_id: str):
         self.session_id = session_id
         self.config = ProtocolConfig(
-            {"session_id": session_id, "agent_name": "prompt-generator"}
+            {"session_id": session_id, "agent_name": "queen-orchestrator"}
         )
         self.logger = LoggingProtocol(self.config)
 
@@ -103,22 +103,16 @@ class PromptGenerator:
 
         # Consolidated batch logging (default behavior)
         if batch_logging and created_files:
+            # Convert absolute path to relative path from project root
+            project_root = "/Users/Armand/Development/SmartWalletFX"
+            relative_prompts_dir = prompts_dir.replace(f"{project_root}/", "") if prompts_dir.startswith(project_root) else prompts_dir
+            
             self.logger.log_event(
                 "worker_prompts_created",
                 {
-                    "created_prompts": [
-                        {
-                            "worker_type": worker_type,
-                            "prompt_file": prompt_file,
-                            "task_focus": next(
-                                (spec.task_focus for spec in worker_specs if spec.worker_type == worker_type),
-                                "unknown"
-                            )
-                        }
-                        for worker_type, prompt_file in created_files.items()
-                    ],
+                    "worker_types": list(created_files.keys()),
                     "total_prompts": len(created_files),
-                    "prompts_directory": prompts_dir,
+                    "prompt_folder": relative_prompts_dir,
                     "complexity_level": worker_specs[0].complexity_level if worker_specs else 1,
                 },
             )

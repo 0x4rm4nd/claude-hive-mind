@@ -38,12 +38,12 @@ def log_event(session_id: str, event_type: str, agent: str, details: Any):
         print(f"Logging failed: {e}")
 
 
-def log_debug(session_id: str, message: str, details: Any):
+def log_debug(session_id: str, message: str, details: Any, level: str = "DEBUG"):
     """Log debug message using protocol infrastructure"""
     try:
         cfg = ProtocolConfig({"session_id": session_id, "agent_name": "backend-worker"})
         logger = LoggingProtocol(cfg)
-        logger.log_debug(message, details)
+        logger.log_debug(message, details, level)
     except Exception as e:
         print(f"Debug logging failed: {e}")
 
@@ -51,12 +51,12 @@ def log_debug(session_id: str, message: str, details: Any):
 def update_session_state(session_id: str, state_update: Dict[str, Any]):
     """Update session state using protocol infrastructure"""
     try:
-        SessionManagement.update_session_state(session_id, state_update)
+        SessionManagement.update_state_atomically(session_id, state_update)
         log_debug(
             session_id, "Session state updated", {"keys": list(state_update.keys())}
         )
     except Exception as e:
-        log_debug(session_id, "Session state update failed", {"error": str(e)})
+        log_debug(session_id, "Session state update failed", {"error": str(e)}, "ERROR")
 
 
 def run_backend_implementation(
@@ -90,11 +90,11 @@ def run_backend_implementation(
             "model": model,
             "timestamp": timestamp,
             "capabilities": [
+                "architecture_analysis",
                 "api_development",
-                "database_design",
-                "service_implementation",
-                "authentication_systems",
-                "performance_optimization",
+                "database_optimization",
+                "system_optimization", 
+                "scalability_assessment",
             ],
         },
     )
@@ -128,20 +128,20 @@ def run_backend_implementation(
 
         # Execute backend agent
         result = backend_agent.run_sync(
-            f"""Implement backend services, APIs, and database changes.
+            f"""Analyze and optimize backend systems, APIs, and architecture.
 
 Task: {task_description}
 Session: {session_id}
 
-Perform comprehensive backend implementation including:
-1. API endpoint design and implementation
-2. Database schema design and migrations
-3. Service layer business logic implementation
-4. Authentication and authorization integration
-5. Performance optimization and caching
-6. Error handling and resilience patterns
+Perform comprehensive backend analysis and optimization including:
+1. Architecture assessment and improvement recommendations  
+2. API design patterns and performance optimization
+3. Database schema optimization and query performance tuning
+4. System scalability and performance bottleneck analysis
+5. Integration patterns and service boundary optimization
+6. Security, caching, and resilience pattern recommendations
 
-Provide specific, actionable implementations with detailed technical specifications.""",
+Provide specific, actionable improvements with detailed technical rationale and implementation guidance.""",
             model=model,
         )
 
@@ -206,6 +206,7 @@ Provide specific, actionable implementations with detailed technical specificati
             session_id,
             "Backend implementation failed",
             {"error": str(e), "task": task_description},
+            "ERROR"
         )
 
         # Update session state to failed
@@ -243,7 +244,7 @@ def create_backend_files(session_id: str, output: BackendOutput):
         log_debug(session_id, "Created backend output JSON", {"path": str(output_file)})
 
     except Exception as e:
-        log_debug(session_id, "File creation failed", {"error": str(e)})
+        log_debug(session_id, "File creation failed", {"error": str(e)}, "ERROR")
 
 
 def main():

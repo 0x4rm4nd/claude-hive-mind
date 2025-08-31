@@ -38,12 +38,12 @@ def log_event(session_id: str, event_type: str, agent: str, details: Any):
         print(f"Logging failed: {e}")
 
 
-def log_debug(session_id: str, message: str, details: Any):
+def log_debug(session_id: str, message: str, details: Any, level: str = "DEBUG"):
     """Log debug message using protocol infrastructure"""
     try:
         cfg = ProtocolConfig({"session_id": session_id, "agent_name": "devops-worker"})
         logger = LoggingProtocol(cfg)
-        logger.log_debug(message, details)
+        logger.log_debug(message, details, level)
     except Exception as e:
         print(f"Debug logging failed: {e}")
 
@@ -51,12 +51,12 @@ def log_debug(session_id: str, message: str, details: Any):
 def update_session_state(session_id: str, state_update: Dict[str, Any]):
     """Update session state using protocol infrastructure"""
     try:
-        SessionManagement.update_session_state(session_id, state_update)
+        SessionManagement.update_state_atomically(session_id, state_update)
         log_debug(
             session_id, "Session state updated", {"keys": list(state_update.keys())}
         )
     except Exception as e:
-        log_debug(session_id, "Session state update failed", {"error": str(e)})
+        log_debug(session_id, "Session state update failed", {"error": str(e)}, "ERROR")
 
 
 def run_devops_implementation(
@@ -207,6 +207,7 @@ Focus on reliability, automation, and operational excellence.""",
             session_id,
             "DevOps implementation failed",
             {"error": str(e), "task": task_description},
+            "ERROR"
         )
 
         # Update session state to failed
@@ -243,7 +244,7 @@ def create_devops_files(session_id: str, output: DevOpsOutput):
         log_debug(session_id, "Created DevOps output JSON", {"path": str(output_file)})
 
     except Exception as e:
-        log_debug(session_id, "File creation failed", {"error": str(e)})
+        log_debug(session_id, "File creation failed", {"error": str(e)}, "ERROR")
 
 
 def main():

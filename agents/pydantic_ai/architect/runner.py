@@ -38,14 +38,19 @@ def log_event(session_id: str, event_type: str, agent: str, details: Any):
         print(f"Logging failed: {e}")
 
 
-def log_debug(session_id: str, message: str, details: Any):
-    """Log debug message using protocol infrastructure"""
+def log_debug(session_id: str, message: str, details: Any, level: str = "DEBUG"):
+    """Log message using protocol infrastructure with specified level"""
     try:
         cfg = ProtocolConfig(
             {"session_id": session_id, "agent_name": "architect-worker"}
         )
         logger = LoggingProtocol(cfg)
-        logger.log_debug(message, details)
+        if level == "ERROR":
+            logger.log_error(message, details)
+        elif level == "WARNING":
+            logger.log_warning(message, details)
+        else:
+            logger.log_debug(message, details)
     except Exception as e:
         print(f"Debug logging failed: {e}")
 
@@ -53,12 +58,12 @@ def log_debug(session_id: str, message: str, details: Any):
 def update_session_state(session_id: str, state_update: Dict[str, Any]):
     """Update session state using protocol infrastructure"""
     try:
-        SessionManagement.update_session_state(session_id, state_update)
+        SessionManagement.update_state_atomically(session_id, state_update)
         log_debug(
             session_id, "Session state updated", {"keys": list(state_update.keys())}
         )
     except Exception as e:
-        log_debug(session_id, "Session state update failed", {"error": str(e)})
+        log_debug(session_id, "Session state update failed", {"error": str(e)}, "ERROR")
 
 
 def run_architect_analysis(
@@ -80,6 +85,7 @@ def run_architect_analysis(
             session_id,
             "Session validation failed",
             {"error": str(e), "session_id": session_id},
+            "ERROR"
         )
 
     # Log worker spawn
@@ -190,6 +196,7 @@ Focus on strategic, high-impact architectural improvements with clear implementa
             session_id,
             "Architect analysis failed",
             {"error": str(e), "task": task_description},
+            "ERROR"
         )
 
         # Update session state to failed
@@ -208,28 +215,35 @@ Focus on strategic, high-impact architectural improvements with clear implementa
 
 def create_architect_files(session_id: str, output: ArchitectOutput):
     """Create architect output files using protocol infrastructure"""
+    current_file = None
     try:
-        session_path = SessionManagement.get_session_path(session_id)
+        session_path = Path(SessionManagement.get_session_path(session_id))
         notes_dir = session_path / "workers" / "notes"
         notes_dir.mkdir(parents=True, exist_ok=True)
 
         # Create architect notes file if content provided
         if output.notes_markdown:
-            notes_file = notes_dir / "architect_notes.md"
+            current_file = "architect_notes.md"
+            notes_file = notes_dir / current_file
             notes_file.write_text(output.notes_markdown)
             log_debug(
                 session_id, "Created architect notes file", {"path": str(notes_file)}
             )
 
         # Create structured output JSON
-        output_file = notes_dir / "architect_output.json"
+        current_file = "architect_output.json"
+        output_file = notes_dir / current_file
         output_file.write_text(output.model_dump_json(indent=2))
         log_debug(
             session_id, "Created architect output JSON", {"path": str(output_file)}
         )
 
     except Exception as e:
-        log_debug(session_id, "File creation failed", {"error": str(e)})
+        log_debug(session_id, "File creation failed", {
+            "error": str(e),
+            "filename": current_file,
+            "session_id": session_id
+        }, "ERROR")
 
 
 def main():

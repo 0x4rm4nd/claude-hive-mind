@@ -82,7 +82,7 @@ def update_session_state(session_id: str, state_update: dict):
             session_id, "Session state updated", {"keys": list(state_update.keys())}
         )
     except Exception as e:
-        log_debug(session_id, "Session state update failed", {"error": str(e)})
+        log_debug(session_id, "Session state update failed", {"error": str(e)}, "ERROR")
 
 
 def generate_ai_session_id(task_description: str, model: str) -> tuple[str, int]:

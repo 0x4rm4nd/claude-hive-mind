@@ -98,6 +98,7 @@
 - **Protocol Violations**: Self-correction required before proceeding
 - **Context7/Serena Unavailable**: Graceful degradation to WebSearch + built-in tools
 - **Session Corruption**: Create new session if STATE.json/EVENTS.jsonl corrupted
+- **Pydantic AI Model 429 Error**: Fallback to `gemini-2.5-flash` model when quota limits hit
 
 ## 🔧 Implementation Patterns
 
