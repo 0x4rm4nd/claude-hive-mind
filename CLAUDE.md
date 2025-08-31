@@ -114,7 +114,7 @@
 
 ### Protocol Reference
 
-**All event logging, compliance verification, and coordination details are defined in the individual protocol files.** Agents must use the standardized functions and templates provided in:
+**All event logging, compliance verification, and coordination details are defined in the individual protocol files.** Agents must use the standardized functions provided in:
 
 - `unified-logging-protocol.md` - Event and debug logging functions
 - `worker-startup-protocol.md` - Mandatory initialization sequence  

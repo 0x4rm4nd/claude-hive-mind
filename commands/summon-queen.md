@@ -18,13 +18,15 @@ The `/summon-queen` command follows a strict, two-phase process. You must execut
 
 **MANDATORY BASH EXECUTION:**
 Use the `Bash` tool to run the Pydantic AI scribe with these exact parameters:
+
 ```bash
-cd .claude && python -m agents.pydantic.run_scribe create --task "$ARGUMENTS" --model openai:gpt-4o-mini
+cd .claude/agents/pydantic && python cli.py scribe create --task "$ARGUMENTS" --model openai:gpt-5
 ```
 
 The Pydantic AI scribe will:
+
 - Generate proper session ID in YYYY-MM-DD-HH-mm-shorttaskdescription format
-- Create complete session directory structure (no .gitkeep files)  
+- Create complete session directory structure (no .gitkeep files)
 - Log `worker_spawned` and `session_created` events automatically
 - Return JSON with `session_id`, `session_path`, and other metadata
 
@@ -36,11 +38,13 @@ Parse the JSON response to extract the `session_id` for the next phase.
 
 **MANDATORY BASH EXECUTION:**
 Use the `Bash` tool to run the Pydantic AI Queen orchestrator with these exact parameters:
+
 ```bash
-cd .claude && python -m agents.pydantic.run_queen --session [session_id_from_scribe] --task "$ARGUMENTS" --model openai:gpt-4o-mini
+cd .claude/agents/pydantic && python cli.py queen --session [session_id_from_scribe] --task "$ARGUMENTS" --model openai:o3
 ```
 
 The Pydantic AI Queen will:
+
 - Perform intelligent codebase exploration using built-in tools
 - Generate comprehensive orchestration plan with worker assignments
 - Create detailed worker prompts in the session's `prompts/` directory
