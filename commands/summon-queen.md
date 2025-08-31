@@ -63,7 +63,8 @@ You MUST use a single message with multiple Bash tool calls to spawn all workers
 
 **Worker Spawning Pattern:**
 For each worker in the orchestration plan's `worker_assignments`:
-1. Extract `worker_type` (e.g., "analyzer-worker", "backend-worker", "architect-worker") 
+
+1. Extract `worker_type` (e.g., "analyzer-worker", "backend-worker", "architect-worker")
 2. Extract `task_focus` as the primary task description
 3. Use Bash tool with `run_in_background: true` to spawn Pydantic AI worker:
 
@@ -72,8 +73,9 @@ python agents/pydantic_ai/cli.py {worker_name} --session {session_id} --task "{t
 ```
 
 **Available Pydantic AI Workers:**
+
 - `analyzer` - Security, performance, and code quality analysis
-- `architect` - System architecture and design analysis  
+- `architect` - System architecture and design analysis
 - `backend` - API, database, and service implementation
 - `devops` - Infrastructure, deployment, and operations
 - `researcher` - Industry standards and best practices research
@@ -82,14 +84,16 @@ python agents/pydantic_ai/cli.py {worker_name} --session {session_id} --task "{t
 - `test` - Testing strategies and quality assurance
 
 **Example Parallel Execution:**
+
 ```bash
 # Run 3 workers simultaneously using CLI
 python agents/pydantic_ai/cli.py analyzer --session 2025-08-31-12-25-crypto-data-analysis --task "Security and Performance Assessment" --model openai:gpt-5 &
-python agents/pydantic_ai/cli.py architect --session 2025-08-31-12-25-crypto-data-analysis --task "System Architecture Review" --model openai:gpt-5 &  
+python agents/pydantic_ai/cli.py architect --session 2025-08-31-12-25-crypto-data-analysis --task "System Architecture Review" --model openai:gpt-5 &
 python agents/pydantic_ai/cli.py backend --session 2025-08-31-12-25-crypto-data-analysis --task "Implementation Analysis" --model openai:gpt-5 &
 ```
 
 **Monitoring and Coordination:**
+
 - Workers write progress events to `EVENTS.jsonl` automatically
 - Workers create output files in `session_directory/workers/notes/`
 - Check worker status using: `tail -f Docs/hive-mind/sessions/{session_id}/EVENTS.jsonl`
@@ -98,10 +102,11 @@ python agents/pydantic_ai/cli.py backend --session 2025-08-31-12-25-crypto-data-
 - Completed workers will log completion events with summary metrics
 
 **Worker Output Structure:**
+
 ```
 session_directory/
 ├── EVENTS.jsonl              # Worker progress and coordination events
-├── DEBUG.jsonl               # Debug logs and error details  
+├── DEBUG.jsonl               # Debug logs and error details
 ├── SESSION.json              # Session state and orchestration plan
 └── workers/
     └── notes/

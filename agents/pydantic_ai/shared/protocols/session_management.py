@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
 Session Management Protocol
-==========================================
+
 Unified session path detection and append-safe file operations.
 Ensures all agents use consistent paths and never overwrite session data.
 """
@@ -423,19 +423,16 @@ class SessionManagement:
         """
         Update SESSION.md with progress information.
         Appends progress updates to the Coordination Progress section.
-
         Args:
             session_id: Session identifier
             progress_update: Progress update to add (markdown format)
             worker_type: Worker reporting the progress
-
         Returns:
             True if update successful
         """
         try:
             session_path = SessionManagement.get_session_path(session_id)
             session_md_path = os.path.join(session_path, "SESSION.md")
-
             # Read current SESSION.md
             if os.path.exists(session_md_path):
                 with open(session_md_path, "r") as f:

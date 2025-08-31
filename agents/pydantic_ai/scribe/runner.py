@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
 Scribe Agent Runner
-==================  
+
 Simple, working execution script for scribe agent.
 """
 
@@ -73,12 +73,14 @@ def update_session_state(session_id: str, state_update: dict):
         project_root_path = Path(__file__).parent.parent.parent.parent.parent
         sessions_dir = project_root_path / "Docs" / "hive-mind" / "sessions"
         session_path = sessions_dir / session_id
-        
+
         state_file = session_path / "STATE.json"
         with open(state_file, "w") as f:
             json.dump(state_update, f, indent=2)
-            
-        log_debug(session_id, "Session state updated", {"keys": list(state_update.keys())})
+
+        log_debug(
+            session_id, "Session state updated", {"keys": list(state_update.keys())}
+        )
     except Exception as e:
         log_debug(session_id, "Session state update failed", {"error": str(e)})
 
@@ -144,7 +146,7 @@ def create_session(task_description: str, model: str) -> dict:
 
     # Create session files using SessionManagement (which creates EVENTS.jsonl, DEBUG.jsonl, BACKLOG.jsonl)
     # The protocol infrastructure handles file creation
-    events_file = session_path / "EVENTS.jsonl" 
+    events_file = session_path / "EVENTS.jsonl"
     events_file.touch()
     debug_file = session_path / "DEBUG.jsonl"
     debug_file.touch()
@@ -152,22 +154,30 @@ def create_session(task_description: str, model: str) -> dict:
     backlog_file.touch()
 
     # Log session creation using standardized protocol
-    log_event(session_id, "session_created", {
-        "session_id": session_id,
-        "task_description": task_description,
-        "model": model,
-        "session_path": f"Docs/hive-mind/sessions/{session_id}",
-        "generated_by": "scribe",
-        "description_length": desc_length,
-    })
+    log_event(
+        session_id,
+        "session_created",
+        {
+            "session_id": session_id,
+            "task_description": task_description,
+            "model": model,
+            "session_path": f"Docs/hive-mind/sessions/{session_id}",
+            "generated_by": "scribe",
+            "description_length": desc_length,
+        },
+    )
 
-    # Log scribe spawn using standardized protocol  
-    log_event(session_id, "worker_spawned", {
-        "worker_type": "scribe",
-        "mode": "create", 
-        "model": model,
-        "purpose": "session_creation",
-    })
+    # Log scribe spawn using standardized protocol
+    log_event(
+        session_id,
+        "worker_spawned",
+        {
+            "worker_type": "scribe",
+            "mode": "create",
+            "model": model,
+            "purpose": "session_creation",
+        },
+    )
 
     # Create SESSION.md
     session_md_content = f"""# Session: {session_id}
@@ -209,7 +219,7 @@ Session ready for Queen orchestration.
             }
         },
     }
-    
+
     update_session_state(session_id, initial_state)
 
     return {

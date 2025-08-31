@@ -1,6 +1,6 @@
 """
 Designer Worker Runner
-=====================
+
 Execution script for designer worker with protocol compliance.
 """
 

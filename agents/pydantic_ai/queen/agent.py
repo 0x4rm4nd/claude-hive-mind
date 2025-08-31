@@ -1,6 +1,6 @@
 """
 Queen Orchestrator Agent
-========================
+
 Lightweight Pydantic AI agent for efficient task orchestration.
 """
 
