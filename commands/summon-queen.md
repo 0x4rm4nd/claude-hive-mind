@@ -54,43 +54,35 @@ The Pydantic AI Queen will:
 
 **CRITICAL**: You must pass the exact `session_id` received from the Pydantic AI scribe to the Queen orchestrator.
 
-### Phase 3: Simultaneous Worker Deployment
+### Phase 3: Automatic Claude Worker Deployment
 
-**After the Queen has generated the orchestration plan, your third action is to spawn ALL workers simultaneously using parallel Pydantic AI runner calls.**
+**The Queen orchestrator now automatically spawns Claude Worker agents using the Task framework. This establishes the proper hierarchy: Queen → Claude Workers → Pydantic AI Workers.**
 
-**MANDATORY PARALLEL EXECUTION:**
-You MUST use a single message with multiple Bash tool calls to spawn all workers concurrently. Do NOT spawn workers sequentially one-by-one.
+**Architecture Flow:**
+1. **Queen Analysis Complete**: The Queen has generated the orchestration plan with worker assignments
+2. **Automatic Claude Worker Spawning**: The Queen automatically spawns Claude Worker agents (.md files) using the Task tool
+3. **Claude Worker Initialization**: Each Claude Worker agent loads its configuration, joins the session, and executes startup protocols
+4. **Pydantic AI Worker Spawning**: Each Claude Worker agent then spawns its corresponding Pydantic AI worker
+5. **Coordinated Execution**: Workers coordinate through the session event system
 
-**Worker Spawning Pattern:**
-For each worker in the orchestration plan's `worker_assignments`:
+**Worker Hierarchy Mapping:**
 
-1. Extract `worker_type` (e.g., "analyzer-worker", "backend-worker", "architect-worker")
-2. Extract `task_focus` as the primary task description
-3. Use Bash tool with `run_in_background: true` to spawn Pydantic AI worker:
+- `analyzer-worker.md` → `pydantic_ai/analyzer/` - Security, performance, and code quality analysis
+- `architect-worker.md` → `pydantic_ai/architect/` - System architecture and design analysis  
+- `backend-worker.md` → `pydantic_ai/backend/` - API, database, and service implementation
+- `devops-worker.md` → `pydantic_ai/devops/` - Infrastructure, deployment, and operations
+- `researcher-worker.md` → `pydantic_ai/researcher/` - Industry standards and best practices research
+- `frontend-worker.md` → `pydantic_ai/frontend/` - UI/UX and client-side implementation
+- `designer-worker.md` → `pydantic_ai/designer/` - Design patterns and user experience
+- `test-worker.md` → `pydantic_ai/test/` - Testing strategies and quality assurance
 
-```bash
-python agents/pydantic_ai/cli.py {worker_name} --session {session_id} --task "{task_focus}" --model openai:gpt-5
-```
+**No Manual Worker Spawning Required:**
+The Queen orchestrator handles all worker spawning automatically through the Task framework. Each Claude Worker agent receives detailed instructions including:
 
-**Available Pydantic AI Workers:**
-
-- `analyzer` - Security, performance, and code quality analysis
-- `architect` - System architecture and design analysis
-- `backend` - API, database, and service implementation
-- `devops` - Infrastructure, deployment, and operations
-- `researcher` - Industry standards and best practices research
-- `frontend` - UI/UX and client-side implementation
-- `designer` - Design patterns and user experience
-- `test` - Testing strategies and quality assurance
-
-**Example Parallel Execution:**
-
-```bash
-# Run 3 workers simultaneously using CLI
-python agents/pydantic_ai/cli.py analyzer --session 2025-08-31-12-25-crypto-data-analysis --task "Security and Performance Assessment" --model openai:gpt-5 &
-python agents/pydantic_ai/cli.py architect --session 2025-08-31-12-25-crypto-data-analysis --task "System Architecture Review" --model openai:gpt-5 &
-python agents/pydantic_ai/cli.py backend --session 2025-08-31-12-25-crypto-data-analysis --task "Implementation Analysis" --model openai:gpt-5 &
-```
+- Session context and coordination requirements
+- Specific task focus and priorities
+- Protocol compliance checklist
+- Instructions to spawn corresponding Pydantic AI worker
 
 **Monitoring and Coordination:**
 
@@ -122,9 +114,9 @@ session_directory/
 
 1.  **Summon:** You, the top-level agent, receive the `/summon-queen` command.
 2.  **Run Pydantic Scribe:** You run the Pydantic AI scribe to create the session with guaranteed logging.
-3.  **Run Pydantic Queen:** You run the Pydantic AI Queen orchestrator with the new `session_id` to perform intelligent task analysis and worker coordination.
-4.  **Deploy Workers:** Use the orchestration plan to spawn ALL specialist Pydantic AI workers SIMULTANEOUSLY via parallel Bash tool calls with `run_in_background: true` (not sequentially).
-5.  **Monitor Progress:** Workers will log their progress to EVENTS.jsonl and create output files in the session directory.
+3.  **Run Pydantic Queen:** You run the Pydantic AI Queen orchestrator with the new `session_id` to perform intelligent task analysis and generate worker assignments.
+4.  **Automatic Worker Deployment:** The Queen automatically spawns Claude Worker agents (.md files) using the Task framework. Each Claude Worker then spawns its corresponding Pydantic AI worker, establishing the proper hierarchy: Queen → Claude Workers → Pydantic AI Workers.
+5.  **Monitor Progress:** Workers coordinate through the event system, logging progress to EVENTS.jsonl and creating output files in the session directory.
 6.  **Run Pydantic Synthesis:** Once the specialist workers are done, run the Pydantic AI scribe again for synthesis.
 
 Your role is to initiate and connect this two-step delegation process correctly, ensuring the roles remain distinct.

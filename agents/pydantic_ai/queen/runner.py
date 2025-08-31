@@ -28,7 +28,7 @@ from shared.protocols import (
     ProtocolConfig,
     WorkerPromptProtocol,
     create_worker_prompts_from_plan,
-    load_project_env
+    load_project_env,
 )
 
 # Use helper function to load project environment
@@ -122,10 +122,27 @@ def run_orchestration(
             session_id, task_description, orchestration_plan
         )
         SessionManagement.update_state_atomically(session_id, detailed_state_update)
-        
-        # Spawn the Pydantic AI workers
-        spawn_result = spawn_pydantic_workers(session_id, task_description, orchestration_plan.worker_assignments)
-        
+
+        # Spawn the Claude Worker agents (which will spawn Pydantic AI workers)
+        spawn_result = spawn_claude_workers(
+            session_id, task_description, orchestration_plan.worker_assignments
+        )
+
+        # Task execution plan prepared for main Claude agent
+        if "task_execution_plan" in spawn_result:
+            log_event(
+                session_id,
+                "task_plan_prepared",
+                "queen-orchestrator",
+                {
+                    "task_count": len(spawn_result["task_execution_plan"]),
+                    "next_step": "main_claude_agent_will_execute_tasks",
+                    "worker_types": [
+                        t["worker_type"] for t in spawn_result["task_execution_plan"]
+                    ],
+                },
+            )
+
         log_event(
             session_id,
             "workers_deployed",
@@ -133,11 +150,15 @@ def run_orchestration(
             {
                 "spawned_count": spawn_result["spawn_count"],
                 "failed_count": len(spawn_result["failed_spawns"]),
-                "spawned_workers": [w["worker_type"] for w in spawn_result["spawned_workers"]],
-                "failed_workers": [f["worker_type"] for f in spawn_result["failed_spawns"]]
-            }
+                "spawned_workers": [
+                    w["worker_type"] for w in spawn_result["spawned_workers"]
+                ],
+                "failed_workers": [
+                    f["worker_type"] for f in spawn_result["failed_spawns"]
+                ],
+            },
         )
-        
+
         # Update SESSION.md with human-readable summary
         update_session_summary(session_id, task_description, orchestration_plan)
 
@@ -154,7 +175,7 @@ def run_orchestration(
                         "priority": assignment.priority,
                         "dependencies": assignment.dependencies,
                         "estimated_duration": assignment.estimated_duration,
-                        "rationale": assignment.rationale
+                        "rationale": assignment.rationale,
                     }
                     for assignment in orchestration_plan.worker_assignments
                 ],
@@ -166,7 +187,9 @@ def run_orchestration(
 
         # Create worker prompt files (framework-enforced)
         try:
-            created_prompts = create_worker_prompts_from_plan(session_id, orchestration_plan)
+            created_prompts = create_worker_prompts_from_plan(
+                session_id, orchestration_plan
+            )
             # Logging is handled by prompt_generator with batch_logging=True (default)
         except Exception as e:
             log_debug(
@@ -175,8 +198,8 @@ def run_orchestration(
                 {
                     "error": str(e),
                     "exception_type": str(type(e)),
-                    "impact": "Workers may not have proper task instructions"
-                }
+                    "impact": "Workers may not have proper task instructions",
+                },
             )
             # Continue execution - workers can use fallback extraction
 
@@ -192,11 +215,16 @@ def run_orchestration(
             },
         )
 
+        # Attach task execution plan to orchestration plan for main Claude agent
+        orchestration_plan.task_execution_plan = spawn_result.get(
+            "task_execution_plan", []
+        )
+
         return orchestration_plan
 
     except Exception as e:
         error_str = str(e).lower()
-        
+
         # Log error to debug
         log_debug(
             session_id,
@@ -208,33 +236,52 @@ def run_orchestration(
                 "original_model": model,
             },
         )
-        
+
         # Check if we should retry with different parameters
         if retry_count < max_retries:
             new_model = model
-            
+
             # Adjust model based on error type
             if "model_not_found" in error_str or "does not exist" in error_str:
                 if "o3" in model or "o1" in model:
                     new_model = "openai:gpt-4o"
-                    log_debug(session_id, "Switching to available model", {"new_model": new_model})
+                    log_debug(
+                        session_id,
+                        "Switching to available model",
+                        {"new_model": new_model},
+                    )
                 elif "gpt-5" in model:
-                    new_model = "openai:gpt-4o" 
-                    log_debug(session_id, "Switching to available model", {"new_model": new_model})
+                    new_model = "openai:gpt-4o"
+                    log_debug(
+                        session_id,
+                        "Switching to available model",
+                        {"new_model": new_model},
+                    )
             elif "rate_limit" in error_str:
                 import time
+
                 wait_time = (retry_count + 1) * 2  # Exponential backoff
-                log_debug(session_id, f"Rate limit hit, waiting {wait_time}s", {"wait_time": wait_time})
+                log_debug(
+                    session_id,
+                    f"Rate limit hit, waiting {wait_time}s",
+                    {"wait_time": wait_time},
+                )
                 time.sleep(wait_time)
             elif "context_length" in error_str or "too long" in error_str:
                 # Could adjust prompt length here if needed
-                log_debug(session_id, "Context length exceeded, using simpler prompt", {})
-            
+                log_debug(
+                    session_id, "Context length exceeded, using simpler prompt", {}
+                )
+
             # Retry with adjusted parameters
-            return run_orchestration(session_id, task_description, new_model, retry_count + 1)
-        
+            return run_orchestration(
+                session_id, task_description, new_model, retry_count + 1
+            )
+
         # Max retries exceeded, re-raise the exception
-        log_debug(session_id, "Max retries exceeded, giving up", {"max_retries": max_retries})
+        log_debug(
+            session_id, "Max retries exceeded, giving up", {"max_retries": max_retries}
+        )
         raise e
 
 
@@ -245,16 +292,18 @@ def update_session_summary(
     try:
         session_path = SessionManagement.get_session_path(session_id)
         session_md_path = os.path.join(session_path, "SESSION.md")
-        
+
         # Parse session ID for date
         date_part = session_id.split("-")[:3]  # 2025-08-31-10
         session_date = "-".join(date_part[:3]) if len(date_part) >= 3 else "unknown"
-        
+
         # Generate worker assignments section
         worker_assignments_md = ""
         for assignment in orchestration_plan.worker_assignments:
-            worker_assignments_md += f"- **{assignment.worker_type}**: {assignment.task_focus}\n"
-        
+            worker_assignments_md += (
+                f"- **{assignment.worker_type}**: {assignment.task_focus}\n"
+            )
+
         # Create SESSION.md content
         session_content = f"""# {task_description.title()} Session
 
@@ -292,13 +341,13 @@ def update_session_summary(
 ---
 *Generated by Queen Orchestrator at {orchestration_plan.timestamp}*
 """
-        
+
         # Write SESSION.md
         with open(session_md_path, "w") as f:
             f.write(session_content)
-            
+
         return True
-        
+
     except Exception as e:
         log_debug(session_id, "SESSION.md update failed", {"error": str(e)})
         return False
@@ -372,8 +421,6 @@ def create_detailed_state_update(
         state_update["worker_configs"][worker_type] = worker_config
 
     return state_update
-
-
 
 
 async def monitor_worker_progress(
@@ -487,131 +534,148 @@ async def monitor_worker_progress(
     )
 
 
-def spawn_pydantic_workers(session_id: str, task_description: str, worker_assignments: List[WorkerAssignment]) -> Dict[str, Any]:
-    """Spawn Pydantic AI worker agents using bash commands"""
-    import subprocess
-    
-    # Map worker types to agent directory names  
-    worker_type_mapping = {
-        "analyzer-worker": "analyzer",
-        "architect-worker": "architect", 
-        "backend-worker": "backend",
-        "frontend-worker": "frontend",
-        "designer-worker": "designer",
-        "devops-worker": "devops",
-        "researcher-worker": "researcher",
-        "test-worker": "test"
-    }
-    
+def spawn_claude_workers(
+    session_id: str, task_description: str, worker_assignments: List[WorkerAssignment]
+) -> Dict[str, Any]:
+    """Spawn Claude Worker agents (.md files) which will then spawn their Pydantic AI workers"""
+
     spawned_workers = []
     failed_spawns = []
-    
-    # Get the base path for agents
-    base_path = Path(__file__).parent.parent
-    
-    # Prepare all worker commands first
-    worker_commands = []
-    project_root = Path(__file__).parent.parent.parent.parent
-    
+
+    # Queue all workers as Task objects for parallel execution
+    worker_tasks = []
+
     for assignment in worker_assignments:
         worker_type = assignment.worker_type
         task_focus = assignment.task_focus
-            
-        agent_name = worker_type_mapping.get(worker_type)
-        
-        if not agent_name:
-            failed_spawns.append({
-                "worker_type": worker_type,
-                "error": f"Unknown worker type: {worker_type}"
-            })
-            continue
-            
-        # Construct the bash command to spawn the worker as a module
-        # Use -m to run as module to handle relative imports correctly
-        cmd = [
-            "python", 
-            "-m", f"agents.pydantic_ai.{agent_name}.runner",
-            "--session", session_id,
-            "--task", task_focus
-        ]
-        
-        worker_commands.append({
-            "worker_type": worker_type,
-            "agent_name": agent_name,
-            "task_focus": task_focus,
-            "cmd": cmd
-        })
-    
-    # Spawn all workers in parallel
-    processes = []
-    for worker_config in worker_commands:
+
+        # Create detailed task prompt for the Claude Worker agent
+        worker_prompt = f"""
+Execute analysis task for session {session_id}:
+
+**Task Focus**: {assignment.task_focus}
+
+**Priority**: {assignment.priority}
+**Strategic Value**: {assignment.strategic_value}
+**Estimated Duration**: {assignment.estimated_duration}
+**Rationale**: {assignment.rationale}
+
+**Dependencies**: {', '.join(assignment.dependencies) if assignment.dependencies else 'None'}
+
+**Your Responsibilities**:
+1. Load your agent configuration from agents/{worker_type}.md
+2. Join the active session (session_id: {session_id})
+3. Execute startup protocol checklist
+4. Spawn your corresponding Pydantic AI worker with the task focus above
+5. Monitor and coordinate the work
+6. Log completion when your Pydantic AI worker finishes
+
+**Context**: This is part of orchestrated task: {task_description}
+
+Follow the hive-mind coordination protocols and ensure proper session management.
+"""
+
         try:
-            # Spawn the worker process in background
-            # Change to project root directory to ensure module imports work
-            process = subprocess.Popen(
-                worker_config["cmd"],
-                cwd=str(project_root),
-                stdout=subprocess.PIPE,
-                stderr=subprocess.PIPE,
-                text=True
-            )
-            processes.append((process, worker_config))
-            
-            spawned_workers.append({
-                "worker_type": worker_config["worker_type"],
-                "agent_name": worker_config["agent_name"],
-                "process_id": process.pid,
-                "command": " ".join(worker_config["cmd"]),
-                "task_focus": worker_config["task_focus"]
-            })
-            
-            # Log the worker spawn
-            log_event(
-                session_id,
-                "worker_spawned",
-                worker_config["agent_name"],
+            # Prepare Claude Code Task parameters for spawning worker agents
+            # The Claude sub-agents will then spawn their Pydantic AI workers
+
+            task_params = {
+                "subagent_type": worker_type,
+                "description": f"Execute {assignment.task_focus}",
+                "prompt": worker_prompt,
+            }
+
+            worker_tasks.append(
                 {
-                    "worker_type": worker_config["worker_type"],
-                    "task_focus": worker_config["task_focus"],
-                    "process_id": process.pid,
-                    "spawned_by": "queen-orchestrator"
+                    "task_params": task_params,
+                    "worker_type": worker_type,
+                    "assignment": assignment,
                 }
             )
-            
+
+            spawned_workers.append(
+                {
+                    "worker_type": worker_type,
+                    "task_focus": assignment.task_focus,
+                    "priority": assignment.priority,
+                    "spawned_by": "queen-orchestrator",
+                    "spawn_method": "claude_worker_agent",
+                }
+            )
+
         except Exception as e:
-            failed_spawns.append({
-                "worker_type": worker_config["worker_type"],
-                "error": str(e)
-            })
+            failed_spawns.append({"worker_type": worker_type, "error": str(e)})
             log_event(
                 session_id,
-                "worker_spawn_failed", 
+                "claude_worker_spawn_failed",
                 "queen-orchestrator",
-                {
-                    "worker_type": worker_config["worker_type"],
-                    "error": str(e)
-                }
+                {"worker_type": worker_type, "error": str(e)},
             )
-    
-    # Log parallel deployment completion
-    if spawned_workers:
+
+    # Log the Claude Worker spawn
+    log_event(
+        session_id,
+        "claude_workers_spawned",
+        worker_type,
+        {
+            "task_focus": assignment.task_focus,
+            "priority": assignment.priority,
+            "strategic_value": assignment.strategic_value,
+            "spawned_by": "queen-orchestrator",
+            "next_step": "claude_worker_will_spawn_pydantic_ai_worker",
+        },
+    )
+
+    # Execute all worker tasks (this spawns the Claude Worker agents)
+    if worker_tasks:
         log_event(
             session_id,
-            "parallel_worker_deployment_completed",
-            "queen-orchestrator", 
+            "parallel_worker_deployment_initiated",
+            "queen-orchestrator",
             {
-                "total_spawned": len(spawned_workers),
-                "worker_types": [w["worker_type"] for w in spawned_workers],
-                "spawn_strategy": "parallel",
-                "deployment_time": "simultaneous"
-            }
+                "total_workers": len(worker_tasks),
+                "worker_types": [wt["worker_type"] for wt in worker_tasks],
+                "spawn_strategy": "parallel_claude_workers",
+                "next_phase": "claude_workers_will_spawn_pydantic_ai_workers",
+            },
         )
-    
+
+        # Prepare Task parameters for main Claude agent to execute
+        # The main Claude agent will use the Task tool to spawn workers
+        # Each Claude worker will then spawn its corresponding Pydantic AI worker
+        task_execution_plan = []
+
+        for worker_task in worker_tasks:
+            task_execution_plan.append(
+                {
+                    "worker_type": worker_task["worker_type"],
+                    "task_params": worker_task["task_params"],
+                    "assignment": {
+                        "task_focus": worker_task["assignment"].task_focus,
+                        "priority": worker_task["assignment"].priority,
+                        "strategic_value": worker_task["assignment"].strategic_value,
+                    },
+                }
+            )
+
+        log_event(
+            session_id,
+            "worker_tasks_prepared",
+            worker_task["worker_type"],
+            {
+                "preparation_status": "ready_for_execution",
+                "task_description": worker_task["assignment"].task_focus,
+                "next_step": "awaiting_main_claude_agent_task_execution",
+            },
+        )
+
     return {
         "spawned_workers": spawned_workers,
         "failed_spawns": failed_spawns,
         "spawn_count": len(spawned_workers),
-        "session_id": session_id
+        "session_id": session_id,
+        "spawn_method": "claude_worker_agents",
+        "task_execution_plan": task_execution_plan,
     }
 
 

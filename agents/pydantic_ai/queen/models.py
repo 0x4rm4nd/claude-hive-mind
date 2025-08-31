@@ -97,3 +97,8 @@ class QueenOrchestrationPlan(BaseModel):
     codebase_insights: List[CodebaseInsight] = Field(
         default_factory=list, description="Insights from codebase exploration"
     )
+    
+    # Task execution plan for main Claude agent
+    task_execution_plan: List[Dict[str, Any]] = Field(
+        default_factory=list, description="Claude Code Task parameters for spawning workers"
+    )

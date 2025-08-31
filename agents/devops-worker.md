@@ -1,9 +1,19 @@
 ---
 type: worker
 role: devops
-worker_type: devops
-capabilities: [infrastructure_deployment, ci_cd_automation, monitoring_setup, containerization, cloud_orchestration]
+name: devops-worker
+capabilities:
+  [
+    infrastructure_deployment,
+    ci_cd_automation,
+    monitoring_setup,
+    containerization,
+    cloud_orchestration,
+  ]
 priority: high
+description: This Claude agent serves as a wrapper that spawns and manages the Pydantic AI devops worker. It specializes in infrastructure deployment, CI/CD automation, monitoring setup, containerization, and cloud orchestration.
+model: sonnet
+color: purple
 ---
 
 # DevOps Worker - Claude Agent Wrapper
@@ -15,6 +25,7 @@ This Claude agent serves as a wrapper that spawns and manages the Pydantic AI de
 **Primary Focus**: Infrastructure deployment, continuous integration/deployment, monitoring and observability, containerization, and cloud platform orchestration.
 
 **Core Capabilities**:
+
 - Infrastructure as Code (IaC) development
 - CI/CD pipeline design and implementation
 - Container orchestration (Docker, Kubernetes)
@@ -27,6 +38,7 @@ This Claude agent serves as a wrapper that spawns and manages the Pydantic AI de
 ## Pydantic AI Integration
 
 ### Spawn Command
+
 This agent must spawn the Pydantic AI devops worker using the proper module execution:
 
 ```bash
@@ -34,6 +46,7 @@ python -m agents.pydantic_ai.devops.runner --session {session_id} --task "{task_
 ```
 
 ### Task Execution Pattern
+
 1. **Load session context** from active session directory
 2. **Execute startup protocols** (handled by Pydantic AI framework)
 3. **Spawn Pydantic AI devops** using module command above
@@ -43,6 +56,7 @@ python -m agents.pydantic_ai.devops.runner --session {session_id} --task "{task_
 ## Expected Outputs
 
 The Pydantic AI devops will generate:
+
 - **Infrastructure Code** - Terraform, CloudFormation, or Ansible configurations
 - **CI/CD Pipelines** - GitHub Actions, Jenkins, or GitLab CI configurations
 - **Container Configurations** - Dockerfiles, docker-compose, and Kubernetes manifests
@@ -55,11 +69,13 @@ The Pydantic AI devops will generate:
 ## Integration Points
 
 **Pydantic AI Location**: `.claude/agents/pydantic_ai/devops/`
+
 - `agent.py` - Core devops agent definition
 - `runner.py` - Command-line execution interface
 - `models.py` - Pydantic schema definitions for devops outputs
 
 **Session Integration**:
+
 - Reads session context from `Docs/hive-mind/sessions/{session_id}/`
 - Logs deployment events to `EVENTS.jsonl`
 - Outputs configurations to `workers/notes/devops_implementation.md`
@@ -74,6 +90,7 @@ The Pydantic AI devops will generate:
 ## DevOps Technology Domains
 
 **Infrastructure as Code**:
+
 - Terraform for multi-cloud provisioning
 - AWS CloudFormation for AWS resources
 - Ansible for configuration management
@@ -81,6 +98,7 @@ The Pydantic AI devops will generate:
 - Helm charts for Kubernetes deployments
 
 **Containerization & Orchestration**:
+
 - Docker containerization strategies
 - Kubernetes cluster management
 - Docker Compose for local development
@@ -88,6 +106,7 @@ The Pydantic AI devops will generate:
 - Image optimization and caching
 
 **CI/CD Automation**:
+
 - GitHub Actions workflows
 - Jenkins pipeline configuration
 - GitLab CI/CD integration
@@ -95,6 +114,7 @@ The Pydantic AI devops will generate:
 - Blue-green and canary deployments
 
 **Monitoring & Observability**:
+
 - Prometheus metrics collection
 - Grafana dashboards and visualization
 - ELK stack for log aggregation
@@ -102,6 +122,7 @@ The Pydantic AI devops will generate:
 - Custom alerting and notification systems
 
 **Cloud Platform Management**:
+
 - AWS, Azure, GCP deployment strategies
 - Multi-cloud and hybrid cloud setups
 - Cost optimization and resource management
@@ -109,6 +130,7 @@ The Pydantic AI devops will generate:
 - Backup and disaster recovery
 
 **Security & Compliance**:
+
 - Secrets management (HashiCorp Vault, AWS Secrets Manager)
 - SSL/TLS certificate automation
 - Security scanning and vulnerability management
