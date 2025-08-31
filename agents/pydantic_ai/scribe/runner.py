@@ -8,6 +8,7 @@ Simple, working execution script for scribe agent.
 import argparse
 import json
 import os
+import re
 import sys
 from datetime import datetime
 from pathlib import Path
@@ -32,19 +33,51 @@ def iso_now() -> str:
     return datetime.utcnow().isoformat() + "Z"
 
 
-def create_session_id(task: str) -> str:
-    """Create a session ID from task description"""
-    timestamp = datetime.utcnow().strftime("%Y-%m-%d-%H-%M")
-    # Simple task summarization
-    words = task.lower().split()[:3]
-    task_part = "-".join(w[:8] for w in words if w.isalnum())[:20]
-    return f"{timestamp}-{task_part}"
+def generate_ai_session_id(task_description: str, model: str) -> tuple[str, int]:
+    """Generate session ID using AI to create better short description"""
+    timestamp = datetime.utcnow().strftime('%Y-%m-%d-%H-%M')
+    
+    # Check if API key is available - FAIL HARD if not
+    if not os.getenv('OPENAI_API_KEY'):
+        raise ValueError("OPENAI_API_KEY environment variable is required for AI session ID generation")
+    
+    # Use AI to generate a concise description
+    class SessionDescription(BaseModel):
+        short_name: str  # 1-3 words, lowercase, hyphens for spaces
+    
+    desc_agent = Agent(model, result_type=SessionDescription)
+    
+    prompt = f"""Create a very short description (1-3 words) for this task: {task_description}
+    
+    Requirements:
+    - Maximum 3 words
+    - Use lowercase
+    - Use hyphens instead of spaces
+    - Be descriptive but concise
+    
+    Examples:
+    - "add user authentication" -> "user-auth"
+    - "fix database connection issues" -> "db-fix"  
+    - "implement payment processing" -> "payment-proc"
+    """
+    
+    result = desc_agent.run_sync(prompt)
+    short_desc = result.data.short_name
+    # Clean and validate the description
+    short_desc = re.sub(r'[^a-z0-9\-]', '', short_desc.lower())
+    short_desc = re.sub(r'-+', '-', short_desc).strip('-')
+    
+    if len(short_desc) > 20:
+        short_desc = short_desc[:20]
+    
+    session_id = f"{timestamp}-{short_desc}"
+    return session_id, len(short_desc)
 
 
 def create_session(task_description: str, model: str) -> dict:
     """Create a new session with directory structure"""
 
-    session_id = create_session_id(task_description)
+    session_id, desc_length = generate_ai_session_id(task_description, model)
 
     # Create session directory
     project_root_path = Path(__file__).parent.parent.parent.parent.parent
@@ -53,18 +86,96 @@ def create_session(task_description: str, model: str) -> dict:
 
     session_path.mkdir(parents=True, exist_ok=True)
     (session_path / "workers").mkdir(exist_ok=True)
+    (session_path / "workers" / "notes").mkdir(exist_ok=True)
+    (session_path / "prompts").mkdir(exist_ok=True)
 
-    # Create STATE.json
-    state = {
+    # Create EVENTS.jsonl
+    events_file = session_path / "EVENTS.jsonl"
+    events_file.touch()
+    
+    # Log session creation event
+    session_created_event = {
+        "timestamp": iso_now(),
+        "event_type": "session_created",
+        "worker_type": "scribe",
+        "data": {
+            "session_id": session_id,
+            "task_description": task_description,
+            "model": model,
+            "session_path": str(session_path),
+            "generated_by": "scribe",
+            "description_length": desc_length
+        }
+    }
+    with open(events_file, "a") as f:
+        f.write(json.dumps(session_created_event) + "\n")
+    
+    # Log scribe spawn event
+    worker_spawned_event = {
+        "timestamp": iso_now(),
+        "event_type": "worker_spawned", 
+        "worker_type": "scribe",
+        "data": {
+            "worker_type": "scribe",
+            "mode": "create",
+            "model": model,
+            "purpose": "session_creation"
+        }
+    }
+    with open(events_file, "a") as f:
+        f.write(json.dumps(worker_spawned_event) + "\n")
+
+    # Create DEBUG.jsonl
+    debug_file = session_path / "DEBUG.jsonl"
+    debug_file.touch()
+    
+    # Create BACKLOG.jsonl
+    backlog_file = session_path / "BACKLOG.jsonl"
+    backlog_file.touch()
+
+    # Create SESSION.md
+    session_md_content = f"""# Session: {session_id}
+
+**Created:** {iso_now()}  
+**Task:** {task_description}  
+**Model:** {model}  
+**Status:** Created  
+
+## Overview
+Session created for task analysis and worker coordination.
+
+## Progress
+- [x] Session initialization
+- [ ] Task analysis  
+- [ ] Worker deployment
+- [ ] Synthesis
+
+## Notes
+Session ready for Queen orchestration.
+"""
+    
+    with open(session_path / "SESSION.md", "w") as f:
+        f.write(session_md_content)
+
+    # Create complete STATE.json
+    initial_state = {
         "session_id": session_id,
         "created": iso_now(),
         "task_description": task_description,
         "model": model,
         "status": "created",
+        "phase": "initialization",
+        "workers": {
+            "scribe": {
+                "status": "active",
+                "spawned_at": iso_now(),
+                "mode": "create"
+            }
+        }
     }
 
     with open(session_path / "STATE.json", "w") as f:
-        json.dump(state, f, indent=2)
+        json.dump(initial_state, f, indent=2)
 
     return {
         "session_id": session_id,
