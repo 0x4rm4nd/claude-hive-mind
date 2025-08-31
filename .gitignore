@@ -1,0 +1,9 @@
+settings.local.json
+.DS_STORE
+.env
+
+hooks
+scripts
+workflows
+
+__pycache__
