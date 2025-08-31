@@ -1,7 +1,8 @@
+#!/usr/bin/env python3
 """
-Scribe Runner
-============
-Session creation and synthesis execution.
+Scribe Agent Runner
+
+Handles session creation and task summarization.
 """
 
 import argparse
@@ -9,331 +10,268 @@ import json
 import os
 import re
 from datetime import datetime
-from pathlib import Path
-from typing import List, Dict, Any
-
 import sys
 
-# Environment setup
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', '..', '..', '..'))
+# Critical: Ensure the real pydantic library is imported correctly
+# Manipulate sys.path to avoid the naming conflict with our 'pydantic' directory
 
-from ..shared.protocols import SessionManagement
+script_dir = os.path.dirname(os.path.abspath(__file__))
+pydantic_agents_dir = os.path.dirname(script_dir)  # The 'pydantic' directory
+agents_dir = os.path.dirname(pydantic_agents_dir)  # The 'agents' directory  
+project_root = os.path.dirname(os.path.dirname(agents_dir))  # The project root
 
-from .models import ScribeSynthesisOutput, ScribeSessionCreationOutput, TaskSummaryOutput
-from .agent import task_summary_agent
-from ..shared.tools import iso_now, detect_project_root
+# CRITICAL: Remove the agents directory from sys.path to prevent the naming conflict
+sys.path = [p for p in sys.path if not (agents_dir in p or pydantic_agents_dir in p)]
+
+# Add project root for general imports
+sys.path.insert(0, project_root)
+
+# Now we can safely import the real pydantic library
+from pydantic import BaseModel, Field
+from pydantic_ai import Agent
+
+# Import our modules using full paths to avoid the naming conflict
+# Import shared modules by dynamically loading them
+import importlib.util
+
+def load_module_from_file(module_name: str, file_path: str):
+    """Load a module directly from a file path."""
+    spec = importlib.util.spec_from_file_location(module_name, file_path)
+    if spec is None or spec.loader is None:
+        raise ImportError(f"Could not load module {module_name} from {file_path}")
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    return module
+
+# Load shared modules
+session_mgmt_path = os.path.join(pydantic_agents_dir, 'shared', 'protocols', 'session_management.py')
+session_mgmt_module = load_module_from_file('session_management', session_mgmt_path)
+SessionManagement = session_mgmt_module.SessionManagement
+
+tools_path = os.path.join(pydantic_agents_dir, 'shared', 'tools.py')
+
+# Tools.py has its own relative import issue, so let's load what we need directly
+# For now, implement the functions we need inline
+def iso_now() -> str:
+    """Return current timestamp in ISO format"""
+    return datetime.utcnow().isoformat() + "Z"
+
+def detect_project_root() -> str:
+    """Detect the project root directory"""
+    current = os.path.abspath(os.getcwd())
+    
+    # Look for key project indicators
+    while current != os.path.dirname(current):  # Not at filesystem root
+        if any(os.path.exists(os.path.join(current, indicator)) for indicator in [
+            '.git', 'pyproject.toml', 'package.json', 'Cargo.toml', 'go.mod'
+        ]):
+            return current
+        if os.path.basename(current) == 'SmartWalletFX':
+            return current
+        current = os.path.dirname(current)
+    
+    # Fallback - go up from .claude directory
+    current = script_dir
+    while current and not current.endswith('SmartWalletFX'):
+        current = os.path.dirname(current)
+        if os.path.basename(current) == 'SmartWalletFX':
+            return current
+    
+    return os.getcwd()
+
+# Load local modules
+models_path = os.path.join(script_dir, 'models.py')
+scribe_models = load_module_from_file('scribe_models', models_path)
+ScribeSynthesisOutput = scribe_models.ScribeSynthesisOutput
+ScribeSessionCreationOutput = scribe_models.ScribeSessionCreationOutput
+TaskSummaryOutput = scribe_models.TaskSummaryOutput
+
+# For the agent, we'll need to be more careful because it imports the problematic modules
+# Let's implement the functionality inline for now
+
+# Simple task summarization using direct pydantic_ai usage
+class TaskSummary(BaseModel):
+    summary: str
+    key_requirements: list[str]
+    complexity_estimate: int  # 1-4 scale
+    suggested_approach: str
+
+task_summary_agent = Agent(
+    model='openai:gpt-4o-mini',
+    result_type=TaskSummary,
+    system_prompt="""You are a task analysis specialist. Analyze tasks and provide:
+
+    1. A clear, concise summary of what needs to be done
+    2. Key requirements and constraints 
+    3. Complexity estimate (1=simple, 2=moderate, 3=complex, 4=very complex)
+    4. Suggested implementation approach
+
+    Focus on technical accuracy and actionable insights."""
+)
 
 
 def generate_ai_session_id(task_description: str, model: str) -> tuple[str, int]:
     """Generate session ID using AI to create better short description"""
     timestamp = datetime.utcnow().strftime('%Y-%m-%d-%H-%M')
     
-    if task_summary_agent:
-        try:
-            # Use AI to generate better short description
-            result = task_summary_agent.run_sync(
-                f"Task: {task_description}", 
-                model=model
-            )
-            summary: TaskSummaryOutput = result.output
-            
-            short_desc = summary.short_description.lower().replace('_', '-')
-            # Ensure it's properly hyphenated and not too long
-            if len(short_desc) > 50:
-                short_desc = short_desc[:50].rstrip('-')
-            
-            session_id = f"{timestamp}-{short_desc}"
-            return session_id, summary.complexity_level
-            
-        except Exception as e:
-            print(f"AI summary failed, using fallback: {e}")
+    # Use AI to generate a concise description
+    class SessionDescription(BaseModel):
+        short_name: str  # 1-3 words, lowercase, hyphens for spaces
     
-    # Fallback to smart slugification
-    return generate_smart_session_id(task_description, timestamp)
-
-
-def generate_smart_session_id(task_description: str, timestamp: str) -> tuple[str, int]:
-    """Smart session ID generation without AI"""
+    desc_agent = Agent(model, result_type=SessionDescription)
     
-    # Enhanced rules for better session IDs
-    task_lower = task_description.lower()
+    prompt = f"""Create a very short description (1-3 words) for this task: {task_description}
     
-    # Domain-specific keywords mapping
-    domain_map = {
-        'crypto': 'crypto',
-        'security': 'security', 
-        'performance': 'perf',
-        'analyze': 'analysis',
-        'review': 'review',
-        'audit': 'audit',
-        'implement': 'impl',
-        'optimize': 'opt',
-        'fix': 'fix',
-        'bug': 'bugfix',
-        'api': 'api',
-        'database': 'db',
-        'frontend': 'fe',
-        'backend': 'be',
-        'microservice': 'svc',
-        'architecture': 'arch',
-        'deploy': 'deploy',
-        'test': 'test'
-    }
+    Requirements:
+    - Maximum 3 words
+    - Use lowercase
+    - Use hyphens instead of spaces
+    - Be descriptive but concise
     
-    # Extract meaningful words and map to shorter versions
-    words = re.findall(r'\\b[a-zA-Z0-9]+\\b', task_lower)
-    mapped_words = []
+    Examples:
+    - "add user authentication" -> "user-auth"
+    - "fix database connection issues" -> "db-fix"  
+    - "implement payment processing" -> "payment-proc"
+    """
     
-    for word in words:
-        if word in domain_map:
-            mapped_words.append(domain_map[word])
-        elif len(word) > 3 and word not in {'the', 'and', 'for', 'with', 'from', 'this', 'that'}:
-            mapped_words.append(word)
-    
-    # Take first 3-4 meaningful words
-    meaningful_words = mapped_words[:4] if len(mapped_words) >= 2 else words[:3]
-    
-    task_slug = '-'.join(meaningful_words) if meaningful_words else 'task'
-    if len(task_slug) > 50:
-        task_slug = task_slug[:50].rstrip('-')
-    
-    # Smart complexity assessment
-    complexity_indicators = {
-        'architecture': 4, 'comprehensive': 4, 'full': 3, 'complete': 3,
-        'security': 3, 'performance': 3, 'scalability': 3, 
-        'analyze': 2, 'review': 2, 'audit': 3,
-        'implement': 2, 'create': 2, 'build': 2,
-        'fix': 1, 'update': 1, 'simple': 1
-    }
-    
-    max_complexity = 1
-    for word in words:
-        if word in complexity_indicators:
-            max_complexity = max(max_complexity, complexity_indicators[word])
-    
-    # Also consider length
-    length_complexity = min(4, len(task_description.split()) // 8 + 1)
-    complexity = max(max_complexity, length_complexity)
-    
-    session_id = f"{timestamp}-{task_slug}"
-    return session_id, complexity
-
-
-def log_event(session_id: str, event_type: str, agent: str, details: Any):
-    """Simple event logging to EVENTS.jsonl"""
-    timestamp = iso_now()
-    event = {
-        "timestamp": timestamp,
-        "type": event_type,
-        "agent": agent,
-        "details": details
-    }
-    
-    # Find session directory
-    project_root = detect_project_root()
-    events_file = Path(project_root) / "Docs" / "hive-mind" / "sessions" / session_id / "EVENTS.jsonl"
-    
-    # Append to events file
-    with open(events_file, 'a') as f:
-        f.write(json.dumps(event) + '\\n')
+    try:
+        result = desc_agent.run_sync(prompt)
+        short_desc = result.data.short_name
+        # Clean and validate the description
+        short_desc = re.sub(r'[^a-z0-9\-]', '', short_desc.lower())
+        short_desc = re.sub(r'-+', '-', short_desc).strip('-')
+        
+        if len(short_desc) > 20:  # Fallback if too long
+            short_desc = short_desc[:20]
+        
+        session_id = f"{timestamp}-{short_desc}"
+        return session_id, len(short_desc)
+        
+    except Exception as e:
+        # Fallback to simple approach
+        print(f"AI description failed: {e}")
+        # Extract first few meaningful words
+        words = re.findall(r'\b[a-z]+\b', task_description.lower())[:3]
+        short_desc = '-'.join(words) if words else 'task'
+        session_id = f"{timestamp}-{short_desc}"
+        return session_id, len(short_desc)
 
 
 def create_session(task_description: str, model: str) -> ScribeSessionCreationOutput:
-    """Create a new session with proper structure"""
+    """Create a new session with proper directory structure"""
     
-    # Use AI to generate better session ID and complexity assessment
-    session_id, complexity = generate_ai_session_id(task_description, model)
-    worker = "scribe-worker"
+    # Generate session ID
+    session_id, desc_length = generate_ai_session_id(task_description, model)
     
-    # Create session directory structure
+    # Set up paths
     project_root = detect_project_root()
-    session_path = Path(project_root) / "Docs" / "hive-mind" / "sessions" / session_id
+    sessions_dir = os.path.join(project_root, "Docs", "hive-mind", "sessions")
+    session_path = os.path.join(sessions_dir, session_id)
     
-    # Create directories
-    session_path.mkdir(parents=True, exist_ok=True)
-    (session_path / "workers" / "notes").mkdir(parents=True, exist_ok=True)
-    (session_path / "workers" / "json").mkdir(parents=True, exist_ok=True)
-    (session_path / "prompts").mkdir(exist_ok=True)
+    # Create session directories
+    os.makedirs(session_path, exist_ok=True)
+    os.makedirs(os.path.join(session_path, "prompts"), exist_ok=True)
+    os.makedirs(os.path.join(session_path, "workers", "notes"), exist_ok=True)
     
-    timestamp = iso_now()
+    # Initialize session management
+    session_mgmt = SessionManagement(session_id, session_path)
     
-    # Create STATE.json
+    # Log session creation
+    session_mgmt.log_event("session_created", "scribe", {
+        "timestamp": iso_now(),
+        "task_description": task_description,
+        "model": model,
+        "session_path": session_path,
+        "generated_by": "scribe",
+        "description_length": desc_length
+    })
+    
+    # Log scribe spawn
+    session_mgmt.log_event("worker_spawned", "scribe", {
+        "timestamp": iso_now(),
+        "worker_type": "scribe",
+        "mode": "create",
+        "model": model,
+        "purpose": "session_creation"
+    })
+    
+    # Create initial STATE.json
     initial_state = {
         "session_id": session_id,
-        "task": task_description,
-        "complexity_level": complexity,
-        "created_at": timestamp,
-        "status": "initialized",
-        "active_workers": [],
-        "worker_configs": {},
-        "completion_status": {}
+        "created": iso_now(),
+        "task_description": task_description,
+        "model": model,
+        "status": "created",
+        "phase": "initialization",
+        "workers": {
+            "scribe": {
+                "status": "active",
+                "spawned_at": iso_now(),
+                "mode": "create"
+            }
+        }
     }
     
-    with open(session_path / "STATE.json", 'w') as f:
+    with open(os.path.join(session_path, "STATE.json"), "w") as f:
         json.dump(initial_state, f, indent=2)
-    
-    # Create SESSION.md
-    session_md = f"""# Session: {session_id}
-
-## Task
-{task_description}
-
-## Configuration
-- **Created**: {timestamp}
-- **Complexity Level**: {complexity}
-- **Status**: Initialized
-
-## Directory Structure
-- `STATE.json` - Session state and worker tracking
-- `EVENTS.jsonl` - Event logging stream
-- `workers/notes/` - Human-readable analysis outputs  
-- `workers/json/` - Machine-readable worker responses
-- `prompts/` - Worker-specific task instructions
-"""
-    
-    with open(session_path / "SESSION.md", 'w') as f:
-        f.write(session_md)
-    
-    # Initialize empty files
-    (session_path / "EVENTS.jsonl").touch()
-    (session_path / "DEBUG.jsonl").touch()
-    (session_path / "BACKLOG.jsonl").touch()
-    
-    # Log events
-    log_event(session_id, "worker_spawned", worker, {"note": "Scribe activated for session creation", "mode": "creation"})
-    log_event(session_id, "session_created", worker, {
-        "session_id": session_id,
-        "task": task_description,
-        "complexity_level": complexity,
-        "session_path": str(session_path)
-    })
     
     return ScribeSessionCreationOutput(
         session_id=session_id,
-        timestamp=timestamp,
-        status="completed",
+        session_path=session_path,
         task_description=task_description,
-        complexity_level=complexity,
-        session_path=str(session_path)
+        model=model,
+        status="created",
+        created_at=iso_now()
     )
 
 
-def run_synthesis(session_id: str, model: str) -> ScribeSynthesisOutput:
-    """Run synthesis on completed worker outputs"""
+def summarize_task(session_id: str, task: str, model: str) -> TaskSummaryOutput:
+    """Generate task summary using the AI agent"""
+    result = task_summary_agent.run_sync(
+        f"Analyze and summarize this task: {task}",
+        model=model
+    )
     
-    project_root = detect_project_root()
-    session_path = Path(project_root) / "Docs" / "hive-mind" / "sessions" / session_id
-    
-    if not session_path.exists():
-        raise SystemExit(f"Session does not exist: {session_id}")
-    
-    worker = "scribe-worker"
-    timestamp = iso_now()
-    
-    # Log worker spawn
-    log_event(session_id, "worker_spawned", worker, {"note": "Scribe activated for synthesis", "mode": "synthesis"})
-    
-    # Simple synthesis for now (no AI needed for basic functionality test)
-    # Enhanced synthesis structure (patterns extracted from research template)
-    synthesis_md = f"""# Research Synthesis
-
-## Session: {session_id}
-**Generated**: {timestamp}
-
-## Executive Summary
-This synthesis consolidates findings from all worker outputs in this session.
-
-## Technology Stack Recommendations
-*Analysis of technology choices and architectural decisions*
-
-## Implementation Strategy
-*Phased approach based on worker research and analysis*
-
-### Phase 1: Foundation Setup
-*Core infrastructure and architecture setup*
-
-### Phase 2: Core Implementation  
-*Primary feature development*
-
-### Phase 3: Integration & Testing
-*System integration and quality assurance*
-
-### Phase 4: Security & Performance
-*Security hardening and performance optimization*
-
-### Phase 5: Deployment & Monitoring
-*Production deployment and monitoring setup*
-
-## Best Practices
-*Industry standards and patterns identified by workers*
-
-## SmartWalletFX-Specific Integration
-*Project-specific requirements and considerations*
-
-### Financial Application Requirements
-*Security, compliance, and performance requirements for financial data*
-
-### Existing Architecture Integration  
-*Integration with current SmartWalletFX architecture*
-
-### Crypto/DeFi Considerations
-*Blockchain and cryptocurrency-specific requirements*
-
-## Worker Research Contributions
-*Summary of findings from each specialized worker*
-
-## Synthesis Metadata
-**Session ID**: {session_id}
-**Completion Status**: Session processed successfully  
-**Quality Assurance**: Framework-enforced output validation
-**Next Phase**: Implementation based on synthesized findings
-
----
-*Generated by Pydantic AI scribe-worker*
-"""
-    
-    # Write synthesis file
-    synthesis_path = session_path / "workers" / "notes" / "RESEARCH_SYNTHESIS.md"
-    synthesis_path.write_text(synthesis_md, encoding="utf-8")
-    
-    # Log completion
-    log_event(session_id, "synthesis_created", worker, {"file": str(synthesis_path)})
-    log_event(session_id, "synthesis_completed", worker, {"status": "completed"})
-    log_event(session_id, "session_completed", worker, {"by": worker, "status": "completed"})
-    log_event(session_id, "worker_completed", worker, {"status": "completed"})
-    
-    return ScribeSynthesisOutput(
+    return TaskSummaryOutput(
         session_id=session_id,
-        timestamp=timestamp,
-        status="completed",
-        synthesis_markdown=synthesis_md
+        original_task=task,
+        summary=result.data.summary,
+        key_requirements=result.data.key_requirements,
+        complexity_estimate=result.data.complexity_estimate,
+        suggested_approach=result.data.suggested_approach,
+        model_used=model
     )
 
 
 def main():
-    parser = argparse.ArgumentParser(description="Pydantic AI scribe-worker")
-    parser.add_argument(
-        "mode", 
-        choices=["create", "synthesis"], 
-        help="Mode: 'create' for session creation, 'synthesis' for final synthesis"
-    )
-    parser.add_argument("--session", help="Session ID (required for synthesis mode)")
-    parser.add_argument("--task", help="Task description (required for create mode)")
-    parser.add_argument("--model", default="openai:gpt-4o-mini", help="Model (not used in basic version)")
+    parser = argparse.ArgumentParser(description="Scribe Agent - Session creation and task summarization")
+    parser.add_argument("mode", choices=["create", "summarize"], help="Operation mode")
+    parser.add_argument("--session", help="Session ID (for summarize mode)")
+    parser.add_argument("--task", required=True, help="Task description")
+    parser.add_argument("--model", default="openai:gpt-4o-mini", help="Model to use")
     
     args = parser.parse_args()
-
-    if args.mode == "create":
-        if not args.task:
-            parser.error("--task is required for create mode")
-        out = create_session(args.task, args.model)
-        print(json.dumps(out.model_dump(), indent=2))
     
-    elif args.mode == "synthesis":
-        if not args.session:
-            parser.error("--session is required for synthesis mode")  
-        out = run_synthesis(args.session, args.model)
-        print(json.dumps(out.model_dump(), indent=2))
+    try:
+        if args.mode == "create":
+            result = create_session(args.task, args.model)
+            print(json.dumps(result.model_dump(), indent=2))
+            
+        elif args.mode == "summarize":
+            if not args.session:
+                raise ValueError("--session is required for summarize mode")
+            result = summarize_task(args.session, args.task, args.model) 
+            print(json.dumps(result.model_dump(), indent=2))
+            
+    except Exception as e:
+        error_response = {
+            "error": str(e),
+            "mode": args.mode,
+            "task": args.task,
+            "model": args.model
+        }
+        print(json.dumps(error_response, indent=2))
+        sys.exit(1)
 
 
 if __name__ == "__main__":

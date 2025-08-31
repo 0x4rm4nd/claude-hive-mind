@@ -10,7 +10,21 @@ from pathlib import Path
 
 # Environment setup - protocols now imported via relative imports
 
-from .protocols import load_project_env
+# Import protocols using direct file loading to avoid relative import issues
+import os
+import importlib.util
+
+# Load load_project_env directly
+protocols_init_path = os.path.join(os.path.dirname(__file__), 'protocols', '__init__.py')
+spec = importlib.util.spec_from_file_location('protocols_module', protocols_init_path)
+protocols_module = importlib.util.module_from_spec(spec)
+
+# Load the env_loader module which contains load_project_env
+env_loader_path = os.path.join(os.path.dirname(__file__), 'protocols', 'env_loader.py')
+spec = importlib.util.spec_from_file_location('env_loader', env_loader_path)
+env_loader = importlib.util.module_from_spec(spec)
+spec.loader.exec_module(env_loader)
+load_project_env = env_loader.load_project_env
 from datetime import datetime
 
 load_project_env()
