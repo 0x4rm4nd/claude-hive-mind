@@ -112,7 +112,17 @@ def run_designer_analysis(
     )
 
     try:
-        log_debug(session_id, "Starting designer analysis", {"task": task_description})
+        # Log analysis started event for behavior tracking
+        log_event(
+            session_id,
+            "analysis_started",
+            worker,
+            {
+                "task": task_description,
+                "analysis_type": "design_analysis",
+                "timestamp": timestamp,
+            },
+        )
 
         # Execute designer agent
         result = designer_agent.run_sync(
@@ -143,18 +153,6 @@ Focus on user-centered improvements that enhance usability and accessibility."""
         if not output.timestamp:
             output.timestamp = timestamp
 
-        log_debug(
-            session_id,
-            "Designer analysis completed",
-            {
-                "design_recommendations": len(output.design_recommendations),
-                "accessibility_findings": len(output.accessibility_findings),
-                "design_system_components": len(output.design_system_components),
-                "design_maturity_score": output.design_maturity_score,
-                "accessibility_score": output.accessibility_score,
-                "usability_score": output.usability_score,
-            },
-        )
 
         # Create analysis file using protocol infrastructure
         create_designer_files(session_id, output)
@@ -202,14 +200,6 @@ Focus on user-centered improvements that enhance usability and accessibility."""
                 f"{worker}_error": str(e),
                 f"{worker}_failed": timestamp,
             },
-        )
-
-        # Log failure
-        log_event(
-            session_id,
-            "worker_failed",
-            worker,
-            {"error": str(e), "task": task_description},
         )
 
         raise

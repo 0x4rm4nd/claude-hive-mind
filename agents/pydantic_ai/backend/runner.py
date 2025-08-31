@@ -113,6 +113,18 @@ def run_backend_implementation(
         log_debug(
             session_id, "Starting backend implementation", {"task": task_description}
         )
+        
+        # Log analysis started event for behavior tracking
+        log_event(
+            session_id,
+            "analysis_started",
+            worker,
+            {
+                "task": task_description,
+                "analysis_type": "backend_implementation",
+                "timestamp": timestamp,
+            },
+        )
 
         # Execute backend agent
         result = backend_agent.run_sync(
@@ -206,13 +218,6 @@ Provide specific, actionable implementations with detailed technical specificati
             },
         )
 
-        # Log failure
-        log_event(
-            session_id,
-            "worker_failed",
-            worker,
-            {"error": str(e), "task": task_description},
-        )
 
         raise
 

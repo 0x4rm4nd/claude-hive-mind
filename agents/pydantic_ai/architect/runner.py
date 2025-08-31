@@ -112,7 +112,17 @@ def run_architect_analysis(
     )
 
     try:
-        log_debug(session_id, "Starting architect analysis", {"task": task_description})
+        # Log analysis started event for behavior tracking
+        log_event(
+            session_id,
+            "analysis_started",
+            worker,
+            {
+                "task": task_description,
+                "analysis_type": "architecture_analysis",
+                "timestamp": timestamp,
+            },
+        )
 
         # Execute architect agent
         result = architect_agent.run_sync(
@@ -143,20 +153,6 @@ Focus on strategic, high-impact architectural improvements with clear implementa
         if not output.timestamp:
             output.timestamp = timestamp
 
-        log_debug(
-            session_id,
-            "Architect analysis completed",
-            {
-                "architectural_recommendations": len(
-                    output.architectural_recommendations
-                ),
-                "technology_decisions": len(output.technology_decisions),
-                "architectural_maturity_score": output.architectural_maturity_score,
-                "architecture_quality_score": output.architecture_quality_score,
-                "maintainability_score": output.maintainability_score,
-                "extensibility_score": output.extensibility_score,
-            },
-        )
 
         # Create analysis file using protocol infrastructure
         create_architect_files(session_id, output)
@@ -206,13 +202,6 @@ Focus on strategic, high-impact architectural improvements with clear implementa
             },
         )
 
-        # Log failure
-        log_event(
-            session_id,
-            "worker_failed",
-            worker,
-            {"error": str(e), "task": task_description},
-        )
 
         raise
 

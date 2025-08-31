@@ -113,6 +113,18 @@ def run_devops_implementation(
         log_debug(
             session_id, "Starting DevOps implementation", {"task": task_description}
         )
+        
+        # Log analysis started event for behavior tracking
+        log_event(
+            session_id,
+            "analysis_started",
+            worker,
+            {
+                "task": task_description,
+                "analysis_type": "devops_implementation",
+                "timestamp": timestamp,
+            },
+        )
 
         # Execute DevOps agent
         result = devops_agent.run_sync(
@@ -207,12 +219,6 @@ Focus on reliability, automation, and operational excellence.""",
             },
         )
 
-        # Log failure
-        log_event(
-            session_id,
-            "worker_failed",
-            worker,
-            {"error": str(e), "task": task_description},
         )
 
         raise

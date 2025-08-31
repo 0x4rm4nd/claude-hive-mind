@@ -112,7 +112,17 @@ def run_researcher_analysis(
     )
 
     try:
-        log_debug(session_id, "Starting research analysis", {"task": task_description})
+        # Log analysis started event for behavior tracking
+        log_event(
+            session_id,
+            "analysis_started",
+            worker,
+            {
+                "task": task_description,
+                "analysis_type": "research_analysis",
+                "timestamp": timestamp,
+            },
+        )
 
         # Execute researcher agent
         result = researcher_agent.run_sync(
@@ -143,20 +153,6 @@ Focus on evidence-based findings with credible sources and actionable recommenda
         if not output.timestamp:
             output.timestamp = timestamp
 
-        log_debug(
-            session_id,
-            "Research analysis completed",
-            {
-                "research_findings": len(output.research_findings),
-                "technology_evaluations": len(output.technology_evaluations),
-                "best_practice_recommendations": len(
-                    output.best_practice_recommendations
-                ),
-                "research_depth_score": output.research_depth_score,
-                "source_credibility_score": output.source_credibility_score,
-                "relevance_score": output.relevance_score,
-            },
-        )
 
         # Create research files using protocol infrastructure
         create_researcher_files(session_id, output)
@@ -205,14 +201,6 @@ Focus on evidence-based findings with credible sources and actionable recommenda
                 f"{worker}_error": str(e),
                 f"{worker}_failed": timestamp,
             },
-        )
-
-        # Log failure
-        log_event(
-            session_id,
-            "worker_failed",
-            worker,
-            {"error": str(e), "task": task_description},
         )
 
         raise

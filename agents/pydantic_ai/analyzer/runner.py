@@ -112,7 +112,17 @@ def run_analyzer_analysis(
     )
 
     try:
-        log_debug(session_id, "Starting analyzer analysis", {"task": task_description})
+        # Log analysis started event for behavior tracking
+        log_event(
+            session_id,
+            "analysis_started",
+            worker,
+            {
+                "task": task_description,
+                "analysis_type": "security_performance_quality",
+                "timestamp": timestamp,
+            },
+        )
 
         # Execute analyzer agent
         result = analyzer_agent.run_sync(
@@ -142,18 +152,6 @@ Provide specific, actionable findings with clear priorities and effort estimates
         if not output.timestamp:
             output.timestamp = timestamp
 
-        log_debug(
-            session_id,
-            "Analyzer analysis completed",
-            {
-                "security_findings": len(output.security_findings),
-                "performance_issues": len(output.performance_issues),
-                "quality_metrics": len(output.quality_metrics),
-                "security_score": output.security_score,
-                "performance_score": output.performance_score,
-                "quality_score": output.quality_score,
-            },
-        )
 
         # Create analysis file using protocol infrastructure
         create_analyzer_files(session_id, output)
@@ -203,13 +201,6 @@ Provide specific, actionable findings with clear priorities and effort estimates
             },
         )
 
-        # Log failure
-        log_event(
-            session_id,
-            "worker_failed",
-            worker,
-            {"error": str(e), "task": task_description},
-        )
 
         raise
 
