@@ -12,14 +12,18 @@ import re
 import sys
 from datetime import datetime
 from pathlib import Path
-from dotenv import load_dotenv
 
-# Load environment variables - explicit path to .claude/.env
-env_path = Path(__file__).resolve().parent.parent.parent / ".env"
-if not env_path.exists():
-    # Fallback: look in current directory
-    env_path = Path.cwd() / ".env"
-load_dotenv(env_path)
+# Environment setup
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "..", ".."))
+
+# Add agents/pydantic_ai to path for imports
+pydantic_ai_path = os.path.join(os.path.dirname(__file__), "..")
+sys.path.insert(0, str(pydantic_ai_path))
+
+from shared.protocols import load_project_env
+
+# Use helper function to load project environment
+load_project_env()
 
 # Direct imports
 from pydantic_ai import Agent
