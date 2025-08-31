@@ -1,6 +1,6 @@
-# Hive-Mind Technical Decisions & Architecture Rationale
+# Pydantic AI Agent Architecture - Technical Decisions & Rationale
 
-> **Purpose**: Definitive reference for all technical choices in the `.claude/` hive-mind system. This prevents repeated questions about design decisions across sessions.
+> **Purpose**: Definitive reference for all technical choices in the `.claude/` Pydantic AI agent system. This prevents repeated questions about design decisions across sessions.
 
 ---
 
@@ -88,20 +88,26 @@
 
 ## 🎯 Core Architecture Decisions
 
-### 1. Worker Specialization Strategy
-**Decision**: Use 8 domain-agnostic specialized worker types for all software development
-**Rationale**: Balance between specialization and complexity - 8 roles cover all software development domains without over-complicating the agent folder
-**Worker Types (Domain-Agnostic)**:
-- 🔬 **Researcher Worker**: Multi-domain Context7 research coordination (any technology stack)
-- 🏗️ **Service Architect**: System design and scalability patterns (any architecture)  
-- ⚙️ **Backend Worker**: API/database/server implementation (any backend technology)
-- 🎨 **Frontend Worker**: UI/client-side implementation (any frontend framework)
-- 🎯 **Designer Worker**: UX/UI design for any application type
-- 🧪 **Test Worker**: Comprehensive testing strategies (any testing framework)
-- 🚀 **DevOps Worker**: Infrastructure and deployment (any cloud/deployment strategy)
-- 🔍 **Analyzer Worker**: Security/performance analysis (any codebase)
+### 1. Pydantic AI Framework-Enforced Architecture
+**Decision**: Migrated from instruction-based markdown workers to framework-enforced Pydantic AI agents
+**Rationale**: Eliminate human error in protocol compliance by making violations structurally impossible
+**Architecture Pattern**:
+- **Framework-Enforced**: Critical behaviors (logging, file creation, validation) are code-enforced via Pydantic schemas
+- **Creative LLM**: Strategic reasoning, content generation, and analysis remain flexible for AI intelligence
+- **Multi-Agent Coordination**: Multiple Pydantic AI agents coordinate through STATE.json for complex tasks
 
-**Flexibility**: Each worker adapts to the specific technology stack and domain of the current project
+**Agent Types (Framework-Enforced)**:
+- 🏗️ **Agent-Architect**: Meta-system designer specializing in Pydantic AI framework patterns and ecosystem architecture
+- 🔬 **Researcher Agents**: Context7-integrated research with validated output schemas
+- ⚙️ **Backend Agents**: API/database specialists with type-safe implementation patterns
+- 🎨 **Frontend Agents**: UI/client-side specialists with component architecture validation
+- 🎯 **Designer Agents**: UX/UI design with structured design system compliance
+- 🧪 **Test Agents**: Quality assurance with comprehensive testing strategy validation
+- 🚀 **DevOps Agents**: Infrastructure specialists with deployment pipeline validation
+- 🔍 **Analyzer Agents**: Security, performance, and code quality assessment with structured findings
+- 👑 **Queen-Orchestrator Agent**: Multi-agent coordination with STATE.json management
+
+**Key Improvement**: From "hoping they follow instructions" to "structurally impossible to get wrong"
 
 ### 2. Research-First Protocol Necessity
 **Decision**: Always do full research with adaptive depth based on task type
@@ -116,31 +122,39 @@
 - **Bug Fixes**: Quick lookup + existing pattern analysis
 - **Maintenance**: Pattern library + minimal external research
 
-### 3. Tool Dependency & Failure Strategy with Protocol Enforcement
-**Decision**: Graceful degradation for all external tools, local session management as primary coordination
+### 3. Framework-Enforced Protocol System with Code Integration
+**Decision**: Migrate from markdown protocols to Python module protocols in `.claude/agents/pydantic_ai/shared/protocols/`
 **Rationale**:
-- **Context7 MCP**: Fallback to WebSearch + documentation analysis when unavailable  
-- **Serena MCP**: Fallback to built-in tools (Read, Edit, Grep) when unavailable
-- **Session Management**: Local STATE.json and EVENTS.jsonl provide coordination without external dependencies
-- **Token efficiency**: Graceful degradation maintains functionality while optimizing resource usage
+- **Code-Enforced Compliance**: Protocols are Python functions that cannot be skipped or violated
+- **Type Safety**: Pydantic models ensure protocol inputs/outputs are structurally valid
+- **Tool Integration**: Context7 MCP and Serena MCP integrate directly with protocol functions
+- **Graceful Degradation**: Built-in fallbacks when external tools unavailable
 - **Self-Contained**: System operates independently with enhanced functionality when tools available
 
-**Implementation Strategy**:
+**Protocol Architecture**:
 ```python
-# Research tools: graceful degradation
-try:
-    context7_research = mcp__context7__get_library_docs(...)
-except:
-    context7_research = fallback_web_research(...)  # Use WebSearch + documentation analysis
+# Framework-enforced protocol system
+from protocols import (
+    SessionManagement,      # session_management.py
+    LoggingProtocol,       # logging_protocol.py  
+    WorkerPromptProtocol,  # worker_prompt_protocol.py
+    PromptGenerator,       # prompt_generator.py
+    ProtocolLoader,        # protocol_loader.py
+    EnvLoader             # env_loader.py
+)
 
-try:
-    serena_analysis = mcp__serena__find_symbol(...)
-except:
-    serena_analysis = fallback_grep_analysis(...)  # Use built-in Read, Edit, Grep tools
-
-# Local session management as primary coordination mechanism
-session_coordinator = LocalSessionManager(session_id)
-session_coordinator.initialize_state()
+# Automatic protocol enforcement - cannot be bypassed
+def run_pydantic_agent(agent_config: AgentConfig, task: str):
+    # Framework enforces protocol compliance
+    session = SessionManagement.initialize_session(agent_config.session_id)
+    LoggingProtocol.log_event("agent_started", agent_config.name)
+    
+    # AI reasoning within validated structure
+    result = agent.run_sync(task, model=agent_config.model)
+    
+    # Framework validates output structure
+    validated_output = AgentOutput.model_validate(result.output)
+    return validated_output
 ```
 
 ### 4. Session Complexity & Resumption Requirements
@@ -214,24 +228,24 @@ session_coordinator.initialize_state()
 
 ---
 
-## 🔄 Worker Coordination Protocol with Enforcement
+## 🔄 Pydantic AI Multi-Agent Coordination Protocol with Framework Enforcement
 
-### Mandatory Startup Protocol for All Workers
-**Decision**: Centralized protocol files that all agents reference and follow
+### Mandatory Startup Protocol for All Pydantic AI Agents
+**Decision**: Framework-enforced protocol functions that all agents must execute
 **Rationale**: 
-- Single source of truth prevents protocol drift across 8 workers + Queen
-- Behavioral changes require updating only the protocol file, not 9 agent files
-- Consistent enforcement patterns across all agent types
-- Easier maintenance and version control of coordination behavior
+- Code-enforced consistency prevents protocol drift across multiple agents
+- Behavioral changes require updating only the protocol Python modules
+- Type-safe enforcement patterns across all agent types
+- Automatic validation and error detection
 **Implementation**:
-- Protocol files in `.claude/protocols/` contain step-by-step instructions
-- Each agent references the appropriate protocol sections in their configuration
-- Visual mermaid workflow diagrams in shared protocol files
-- Workers MUST follow centralized protocols - cannot proceed without compliance
+- Protocol modules in `.claude/agents/pydantic_ai/shared/protocols/` contain enforcement functions
+- Each agent imports and executes required protocol functions via runner.py
+- Pydantic models validate all protocol inputs/outputs
+- Agents CANNOT proceed without successful protocol function execution - code-level enforcement
 
 ### Blocking/Notification System Design with Smart Monitoring & Compliance
 **Decision**: Dynamic priority reprioritization via EVENTS.jsonl monitoring with context-aware timing and Queen oversight
-**Rationale**: Balance coordination needs with uninterrupted deep work; manual adherence insufficient for 8-worker coordination
+**Rationale**: Balance coordination needs with uninterrupted deep work; framework-enforced compliance essential for multi-agent coordination
 **Smart Monitoring Implementation**:
 - **Active Coding Phase**: Suspend monitoring during Edit/Write/MultiEdit sequences, check after completion
 - **Coordination Phase**: Mandatory 2-3 minute intervals during research/planning/dependencies  
