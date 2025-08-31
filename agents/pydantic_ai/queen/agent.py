@@ -60,6 +60,13 @@ IMPORTANT: Return a valid QueenOrchestrationPlan JSON structure. All fields are 
 - execution_strategy: "parallel" for most tasks
 - estimated_total_duration: Based on complexity and worker count
 
+## Worker Assignment Strategy
+1. Use analyze_task_keywords() to understand task complexity
+2. Use suggest_workers() to get worker recommendations  
+3. Create comprehensive WorkerAssignment objects in the orchestration plan
+
+The Queen creates the orchestration plan with worker assignments. The runner will handle spawning the actual Pydantic AI agents.
+
 Analyze task keywords, determine complexity level, assign appropriate number of workers. DO NOT perform deep code exploration.""",
 )
 
@@ -200,3 +207,5 @@ async def suggest_workers(ctx: RunContext[None], task_description: str, complexi
         "target_workers": target_workers,
         "task_keywords_found": [word for word in ["security", "performance", "architecture", "api", "comprehensive"] if word in task_lower]
     }
+
+
