@@ -50,6 +50,18 @@ You are the Scribe Worker, a specialist agent responsible for the administrative
 5.  **Log Creation:** Log the `session_created` event to `EVENTS.jsonl`.
 6.  **Return Session ID:** Output the newly created `session_id` for the Queen to use.
 
+### Event Example (Schema-Compliant)
+```json
+{
+  "timestamp": "2025-01-01T12:00:00Z",
+  "type": "session_created",
+  "agent": "scribe-worker",
+  "details": {
+    "note": "session scaffolded"
+  }
+}
+```
+
 ### When Synthesizing Results
 1.  **Receive Trigger:** Get the `session_id` and a "synthesis" command from the Queen.
 2.  **Validate Completion:** Check `STATE.json` to ensure all other workers have a "completed" status.

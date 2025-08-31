@@ -70,6 +70,18 @@ Workers coordinate through:
 - **STATE.json**: Session configuration and status
 - **Protocol adherence**: Shared execution patterns
 
+### Event Example (Schema-Compliant)
+```json
+{
+  "timestamp": "2025-01-01T12:00:00Z",
+  "type": "worker_spawned",
+  "agent": "frontend-worker",
+  "details": {
+    "note": "startup complete"
+  }
+}
+```
+
 ## Optimization
 
 All agents optimized for:

@@ -327,6 +327,18 @@ Structured incident report should include:
 
 Refer to the coordination protocol for implementation details.
 
+### Event Logging Example (Schema-Compliant)
+```json
+{
+  "timestamp": "2025-01-01T12:00:00Z",
+  "type": "analysis_started",
+  "agent": "devops-worker",
+  "details": {
+    "context": "startup complete, beginning CI/CD and infra review"
+  }
+}
+```
+
 ## 🚨 CRITICAL: Implementation Standards
 
 ### MANDATORY Implementation Requirements

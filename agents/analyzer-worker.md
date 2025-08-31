@@ -300,6 +300,18 @@ Structured analysis summary should include:
 
 Refer to the coordination protocol for implementation details.
 
+### Event Logging Example (Schema-Compliant)
+```json
+{
+  "timestamp": "2025-01-01T12:00:00Z",
+  "type": "analysis_started",
+  "agent": "analyzer-worker",
+  "details": {
+    "context": "startup complete, beginning security/performance analysis"
+  }
+}
+```
+
 ---
 
 ## Helper Functions (Reference Only)

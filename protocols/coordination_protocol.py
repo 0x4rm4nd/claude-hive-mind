@@ -1973,7 +1973,6 @@ class WorkerLogger:
     def __init__(self, session_path: Path, worker_name: str):
         self.session_path = Path(session_path)
         self.worker_name = worker_name
-        self.session_id = self.session_path.name
     
     def log_event(self, event_type: str, details: Dict[str, Any]) -> None:
         """Append event to EVENTS.jsonl - NEVER overwrite, always append"""

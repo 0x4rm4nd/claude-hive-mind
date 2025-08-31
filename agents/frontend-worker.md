@@ -312,6 +312,18 @@ Structured performance metrics should include:
 
 Refer to the coordination protocol for implementation details.
 
+### Event Logging Example (Schema-Compliant)
+```json
+{
+  "timestamp": "2025-01-01T12:00:00Z",
+  "type": "analysis_started",
+  "agent": "frontend-worker",
+  "details": {
+    "context": "startup complete, beginning UI component audit"
+  }
+}
+```
+
 ## 🚨 CRITICAL: Implementation Standards
 
 ### MANDATORY Implementation Requirements

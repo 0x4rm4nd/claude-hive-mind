@@ -346,3 +346,15 @@ Structured design decision should include:
 - Use save_json() for structured architecture data
 
 Refer to the coordination protocol for implementation details.
+
+### Event Logging Example (Schema-Compliant)
+```json
+{
+  "timestamp": "2025-01-01T12:00:00Z",
+  "type": "analysis_started",
+  "agent": "architect-worker",
+  "details": {
+    "context": "startup complete, beginning architecture assessment"
+  }
+}
+```
