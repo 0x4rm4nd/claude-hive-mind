@@ -47,7 +47,10 @@ class BaseProtocol:
     """Base class for all protocol implementations"""
     
     def __init__(self, config: Dict[str, Any] = None):
-        self.config = ProtocolConfig(config)
+        if isinstance(config, ProtocolConfig):
+            self.config = config
+        else:
+            self.config = ProtocolConfig(config)
         self.execution_log = []
     
     def log_execution(self, action: str, status_or_data: Any = None, data: Any = None):

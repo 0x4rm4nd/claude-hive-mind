@@ -8,13 +8,13 @@ This directory implements a **framework-enforced agent ecosystem** using Pydanti
 
 ### **Core Philosophy: Framework-Enforced vs Instruction-Dependent**
 
-| Aspect | Traditional Claude Code Agents | Pydantic AI Agents |
-|--------|---------------------------|-------------------|
-| **Behavior Control** | 📝 Markdown instructions (hope they follow) | 🏗️ Python code (impossible to ignore) |
-| **Output Validation** | ❌ Can return anything | ✅ Pydantic schema enforced |
-| **Protocol Compliance** | ❌ Manual, error-prone | ✅ Built into execution flow |
-| **Reliability** | 🎲 Probabilistic | 🔒 Deterministic |
-| **Debugging** | 😵‍💫 "Why didn't it follow instructions?" | 🔍 Python stack traces |
+| Aspect                  | Traditional Claude Code Agents              | Pydantic AI Agents                    |
+| ----------------------- | ------------------------------------------- | ------------------------------------- |
+| **Behavior Control**    | 📝 Markdown instructions (hope they follow) | 🏗️ Python code (impossible to ignore) |
+| **Output Validation**   | ❌ Can return anything                      | ✅ Pydantic schema enforced           |
+| **Protocol Compliance** | ❌ Manual, error-prone                      | ✅ Built into execution flow          |
+| **Reliability**         | 🎲 Probabilistic                            | 🔒 Deterministic                      |
+| **Debugging**           | 😵‍💫 "Why didn't it follow instructions?"     | 🔍 Python stack traces                |
 
 ---
 
@@ -23,7 +23,7 @@ This directory implements a **framework-enforced agent ecosystem** using Pydanti
 ```
 .claude/agents/pydantic/
 ├── README.md                    # This file - architecture documentation
-├── __init__.py                  # Main package exports  
+├── __init__.py                  # Main package exports
 ├── cli.py                       # Unified CLI entry point
 ├── shared/                      # Common components
 │   ├── __init__.py
@@ -35,7 +35,7 @@ This directory implements a **framework-enforced agent ecosystem** using Pydanti
 │   ├── runner.py               # Execution with monitoring
 │   ├── models.py               # Queen-specific schemas
 │   └── tools.py                # Codebase exploration tools
-└── scribe/                      # 📝 Scribe Agent  
+└── scribe/                      # 📝 Scribe Agent
     ├── __init__.py
     ├── agent.py                # Pydantic AI agent
     ├── runner.py               # Session creation & synthesis
@@ -49,7 +49,7 @@ This structure is designed for **easy expansion**. Adding a new agent is straigh
 ```
 └── analyzer/                    # 🔍 New Agent Example
     ├── __init__.py
-    ├── agent.py                # Pydantic AI agent definition  
+    ├── agent.py                # Pydantic AI agent definition
     ├── runner.py               # Execution logic
     ├── models.py               # Agent-specific schemas
     └── tools.py                # Agent-specific tools
@@ -64,28 +64,32 @@ This structure is designed for **easy expansion**. Adding a new agent is straigh
 **Role**: Master task coordinator and continuous workflow monitor
 
 **Key Features**:
+
 - **Intelligent Planning**: AI-powered worker selection and task decomposition
 - **Continuous Monitoring**: Real-time worker progress tracking (30s intervals)
 - **Framework-Enforced Outputs**: `QueenOrchestrationPlan` schema validation
 - **Codebase Exploration**: Built-in tools for project analysis
 
 **Core Responsibilities**:
+
 1. **Strategic Analysis**: Deep task analysis to understand requirements
-2. **Worker Selection**: Match tasks to optimal worker expertise  
+2. **Worker Selection**: Match tasks to optimal worker expertise
 3. **Risk Assessment**: Identify blockers, dependencies, mitigation strategies
 4. **Continuous Monitoring**: Track worker evolution, detect blocks/failures
 5. **Quality Orchestration**: Ensure proper coordination and quality gates
 
 **Usage**:
+
 ```bash
 # Basic orchestration
 python cli.py queen --session SESSION_ID --task "Analyze crypto-data security"
 
-# With continuous monitoring  
+# With continuous monitoring
 python cli.py queen --session SESSION_ID --task "..." --monitor --monitor-interval 30
 ```
 
 **Schema Output**:
+
 ```python
 class QueenOrchestrationPlan(BaseModel):
     complexity_assessment: int  # 1-4 complexity rating
@@ -102,18 +106,21 @@ class QueenOrchestrationPlan(BaseModel):
 **Role**: Session lifecycle management and knowledge synthesis
 
 **Key Features**:
+
 - **Smart Session Creation**: AI-generated session IDs with task analysis
 - **Complexity Assessment**: Automatic 1-4 complexity rating
 - **Synthesis Generation**: Consolidate worker outputs into final reports
 - **Protocol Integration**: Built-in event logging and state management
 
 **Core Responsibilities**:
+
 1. **Session Creation**: Generate structured session directories
 2. **Task Summarization**: AI-powered session ID generation
 3. **Knowledge Synthesis**: Combine worker outputs into comprehensive reports
 4. **Event Logging**: Protocol-compliant activity tracking
 
 **Usage**:
+
 ```bash
 # Create new session
 python cli.py scribe create --task "Comprehensive security audit of crypto-data service"
@@ -123,9 +130,10 @@ python cli.py scribe synthesis --session 2024-01-15-14-30-crypto-security-audit
 ```
 
 **Schema Outputs**:
+
 ```python
 class ScribeSessionCreationOutput(BaseModel):
-    session_id: str           # AI-generated session identifier  
+    session_id: str           # AI-generated session identifier
     complexity_level: int     # 1-4 assessed complexity
     session_path: str         # Full directory path
     # ... additional validated fields
@@ -147,7 +155,7 @@ class TaskSummaryOutput(BaseModel):
 python cli.py scribe create --task "Analyze crypto-data architecture focusing on security, performance, and scalability"
 # Output: session_id: "2024-01-15-14-30-crypto-security-analysis"
 
-# 2. Run Queen orchestrator with monitoring 
+# 2. Run Queen orchestrator with monitoring
 python cli.py queen --session 2024-01-15-14-30-crypto-security-analysis --task "..." --monitor
 
 # 3. Queen monitors workers continuously (every 30s)
@@ -166,7 +174,7 @@ python cli.py queen --session SESSION_ID --task "..." --monitor --monitor-interv
 
 # The Queen will:
 # ✅ Log "monitoring_started" event
-# 🔄 Check worker status every 60s  
+# 🔄 Check worker status every 60s
 # 📊 Log "monitoring_heartbeat" with progress updates
 # ⚠️  Detect blocked workers and log "workers_blocked_detected"
 # ✅ Log "all_workers_completed" when finished
@@ -179,6 +187,7 @@ python cli.py queen --session SESSION_ID --task "..." --monitor --monitor-interv
 ### **Framework Enforcement Benefits**
 
 1. **Schema Validation**: Impossible to return malformed output
+
 ```python
 # This CANNOT happen with Pydantic AI agents:
 # ❌ Queen returns: "I think we should use analyzer and architect workers"
@@ -186,6 +195,7 @@ python cli.py queen --session SESSION_ID --task "..." --monitor --monitor-interv
 ```
 
 2. **Built-in Protocol Compliance**:
+
 ```python
 # Automatic event logging built into execution flow
 log_event(session_id, "queen_spawned", worker, {...})  # Cannot be skipped
@@ -193,6 +203,7 @@ log_event(session_id, "orchestration_completed", worker, {...})  # Guaranteed
 ```
 
 3. **Integrated Monitoring**:
+
 ```python
 # Real-time worker monitoring loop
 async def monitor_worker_progress(session_id, worker_assignments, interval=30):
@@ -208,23 +219,26 @@ async def monitor_worker_progress(session_id, worker_assignments, interval=30):
 To add a new agent (e.g., `analyzer`):
 
 1. **Create Directory Structure**:
+
 ```bash
 mkdir -p agents/pydantic/analyzer
 ```
 
 2. **Define Agent** (`analyzer/agent.py`):
+
 ```python
 from pydantic_ai import Agent
 from .models import AnalyzerOutput
 
 analyzer_agent = Agent(
-    model="openai:gpt-4o-mini",
+    model="openai:gpt-5",
     output_type=AnalyzerOutput,  # Schema-enforced output
     system_prompt="You are a security and performance analyzer..."
 )
 ```
 
 3. **Create Runner** (`analyzer/runner.py`):
+
 ```python
 def main():
     # CLI argument parsing
@@ -233,6 +247,7 @@ def main():
 ```
 
 4. **Add to CLI** (`cli.py`):
+
 ```python
 # Add analyzer subparser
 analyzer_parser = subparsers.add_parser('analyzer')
@@ -244,21 +259,25 @@ analyzer_parser = subparsers.add_parser('analyzer')
 ## 🎯 Key Advantages
 
 ### **1. Reliability Through Code**
+
 - **No missed steps**: Framework enforces behavior
 - **Consistent outputs**: Pydantic validation guarantees
 - **Predictable debugging**: Python stack traces vs "AI didn't follow instructions"
 
-### **2. Scalable Architecture**  
+### **2. Scalable Architecture**
+
 - **Self-contained agents**: Each agent in its own directory
 - **Clean separation**: Models, tools, and execution logic separated
 - **Easy expansion**: Add new agents without touching existing ones
 
 ### **3. Intelligent Coordination**
+
 - **Queen's continuous monitoring**: Real-time worker progress tracking
-- **Automatic escalation**: Built-in detection of blocked/failed workers  
+- **Automatic escalation**: Built-in detection of blocked/failed workers
 - **Event-driven**: Protocol-compliant logging throughout execution
 
 ### **4. Developer Experience**
+
 - **Single CLI**: `python cli.py [agent] [options]`
 - **Type safety**: Full Pydantic validation and IDE support
 - **Framework integration**: Built-in protocol and session management
@@ -268,15 +287,17 @@ analyzer_parser = subparsers.add_parser('analyzer')
 ## 🔄 Migration from Claude Code Agents
 
 **Before** (`.claude/agents/queen-orchestrator.md`):
+
 - 500+ lines of markdown instructions
-- Manual protocol compliance (error-prone)  
+- Manual protocol compliance (error-prone)
 - Unstructured output (can return anything)
 - Hope-based behavior ("please remember to...")
 
 **After** (`.claude/agents/pydantic/queen/`):
+
 - Code-enforced behavior (impossible to ignore)
 - Automatic protocol compliance (built-in)
-- Schema-validated output (`QueenOrchestrationPlan`)  
+- Schema-validated output (`QueenOrchestrationPlan`)
 - Framework-guaranteed behavior ("cannot skip steps")
 
 This represents the evolution from **instruction-dependent AI** to **framework-enforced AI** - moving from hoping agents follow instructions to making compliance structurally impossible to avoid.
@@ -286,105 +307,129 @@ This represents the evolution from **instruction-dependent AI** to **framework-e
 ## 🔧 **Worker Agents** (Specialized Implementation Agents)
 
 ### 🔍 **Analyzer Worker** (`analyzer/`)
+
 **Role**: Security analysis, performance optimization, and code quality assessment
 **Core Capabilities**:
+
 - **Security Analysis**: OWASP Top 10, vulnerability assessment, authentication/authorization review
 - **Performance Profiling**: Bottleneck identification, N+1 queries, algorithm optimization
 - **Code Quality**: Complexity metrics, test coverage, technical debt analysis
 - **Dependency Analysis**: Package vulnerabilities, license compliance, supply chain risks
 
 **Usage**:
+
 ```bash
 python cli.py analyzer --session SESSION_ID --task "Security and performance analysis"
 ```
 
 ### 🏗️ **Architect Worker** (`architect/`)
+
 **Role**: System design, scalability patterns, and technical architecture
 **Core Capabilities**:
+
 - **System Architecture**: Microservices, monoliths, serverless, hybrid patterns
 - **Scalability Design**: Horizontal/vertical scaling, caching, distributed systems
 - **Design Patterns**: SOLID principles, DDD, CQRS, event sourcing
 - **Technology Evaluation**: Framework selection, database choices, integration patterns
 
 **Usage**:
+
 ```bash
 python cli.py architect --session SESSION_ID --task "Architecture review and recommendations"
 ```
 
 ### ⚙️ **Backend Worker** (`backend/`)
+
 **Role**: API development, database design, and service implementation
 **Core Capabilities**:
+
 - **API Development**: RESTful services, GraphQL, authentication, authorization
 - **Database Design**: Schema modeling, query optimization, migrations, performance
 - **Service Architecture**: Business logic, transaction management, integration patterns
 - **Security Implementation**: JWT, OAuth2, data protection, input validation
 
 **Usage**:
+
 ```bash
 python cli.py backend --session SESSION_ID --task "API implementation and database optimization"
 ```
 
 ### 🎨 **Designer Worker** (`designer/`)
+
 **Role**: User experience design, visual design, and accessibility
 **Core Capabilities**:
+
 - **UX Design**: User journey mapping, information architecture, usability optimization
 - **Visual Design**: Brand consistency, typography, color systems, layout design
 - **Accessibility**: WCAG compliance, inclusive design, assistive technology support
 - **Design Systems**: Component libraries, design tokens, pattern documentation
 
 **Usage**:
+
 ```bash
 python cli.py designer --session SESSION_ID --task "UX/UI design review and accessibility audit"
 ```
 
 ### 🚀 **DevOps Worker** (`devops/`)
+
 **Role**: Infrastructure, deployment, monitoring, and CI/CD pipelines
 **Core Capabilities**:
+
 - **Infrastructure Management**: Container orchestration, cloud platforms, IaC
 - **CI/CD Pipelines**: Automated deployment, quality gates, rollback strategies
 - **Monitoring**: Metrics collection, alerting, observability, performance tracking
 - **Security Operations**: DevSecOps, compliance automation, access control
 
 **Usage**:
+
 ```bash
 python cli.py devops --session SESSION_ID --task "Infrastructure optimization and monitoring setup"
 ```
 
 ### 💻 **Frontend Worker** (`frontend/`)
+
 **Role**: UI/UX implementation, component architecture, and state management
 **Core Capabilities**:
+
 - **Component Architecture**: Modern frameworks, reusable components, performance optimization
 - **State Management**: Redux, Context API, async state, data flow patterns
 - **UI Implementation**: Responsive design, accessibility, cross-browser compatibility
 - **Performance Optimization**: Bundle optimization, lazy loading, rendering efficiency
 
 **Usage**:
+
 ```bash
 python cli.py frontend --session SESSION_ID --task "Component implementation and state management"
 ```
 
 ### 🔬 **Researcher Worker** (`researcher/`)
+
 **Role**: Technical research, best practices, and industry standards analysis
 **Core Capabilities**:
+
 - **Technology Evaluation**: Framework comparisons, tool assessment, technology trends
 - **Best Practices Research**: Industry standards, compliance frameworks, methodologies
 - **Competitive Analysis**: Market intelligence, technology landscape, adoption patterns
 - **Evidence-Based Insights**: Credible sources, research validation, actionable recommendations
 
 **Usage**:
+
 ```bash
 python cli.py researcher --session SESSION_ID --task "Technology evaluation and best practices research"
 ```
 
 ### 🧪 **Test Worker** (`test/`)
+
 **Role**: Testing strategy, quality assurance, and test coverage analysis
 **Core Capabilities**:
+
 - **Test Strategy**: Test pyramid, automation strategy, quality gates
 - **Test Implementation**: Unit, integration, e2e, performance, security testing
 - **Quality Assurance**: Coverage analysis, defect prevention, test reliability
 - **Testing Infrastructure**: CI/CD integration, test environments, reporting
 
 **Usage**:
+
 ```bash
 python cli.py test --session SESSION_ID --task "Comprehensive testing strategy and implementation"
 ```

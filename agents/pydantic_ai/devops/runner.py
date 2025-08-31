@@ -1,7 +1,7 @@
 """
-Researcher Worker Runner
-=======================
-Execution script for researcher worker with protocol compliance.
+DevOps Worker Runner
+===================
+Execution script for DevOps worker with protocol compliance.
 """
 
 import argparse
@@ -14,7 +14,7 @@ import sys
 import os
 
 # Environment setup
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', '..', '..'))
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "..", ".."))
 
 from ..shared.protocols import (
     SessionManagement,
@@ -23,8 +23,8 @@ from ..shared.protocols import (
     WorkerPromptProtocol,
 )
 
-from .models import ResearcherOutput
-from .agent import researcher_agent
+from .models import DevOpsOutput
+from .agent import devops_agent
 from ..shared.tools import iso_now
 
 
@@ -41,7 +41,7 @@ def log_event(session_id: str, event_type: str, agent: str, details: Any):
 def log_debug(session_id: str, message: str, details: Any):
     """Log debug message using protocol infrastructure"""
     try:
-        cfg = ProtocolConfig({"session_id": session_id, "agent_name": "researcher-worker"})
+        cfg = ProtocolConfig({"session_id": session_id, "agent_name": "devops-worker"})
         logger = LoggingProtocol(cfg)
         logger.log_debug(message, details)
     except Exception as e:
@@ -52,16 +52,18 @@ def update_session_state(session_id: str, state_update: Dict[str, Any]):
     """Update session state using protocol infrastructure"""
     try:
         SessionManagement.update_session_state(session_id, state_update)
-        log_debug(session_id, "Session state updated", {"keys": list(state_update.keys())})
+        log_debug(
+            session_id, "Session state updated", {"keys": list(state_update.keys())}
+        )
     except Exception as e:
         log_debug(session_id, "Session state update failed", {"error": str(e)})
 
 
-def run_researcher_analysis(
+def run_devops_implementation(
     session_id: str, task_description: str, model: str
-) -> ResearcherOutput:
-    """Run researcher worker with AI analysis"""
-    worker = "researcher-worker"
+) -> DevOpsOutput:
+    """Run DevOps worker with AI implementation"""
+    worker = "devops-worker"
     timestamp = iso_now()
 
     # Validate session exists using protocol infrastructure
@@ -88,12 +90,12 @@ def run_researcher_analysis(
             "model": model,
             "timestamp": timestamp,
             "capabilities": [
-                "technical_research",
-                "technology_evaluation",
-                "best_practices_analysis",
-                "industry_standards",
-                "competitive_intelligence"
-            ]
+                "infrastructure_management",
+                "cicd_pipelines",
+                "monitoring_systems",
+                "security_automation",
+                "deployment_strategies",
+            ],
         },
     )
 
@@ -108,28 +110,30 @@ def run_researcher_analysis(
     )
 
     try:
-        log_debug(session_id, "Starting research analysis", {"task": task_description})
-        
-        # Execute researcher agent
-        result = researcher_agent.run_sync(
-            f"""Conduct comprehensive technical research and analysis.
+        log_debug(
+            session_id, "Starting DevOps implementation", {"task": task_description}
+        )
+
+        # Execute DevOps agent
+        result = devops_agent.run_sync(
+            f"""Implement infrastructure, deployment, and monitoring solutions.
 
 Task: {task_description}
 Session: {session_id}
 
-Perform thorough research analysis including:
-1. Technology evaluation and comparison
-2. Industry best practices and standards research
-3. Security and compliance requirements analysis
-4. Performance optimization insights and benchmarks
-5. Emerging technology trends and adoption considerations
-6. Competitive analysis and market intelligence
+Perform comprehensive DevOps implementation including:
+1. Infrastructure design and configuration
+2. CI/CD pipeline implementation and optimization
+3. Monitoring and observability setup
+4. Security automation and compliance
+5. Deployment strategies and rollback procedures
+6. Performance optimization and cost management
 
-Focus on evidence-based findings with credible sources and actionable recommendations.""",
-            model=model
+Focus on reliability, automation, and operational excellence.""",
+            model=model,
         )
 
-        output: ResearcherOutput = result.output
+        output: DevOpsOutput = result.output
 
         # Framework-enforced output validation ensures structure
         if not output.worker:
@@ -141,19 +145,19 @@ Focus on evidence-based findings with credible sources and actionable recommenda
 
         log_debug(
             session_id,
-            "Research analysis completed",
+            "DevOps implementation completed",
             {
-                "research_findings": len(output.research_findings),
-                "technology_evaluations": len(output.technology_evaluations),
-                "best_practice_recommendations": len(output.best_practice_recommendations),
-                "research_depth_score": output.research_depth_score,
-                "source_credibility_score": output.source_credibility_score,
-                "relevance_score": output.relevance_score
+                "infrastructure_changes": len(output.infrastructure_changes),
+                "deployment_strategies": len(output.deployment_strategies),
+                "monitoring_implementations": len(output.monitoring_implementations),
+                "infrastructure_maturity": output.infrastructure_maturity_score,
+                "cicd_maturity": output.cicd_maturity_score,
+                "observability_score": output.observability_score,
             },
         )
 
-        # Create research files using protocol infrastructure
-        create_researcher_files(session_id, output)
+        # Create implementation files using protocol infrastructure
+        create_devops_files(session_id, output)
 
         # Update session state to completed
         update_session_state(
@@ -161,10 +165,10 @@ Focus on evidence-based findings with credible sources and actionable recommenda
             {
                 f"{worker}_status": "completed",
                 f"{worker}_completed": timestamp,
-                f"{worker}_research_depth": output.research_depth_score,
-                f"{worker}_source_credibility": output.source_credibility_score,
-                f"{worker}_relevance": output.relevance_score,
-                f"{worker}_research_quality": output.research_quality_score,
+                f"{worker}_infrastructure_maturity": output.infrastructure_maturity_score,
+                f"{worker}_cicd_maturity": output.cicd_maturity_score,
+                f"{worker}_observability": output.observability_score,
+                f"{worker}_devops_maturity": output.devops_maturity_score,
             },
         )
 
@@ -175,9 +179,11 @@ Focus on evidence-based findings with credible sources and actionable recommenda
             worker,
             {
                 "duration": "calculated",
-                "research_findings_count": len(output.research_findings),
-                "technology_evaluations_count": len(output.technology_evaluations),
-                "best_practices_count": len(output.best_practice_recommendations),
+                "infrastructure_changes_count": len(output.infrastructure_changes),
+                "deployment_strategies_count": len(output.deployment_strategies),
+                "monitoring_implementations_count": len(
+                    output.monitoring_implementations
+                ),
                 "status": output.status,
             },
         )
@@ -186,9 +192,11 @@ Focus on evidence-based findings with credible sources and actionable recommenda
 
     except Exception as e:
         log_debug(
-            session_id, "Research analysis failed", {"error": str(e), "task": task_description}
+            session_id,
+            "DevOps implementation failed",
+            {"error": str(e), "task": task_description},
         )
-        
+
         # Update session state to failed
         update_session_state(
             session_id,
@@ -206,47 +214,55 @@ Focus on evidence-based findings with credible sources and actionable recommenda
             worker,
             {"error": str(e), "task": task_description},
         )
-        
+
         raise
 
 
-def create_researcher_files(session_id: str, output: ResearcherOutput):
-    """Create researcher output files using protocol infrastructure"""
+def create_devops_files(session_id: str, output: DevOpsOutput):
+    """Create DevOps output files using protocol infrastructure"""
     try:
         session_path = SessionManagement.get_session_path(session_id)
         notes_dir = session_path / "workers" / "notes"
         notes_dir.mkdir(parents=True, exist_ok=True)
 
-        # Create researcher notes file if content provided
+        # Create DevOps notes file if content provided
         if output.notes_markdown:
-            notes_file = notes_dir / "researcher_notes.md"
+            notes_file = notes_dir / "devops_notes.md"
             notes_file.write_text(output.notes_markdown)
-            log_debug(session_id, "Created researcher notes file", {"path": str(notes_file)})
+            log_debug(
+                session_id, "Created DevOps notes file", {"path": str(notes_file)}
+            )
 
         # Create structured output JSON
-        output_file = notes_dir / "researcher_output.json"
+        output_file = notes_dir / "devops_output.json"
         output_file.write_text(output.model_dump_json(indent=2))
-        log_debug(session_id, "Created researcher output JSON", {"path": str(output_file)})
+        log_debug(session_id, "Created DevOps output JSON", {"path": str(output_file)})
 
     except Exception as e:
         log_debug(session_id, "File creation failed", {"error": str(e)})
 
 
 def main():
-    """CLI entry point for researcher worker"""
-    parser = argparse.ArgumentParser(description="Researcher Worker - Technical Research and Analysis")
+    """CLI entry point for DevOps worker"""
+    parser = argparse.ArgumentParser(
+        description="DevOps Worker - Infrastructure and Deployment"
+    )
     parser.add_argument("--session", required=True, help="Session ID")
-    parser.add_argument("--task", required=True, help="Research task description")
-    parser.add_argument("--model", default="openai:gpt-4o-mini", help="AI model to use")
-    
+    parser.add_argument(
+        "--task", required=True, help="DevOps implementation task description"
+    )
+    parser.add_argument("--model", default="openai:gpt-5", help="AI model to use")
+
     args = parser.parse_args()
-    
+
     try:
-        output = run_researcher_analysis(args.session, args.task, args.model)
-        print(f"Research analysis completed. Quality score: {output.research_quality_score}, Depth: {output.research_depth_score}, Relevance: {output.relevance_score}")
+        output = run_devops_implementation(args.session, args.task, args.model)
+        print(
+            f"DevOps implementation completed. Maturity score: {output.devops_maturity_score}, Infrastructure: {output.infrastructure_maturity_score}, CI/CD: {output.cicd_maturity_score}"
+        )
         return 0
     except Exception as e:
-        print(f"Researcher worker failed: {e}")
+        print(f"DevOps worker failed: {e}")
         return 1
 
 

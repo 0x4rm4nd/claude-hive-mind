@@ -1,7 +1,7 @@
 """
-Designer Worker Runner
-=====================
-Execution script for designer worker with protocol compliance.
+Researcher Worker Runner
+=======================
+Execution script for researcher worker with protocol compliance.
 """
 
 import argparse
@@ -14,7 +14,7 @@ import sys
 import os
 
 # Environment setup
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', '..', '..'))
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "..", ".."))
 
 from ..shared.protocols import (
     SessionManagement,
@@ -23,8 +23,8 @@ from ..shared.protocols import (
     WorkerPromptProtocol,
 )
 
-from .models import DesignerOutput
-from .agent import designer_agent
+from .models import ResearcherOutput
+from .agent import researcher_agent
 from ..shared.tools import iso_now
 
 
@@ -41,7 +41,9 @@ def log_event(session_id: str, event_type: str, agent: str, details: Any):
 def log_debug(session_id: str, message: str, details: Any):
     """Log debug message using protocol infrastructure"""
     try:
-        cfg = ProtocolConfig({"session_id": session_id, "agent_name": "designer-worker"})
+        cfg = ProtocolConfig(
+            {"session_id": session_id, "agent_name": "researcher-worker"}
+        )
         logger = LoggingProtocol(cfg)
         logger.log_debug(message, details)
     except Exception as e:
@@ -52,16 +54,18 @@ def update_session_state(session_id: str, state_update: Dict[str, Any]):
     """Update session state using protocol infrastructure"""
     try:
         SessionManagement.update_session_state(session_id, state_update)
-        log_debug(session_id, "Session state updated", {"keys": list(state_update.keys())})
+        log_debug(
+            session_id, "Session state updated", {"keys": list(state_update.keys())}
+        )
     except Exception as e:
         log_debug(session_id, "Session state update failed", {"error": str(e)})
 
 
-def run_designer_analysis(
+def run_researcher_analysis(
     session_id: str, task_description: str, model: str
-) -> DesignerOutput:
-    """Run designer worker with AI analysis"""
-    worker = "designer-worker"
+) -> ResearcherOutput:
+    """Run researcher worker with AI analysis"""
+    worker = "researcher-worker"
     timestamp = iso_now()
 
     # Validate session exists using protocol infrastructure
@@ -88,12 +92,12 @@ def run_designer_analysis(
             "model": model,
             "timestamp": timestamp,
             "capabilities": [
-                "user_experience_design",
-                "visual_design",
-                "accessibility_compliance",
-                "design_systems",
-                "responsive_design"
-            ]
+                "technical_research",
+                "technology_evaluation",
+                "best_practices_analysis",
+                "industry_standards",
+                "competitive_intelligence",
+            ],
         },
     )
 
@@ -108,28 +112,28 @@ def run_designer_analysis(
     )
 
     try:
-        log_debug(session_id, "Starting designer analysis", {"task": task_description})
-        
-        # Execute designer agent
-        result = designer_agent.run_sync(
-            f"""Analyze the user interface design and provide UX/UI recommendations.
+        log_debug(session_id, "Starting research analysis", {"task": task_description})
+
+        # Execute researcher agent
+        result = researcher_agent.run_sync(
+            f"""Conduct comprehensive technical research and analysis.
 
 Task: {task_description}
 Session: {session_id}
 
-Perform comprehensive design analysis including:
-1. User experience evaluation and journey mapping
-2. Visual design assessment and brand consistency review
-3. Accessibility compliance audit (WCAG guidelines)
-4. Design system evaluation and component analysis
-5. Responsive design and cross-platform consistency
-6. Information architecture and navigation optimization
+Perform thorough research analysis including:
+1. Technology evaluation and comparison
+2. Industry best practices and standards research
+3. Security and compliance requirements analysis
+4. Performance optimization insights and benchmarks
+5. Emerging technology trends and adoption considerations
+6. Competitive analysis and market intelligence
 
-Focus on user-centered improvements that enhance usability and accessibility.""",
-            model=model
+Focus on evidence-based findings with credible sources and actionable recommendations.""",
+            model=model,
         )
 
-        output: DesignerOutput = result.output
+        output: ResearcherOutput = result.output
 
         # Framework-enforced output validation ensures structure
         if not output.worker:
@@ -141,19 +145,21 @@ Focus on user-centered improvements that enhance usability and accessibility."""
 
         log_debug(
             session_id,
-            "Designer analysis completed",
+            "Research analysis completed",
             {
-                "design_recommendations": len(output.design_recommendations),
-                "accessibility_findings": len(output.accessibility_findings),
-                "design_system_components": len(output.design_system_components),
-                "design_maturity_score": output.design_maturity_score,
-                "accessibility_score": output.accessibility_score,
-                "usability_score": output.usability_score
+                "research_findings": len(output.research_findings),
+                "technology_evaluations": len(output.technology_evaluations),
+                "best_practice_recommendations": len(
+                    output.best_practice_recommendations
+                ),
+                "research_depth_score": output.research_depth_score,
+                "source_credibility_score": output.source_credibility_score,
+                "relevance_score": output.relevance_score,
             },
         )
 
-        # Create analysis file using protocol infrastructure
-        create_designer_files(session_id, output)
+        # Create research files using protocol infrastructure
+        create_researcher_files(session_id, output)
 
         # Update session state to completed
         update_session_state(
@@ -161,10 +167,10 @@ Focus on user-centered improvements that enhance usability and accessibility."""
             {
                 f"{worker}_status": "completed",
                 f"{worker}_completed": timestamp,
-                f"{worker}_design_maturity": output.design_maturity_score,
-                f"{worker}_accessibility": output.accessibility_score,
-                f"{worker}_usability": output.usability_score,
-                f"{worker}_design_quality": output.design_quality_score,
+                f"{worker}_research_depth": output.research_depth_score,
+                f"{worker}_source_credibility": output.source_credibility_score,
+                f"{worker}_relevance": output.relevance_score,
+                f"{worker}_research_quality": output.research_quality_score,
             },
         )
 
@@ -175,8 +181,9 @@ Focus on user-centered improvements that enhance usability and accessibility."""
             worker,
             {
                 "duration": "calculated",
-                "recommendations_count": len(output.design_recommendations),
-                "accessibility_findings_count": len(output.accessibility_findings),
+                "research_findings_count": len(output.research_findings),
+                "technology_evaluations_count": len(output.technology_evaluations),
+                "best_practices_count": len(output.best_practice_recommendations),
                 "status": output.status,
             },
         )
@@ -185,9 +192,11 @@ Focus on user-centered improvements that enhance usability and accessibility."""
 
     except Exception as e:
         log_debug(
-            session_id, "Designer analysis failed", {"error": str(e), "task": task_description}
+            session_id,
+            "Research analysis failed",
+            {"error": str(e), "task": task_description},
         )
-        
+
         # Update session state to failed
         update_session_state(
             session_id,
@@ -205,47 +214,55 @@ Focus on user-centered improvements that enhance usability and accessibility."""
             worker,
             {"error": str(e), "task": task_description},
         )
-        
+
         raise
 
 
-def create_designer_files(session_id: str, output: DesignerOutput):
-    """Create designer output files using protocol infrastructure"""
+def create_researcher_files(session_id: str, output: ResearcherOutput):
+    """Create researcher output files using protocol infrastructure"""
     try:
         session_path = SessionManagement.get_session_path(session_id)
         notes_dir = session_path / "workers" / "notes"
         notes_dir.mkdir(parents=True, exist_ok=True)
 
-        # Create designer notes file if content provided
+        # Create researcher notes file if content provided
         if output.notes_markdown:
-            notes_file = notes_dir / "designer_notes.md"
+            notes_file = notes_dir / "researcher_notes.md"
             notes_file.write_text(output.notes_markdown)
-            log_debug(session_id, "Created designer notes file", {"path": str(notes_file)})
+            log_debug(
+                session_id, "Created researcher notes file", {"path": str(notes_file)}
+            )
 
         # Create structured output JSON
-        output_file = notes_dir / "designer_output.json"
+        output_file = notes_dir / "researcher_output.json"
         output_file.write_text(output.model_dump_json(indent=2))
-        log_debug(session_id, "Created designer output JSON", {"path": str(output_file)})
+        log_debug(
+            session_id, "Created researcher output JSON", {"path": str(output_file)}
+        )
 
     except Exception as e:
         log_debug(session_id, "File creation failed", {"error": str(e)})
 
 
 def main():
-    """CLI entry point for designer worker"""
-    parser = argparse.ArgumentParser(description="Designer Worker - UX/UI Design Analysis")
+    """CLI entry point for researcher worker"""
+    parser = argparse.ArgumentParser(
+        description="Researcher Worker - Technical Research and Analysis"
+    )
     parser.add_argument("--session", required=True, help="Session ID")
-    parser.add_argument("--task", required=True, help="Design task description")
-    parser.add_argument("--model", default="openai:gpt-4o-mini", help="AI model to use")
-    
+    parser.add_argument("--task", required=True, help="Research task description")
+    parser.add_argument("--model", default="openai:gpt-5", help="AI model to use")
+
     args = parser.parse_args()
-    
+
     try:
-        output = run_designer_analysis(args.session, args.task, args.model)
-        print(f"Design analysis completed. Quality score: {output.design_quality_score}, Accessibility: {output.accessibility_score}, Usability: {output.usability_score}")
+        output = run_researcher_analysis(args.session, args.task, args.model)
+        print(
+            f"Research analysis completed. Quality score: {output.research_quality_score}, Depth: {output.research_depth_score}, Relevance: {output.relevance_score}"
+        )
         return 0
     except Exception as e:
-        print(f"Designer worker failed: {e}")
+        print(f"Researcher worker failed: {e}")
         return 1
 
 

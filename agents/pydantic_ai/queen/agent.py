@@ -11,7 +11,11 @@ from typing import Dict, Any
 
 # Environment setup
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "..", "..", ".."))
-from ..shared.protocols import load_project_env
+# Add the pydantic_ai directory to path for direct imports
+pydantic_ai_path = Path(__file__).parent.parent
+sys.path.insert(0, str(pydantic_ai_path))
+
+from shared.protocols import load_project_env
 
 load_project_env()
 

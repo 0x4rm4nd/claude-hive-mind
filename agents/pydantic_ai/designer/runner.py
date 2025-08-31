@@ -1,7 +1,7 @@
 """
-Frontend Worker Runner
+Designer Worker Runner
 =====================
-Execution script for frontend worker with protocol compliance.
+Execution script for designer worker with protocol compliance.
 """
 
 import argparse
@@ -14,7 +14,7 @@ import sys
 import os
 
 # Environment setup
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', '..', '..'))
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "..", ".."))
 
 from ..shared.protocols import (
     SessionManagement,
@@ -23,8 +23,8 @@ from ..shared.protocols import (
     WorkerPromptProtocol,
 )
 
-from .models import FrontendOutput
-from .agent import frontend_agent
+from .models import DesignerOutput
+from .agent import designer_agent
 from ..shared.tools import iso_now
 
 
@@ -41,7 +41,9 @@ def log_event(session_id: str, event_type: str, agent: str, details: Any):
 def log_debug(session_id: str, message: str, details: Any):
     """Log debug message using protocol infrastructure"""
     try:
-        cfg = ProtocolConfig({"session_id": session_id, "agent_name": "frontend-worker"})
+        cfg = ProtocolConfig(
+            {"session_id": session_id, "agent_name": "designer-worker"}
+        )
         logger = LoggingProtocol(cfg)
         logger.log_debug(message, details)
     except Exception as e:
@@ -52,16 +54,18 @@ def update_session_state(session_id: str, state_update: Dict[str, Any]):
     """Update session state using protocol infrastructure"""
     try:
         SessionManagement.update_session_state(session_id, state_update)
-        log_debug(session_id, "Session state updated", {"keys": list(state_update.keys())})
+        log_debug(
+            session_id, "Session state updated", {"keys": list(state_update.keys())}
+        )
     except Exception as e:
         log_debug(session_id, "Session state update failed", {"error": str(e)})
 
 
-def run_frontend_implementation(
+def run_designer_analysis(
     session_id: str, task_description: str, model: str
-) -> FrontendOutput:
-    """Run frontend worker with AI implementation"""
-    worker = "frontend-worker"
+) -> DesignerOutput:
+    """Run designer worker with AI analysis"""
+    worker = "designer-worker"
     timestamp = iso_now()
 
     # Validate session exists using protocol infrastructure
@@ -88,12 +92,12 @@ def run_frontend_implementation(
             "model": model,
             "timestamp": timestamp,
             "capabilities": [
-                "component_architecture",
-                "state_management",
-                "ui_optimization",
+                "user_experience_design",
+                "visual_design",
+                "accessibility_compliance",
+                "design_systems",
                 "responsive_design",
-                "accessibility_implementation"
-            ]
+            ],
         },
     )
 
@@ -108,28 +112,28 @@ def run_frontend_implementation(
     )
 
     try:
-        log_debug(session_id, "Starting frontend implementation", {"task": task_description})
-        
-        # Execute frontend agent
-        result = frontend_agent.run_sync(
-            f"""Implement frontend components, UI optimizations, and state management.
+        log_debug(session_id, "Starting designer analysis", {"task": task_description})
+
+        # Execute designer agent
+        result = designer_agent.run_sync(
+            f"""Analyze the user interface design and provide UX/UI recommendations.
 
 Task: {task_description}
 Session: {session_id}
 
-Perform comprehensive frontend implementation including:
-1. Component architecture design and implementation
-2. State management integration and optimization
-3. UI/UX optimizations and performance improvements
-4. Responsive design and accessibility compliance
-5. Styling and design system integration
-6. Frontend testing and quality assurance
+Perform comprehensive design analysis including:
+1. User experience evaluation and journey mapping
+2. Visual design assessment and brand consistency review
+3. Accessibility compliance audit (WCAG guidelines)
+4. Design system evaluation and component analysis
+5. Responsive design and cross-platform consistency
+6. Information architecture and navigation optimization
 
-Focus on user experience, performance, and maintainable code architecture.""",
-            model=model
+Focus on user-centered improvements that enhance usability and accessibility.""",
+            model=model,
         )
 
-        output: FrontendOutput = result.output
+        output: DesignerOutput = result.output
 
         # Framework-enforced output validation ensures structure
         if not output.worker:
@@ -141,19 +145,19 @@ Focus on user experience, performance, and maintainable code architecture.""",
 
         log_debug(
             session_id,
-            "Frontend implementation completed",
+            "Designer analysis completed",
             {
-                "component_implementations": len(output.component_implementations),
-                "state_management_changes": len(output.state_management_changes),
-                "ui_optimizations": len(output.ui_optimizations),
-                "component_architecture_score": output.component_architecture_score,
-                "state_architecture_score": output.state_architecture_score,
-                "ui_performance_score": output.ui_performance_score
+                "design_recommendations": len(output.design_recommendations),
+                "accessibility_findings": len(output.accessibility_findings),
+                "design_system_components": len(output.design_system_components),
+                "design_maturity_score": output.design_maturity_score,
+                "accessibility_score": output.accessibility_score,
+                "usability_score": output.usability_score,
             },
         )
 
-        # Create implementation files using protocol infrastructure
-        create_frontend_files(session_id, output)
+        # Create analysis file using protocol infrastructure
+        create_designer_files(session_id, output)
 
         # Update session state to completed
         update_session_state(
@@ -161,10 +165,10 @@ Focus on user experience, performance, and maintainable code architecture.""",
             {
                 f"{worker}_status": "completed",
                 f"{worker}_completed": timestamp,
-                f"{worker}_component_architecture": output.component_architecture_score,
-                f"{worker}_state_architecture": output.state_architecture_score,
-                f"{worker}_ui_performance": output.ui_performance_score,
-                f"{worker}_frontend_quality": output.frontend_quality_score,
+                f"{worker}_design_maturity": output.design_maturity_score,
+                f"{worker}_accessibility": output.accessibility_score,
+                f"{worker}_usability": output.usability_score,
+                f"{worker}_design_quality": output.design_quality_score,
             },
         )
 
@@ -175,9 +179,8 @@ Focus on user experience, performance, and maintainable code architecture.""",
             worker,
             {
                 "duration": "calculated",
-                "components_count": len(output.component_implementations),
-                "state_changes_count": len(output.state_management_changes),
-                "optimizations_count": len(output.ui_optimizations),
+                "recommendations_count": len(output.design_recommendations),
+                "accessibility_findings_count": len(output.accessibility_findings),
                 "status": output.status,
             },
         )
@@ -186,9 +189,11 @@ Focus on user experience, performance, and maintainable code architecture.""",
 
     except Exception as e:
         log_debug(
-            session_id, "Frontend implementation failed", {"error": str(e), "task": task_description}
+            session_id,
+            "Designer analysis failed",
+            {"error": str(e), "task": task_description},
         )
-        
+
         # Update session state to failed
         update_session_state(
             session_id,
@@ -206,47 +211,55 @@ Focus on user experience, performance, and maintainable code architecture.""",
             worker,
             {"error": str(e), "task": task_description},
         )
-        
+
         raise
 
 
-def create_frontend_files(session_id: str, output: FrontendOutput):
-    """Create frontend output files using protocol infrastructure"""
+def create_designer_files(session_id: str, output: DesignerOutput):
+    """Create designer output files using protocol infrastructure"""
     try:
         session_path = SessionManagement.get_session_path(session_id)
         notes_dir = session_path / "workers" / "notes"
         notes_dir.mkdir(parents=True, exist_ok=True)
 
-        # Create frontend notes file if content provided
+        # Create designer notes file if content provided
         if output.notes_markdown:
-            notes_file = notes_dir / "frontend_notes.md"
+            notes_file = notes_dir / "designer_notes.md"
             notes_file.write_text(output.notes_markdown)
-            log_debug(session_id, "Created frontend notes file", {"path": str(notes_file)})
+            log_debug(
+                session_id, "Created designer notes file", {"path": str(notes_file)}
+            )
 
         # Create structured output JSON
-        output_file = notes_dir / "frontend_output.json"
+        output_file = notes_dir / "designer_output.json"
         output_file.write_text(output.model_dump_json(indent=2))
-        log_debug(session_id, "Created frontend output JSON", {"path": str(output_file)})
+        log_debug(
+            session_id, "Created designer output JSON", {"path": str(output_file)}
+        )
 
     except Exception as e:
         log_debug(session_id, "File creation failed", {"error": str(e)})
 
 
 def main():
-    """CLI entry point for frontend worker"""
-    parser = argparse.ArgumentParser(description="Frontend Worker - UI/UX Implementation")
+    """CLI entry point for designer worker"""
+    parser = argparse.ArgumentParser(
+        description="Designer Worker - UX/UI Design Analysis"
+    )
     parser.add_argument("--session", required=True, help="Session ID")
-    parser.add_argument("--task", required=True, help="Frontend implementation task description")
-    parser.add_argument("--model", default="openai:gpt-4o-mini", help="AI model to use")
-    
+    parser.add_argument("--task", required=True, help="Design task description")
+    parser.add_argument("--model", default="openai:gpt-5", help="AI model to use")
+
     args = parser.parse_args()
-    
+
     try:
-        output = run_frontend_implementation(args.session, args.task, args.model)
-        print(f"Frontend implementation completed. Quality score: {output.frontend_quality_score}, UX score: {output.user_experience_score}, Accessibility: {output.accessibility_score}")
+        output = run_designer_analysis(args.session, args.task, args.model)
+        print(
+            f"Design analysis completed. Quality score: {output.design_quality_score}, Accessibility: {output.accessibility_score}, Usability: {output.usability_score}"
+        )
         return 0
     except Exception as e:
-        print(f"Frontend worker failed: {e}")
+        print(f"Designer worker failed: {e}")
         return 1
 
 

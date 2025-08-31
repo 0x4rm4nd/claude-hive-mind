@@ -1,7 +1,7 @@
 """
-DevOps Worker Runner
-===================
-Execution script for DevOps worker with protocol compliance.
+Analyzer Worker Runner
+=====================
+Execution script for analyzer worker with protocol compliance.
 """
 
 import argparse
@@ -14,7 +14,7 @@ import sys
 import os
 
 # Environment setup
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', '..', '..'))
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "..", ".."))
 
 from ..shared.protocols import (
     SessionManagement,
@@ -23,8 +23,8 @@ from ..shared.protocols import (
     WorkerPromptProtocol,
 )
 
-from .models import DevOpsOutput
-from .agent import devops_agent
+from .models import AnalyzerOutput
+from .agent import analyzer_agent
 from ..shared.tools import iso_now
 
 
@@ -41,7 +41,9 @@ def log_event(session_id: str, event_type: str, agent: str, details: Any):
 def log_debug(session_id: str, message: str, details: Any):
     """Log debug message using protocol infrastructure"""
     try:
-        cfg = ProtocolConfig({"session_id": session_id, "agent_name": "devops-worker"})
+        cfg = ProtocolConfig(
+            {"session_id": session_id, "agent_name": "analyzer-worker"}
+        )
         logger = LoggingProtocol(cfg)
         logger.log_debug(message, details)
     except Exception as e:
@@ -52,16 +54,18 @@ def update_session_state(session_id: str, state_update: Dict[str, Any]):
     """Update session state using protocol infrastructure"""
     try:
         SessionManagement.update_session_state(session_id, state_update)
-        log_debug(session_id, "Session state updated", {"keys": list(state_update.keys())})
+        log_debug(
+            session_id, "Session state updated", {"keys": list(state_update.keys())}
+        )
     except Exception as e:
         log_debug(session_id, "Session state update failed", {"error": str(e)})
 
 
-def run_devops_implementation(
+def run_analyzer_analysis(
     session_id: str, task_description: str, model: str
-) -> DevOpsOutput:
-    """Run DevOps worker with AI implementation"""
-    worker = "devops-worker"
+) -> AnalyzerOutput:
+    """Run analyzer worker with AI analysis"""
+    worker = "analyzer-worker"
     timestamp = iso_now()
 
     # Validate session exists using protocol infrastructure
@@ -88,12 +92,12 @@ def run_devops_implementation(
             "model": model,
             "timestamp": timestamp,
             "capabilities": [
-                "infrastructure_management",
-                "cicd_pipelines",
-                "monitoring_systems",
-                "security_automation",
-                "deployment_strategies"
-            ]
+                "security_analysis",
+                "performance_optimization",
+                "code_quality_assessment",
+                "dependency_analysis",
+                "static_analysis",
+            ],
         },
     )
 
@@ -108,28 +112,27 @@ def run_devops_implementation(
     )
 
     try:
-        log_debug(session_id, "Starting DevOps implementation", {"task": task_description})
-        
-        # Execute DevOps agent
-        result = devops_agent.run_sync(
-            f"""Implement infrastructure, deployment, and monitoring solutions.
+        log_debug(session_id, "Starting analyzer analysis", {"task": task_description})
+
+        # Execute analyzer agent
+        result = analyzer_agent.run_sync(
+            f"""Analyze the codebase for security vulnerabilities, performance issues, and code quality problems.
 
 Task: {task_description}
 Session: {session_id}
 
-Perform comprehensive DevOps implementation including:
-1. Infrastructure design and configuration
-2. CI/CD pipeline implementation and optimization
-3. Monitoring and observability setup
-4. Security automation and compliance
-5. Deployment strategies and rollback procedures
-6. Performance optimization and cost management
+Perform comprehensive analysis including:
+1. Security vulnerability assessment
+2. Performance bottleneck identification  
+3. Code quality metrics evaluation
+4. Dependency security analysis
+5. Technical debt quantification
 
-Focus on reliability, automation, and operational excellence.""",
-            model=model
+Provide specific, actionable findings with clear priorities and effort estimates.""",
+            model=model,
         )
 
-        output: DevOpsOutput = result.output
+        output: AnalyzerOutput = result.output
 
         # Framework-enforced output validation ensures structure
         if not output.worker:
@@ -141,19 +144,19 @@ Focus on reliability, automation, and operational excellence.""",
 
         log_debug(
             session_id,
-            "DevOps implementation completed",
+            "Analyzer analysis completed",
             {
-                "infrastructure_changes": len(output.infrastructure_changes),
-                "deployment_strategies": len(output.deployment_strategies),
-                "monitoring_implementations": len(output.monitoring_implementations),
-                "infrastructure_maturity": output.infrastructure_maturity_score,
-                "cicd_maturity": output.cicd_maturity_score,
-                "observability_score": output.observability_score
+                "security_findings": len(output.security_findings),
+                "performance_issues": len(output.performance_issues),
+                "quality_metrics": len(output.quality_metrics),
+                "security_score": output.security_score,
+                "performance_score": output.performance_score,
+                "quality_score": output.quality_score,
             },
         )
 
-        # Create implementation files using protocol infrastructure
-        create_devops_files(session_id, output)
+        # Create analysis file using protocol infrastructure
+        create_analyzer_files(session_id, output)
 
         # Update session state to completed
         update_session_state(
@@ -161,10 +164,9 @@ Focus on reliability, automation, and operational excellence.""",
             {
                 f"{worker}_status": "completed",
                 f"{worker}_completed": timestamp,
-                f"{worker}_infrastructure_maturity": output.infrastructure_maturity_score,
-                f"{worker}_cicd_maturity": output.cicd_maturity_score,
-                f"{worker}_observability": output.observability_score,
-                f"{worker}_devops_maturity": output.devops_maturity_score,
+                f"{worker}_security_score": output.security_score,
+                f"{worker}_performance_score": output.performance_score,
+                f"{worker}_quality_score": output.quality_score,
             },
         )
 
@@ -175,9 +177,9 @@ Focus on reliability, automation, and operational excellence.""",
             worker,
             {
                 "duration": "calculated",
-                "infrastructure_changes_count": len(output.infrastructure_changes),
-                "deployment_strategies_count": len(output.deployment_strategies),
-                "monitoring_implementations_count": len(output.monitoring_implementations),
+                "security_findings_count": len(output.security_findings),
+                "performance_issues_count": len(output.performance_issues),
+                "quality_metrics_count": len(output.quality_metrics),
                 "status": output.status,
             },
         )
@@ -186,9 +188,11 @@ Focus on reliability, automation, and operational excellence.""",
 
     except Exception as e:
         log_debug(
-            session_id, "DevOps implementation failed", {"error": str(e), "task": task_description}
+            session_id,
+            "Analyzer analysis failed",
+            {"error": str(e), "task": task_description},
         )
-        
+
         # Update session state to failed
         update_session_state(
             session_id,
@@ -206,47 +210,55 @@ Focus on reliability, automation, and operational excellence.""",
             worker,
             {"error": str(e), "task": task_description},
         )
-        
+
         raise
 
 
-def create_devops_files(session_id: str, output: DevOpsOutput):
-    """Create DevOps output files using protocol infrastructure"""
+def create_analyzer_files(session_id: str, output: AnalyzerOutput):
+    """Create analyzer output files using protocol infrastructure"""
     try:
         session_path = SessionManagement.get_session_path(session_id)
         notes_dir = session_path / "workers" / "notes"
         notes_dir.mkdir(parents=True, exist_ok=True)
 
-        # Create DevOps notes file if content provided
+        # Create analyzer notes file if content provided
         if output.notes_markdown:
-            notes_file = notes_dir / "devops_notes.md"
+            notes_file = notes_dir / "analyzer_notes.md"
             notes_file.write_text(output.notes_markdown)
-            log_debug(session_id, "Created DevOps notes file", {"path": str(notes_file)})
+            log_debug(
+                session_id, "Created analyzer notes file", {"path": str(notes_file)}
+            )
 
         # Create structured output JSON
-        output_file = notes_dir / "devops_output.json"
+        output_file = notes_dir / "analyzer_output.json"
         output_file.write_text(output.model_dump_json(indent=2))
-        log_debug(session_id, "Created DevOps output JSON", {"path": str(output_file)})
+        log_debug(
+            session_id, "Created analyzer output JSON", {"path": str(output_file)}
+        )
 
     except Exception as e:
         log_debug(session_id, "File creation failed", {"error": str(e)})
 
 
 def main():
-    """CLI entry point for DevOps worker"""
-    parser = argparse.ArgumentParser(description="DevOps Worker - Infrastructure and Deployment")
+    """CLI entry point for analyzer worker"""
+    parser = argparse.ArgumentParser(
+        description="Analyzer Worker - Security and Performance Analysis"
+    )
     parser.add_argument("--session", required=True, help="Session ID")
-    parser.add_argument("--task", required=True, help="DevOps implementation task description")
-    parser.add_argument("--model", default="openai:gpt-4o-mini", help="AI model to use")
-    
+    parser.add_argument("--task", required=True, help="Analysis task description")
+    parser.add_argument("--model", default="openai:gpt-5", help="AI model to use")
+
     args = parser.parse_args()
-    
+
     try:
-        output = run_devops_implementation(args.session, args.task, args.model)
-        print(f"DevOps implementation completed. Maturity score: {output.devops_maturity_score}, Infrastructure: {output.infrastructure_maturity_score}, CI/CD: {output.cicd_maturity_score}")
+        output = run_analyzer_analysis(args.session, args.task, args.model)
+        print(
+            f"Analysis completed successfully. Security score: {output.security_score}, Performance score: {output.performance_score}, Quality score: {output.quality_score}"
+        )
         return 0
     except Exception as e:
-        print(f"DevOps worker failed: {e}")
+        print(f"Analyzer failed: {e}")
         return 1
 
 
