@@ -19,12 +19,16 @@ from coordination_protocol import CoordinationProtocol
 coord = CoordinationProtocol()
 ```
 
-### Step 2: Session Creation (Queen Only)
+### Step 2: Session Creation (Scribe Worker)
 ```python
-# Generate session ID with meaningful task slug
-session_id = coord.generate_session_id("implement user authentication API")
+# Import session ID generator for correct format
+from session_id_generator import generate_session_id
 
-# Create session structure
+# Generate session ID in format: YYYY-MM-DD-HH-mm-shorttaskdescription
+session_id = generate_session_id("implement user authentication API")
+# Example output: "2025-08-31-14-30-implement-user-authentication"
+
+# Create session structure (NO .gitkeep files)
 session_path = coord.create_session_structure(
     session_id=session_id,
     task_description="Implement OAuth2 authentication for API",
@@ -32,8 +36,21 @@ session_path = coord.create_session_structure(
     task_type="feature-development"
 )
 
-# Log Queen spawn event
-coord.log_queen_spawn(session_id, "OAuth2 authentication implementation")
+# Log session creation (scribe-worker logs this)
+coord.log_event(session_id, "session_created", "scribe-worker", 
+                {"note": "Session scaffolded with correct ID format"})
+```
+
+### Step 2b: Queen Activation (Queen Orchestrator)
+```python
+# Queen receives session_id from scribe
+# IMMEDIATELY log queen_spawned as FIRST action
+coord.log_event(
+    session_id,
+    "queen_spawned",  # NOT "queen_started" or other variants
+    "queen-orchestrator",
+    {"note": "Queen orchestrator initialized for session"}
+)
 ```
 
 ### Step 3: Worker Management
@@ -189,11 +206,17 @@ The protocol handles:
 ## Example: Complete Session Flow
 
 ```python
-# Queen creates session
+# Scribe creates session with correct ID format
+from session_id_generator import generate_session_id
 coord = CoordinationProtocol()
-session_id = coord.generate_session_id("implement payment processing")
+session_id = generate_session_id("implement payment processing")
+# Output: "2025-08-31-14-30-implement-payment-processing"
 session_path = coord.create_session_structure(session_id, "Payment processing", 3)
-coord.log_queen_spawn(session_id, "Payment processing feature")
+coord.log_event(session_id, "session_created", "scribe-worker", {"note": "Session ready"})
+
+# Queen takes command
+coord.log_event(session_id, "queen_spawned", "queen-orchestrator", 
+                {"note": "Queen initialized"})
 
 # Plan and assign workers
 plan = coord.plan_workers("Payment processing", 3, session_id)
@@ -234,7 +257,8 @@ coord.debug_mode = True  # Writes to DEBUG.jsonl
 
 ## Notes
 
-- Session IDs must be unique and descriptive (min 15 char slug)
+- Session IDs MUST follow format: YYYY-MM-DD-HH-mm-shorttaskdescription
+- Use session-id-generator.py template for consistent formatting
 - All timestamps are UTC ISO format
 - Event IDs are sequential (evt_001, evt_002, etc.)
 - The protocol is thread-safe and supports concurrent workers

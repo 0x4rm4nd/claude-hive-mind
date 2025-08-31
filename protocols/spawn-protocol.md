@@ -198,6 +198,35 @@ def plan_workers(task_description, complexity_level):
 
 ---
 
+## 🔧 Implementation Requirements
+
+### Session ID Format
+**MANDATORY**: All sessions must use format: `YYYY-MM-DD-HH-mm-shorttaskdescription`
+
+```python
+# CORRECT: 2025-08-31-14-25-crypto-architecture-analysis
+# WRONG: crypto-data-architecture-analysis_20250831_142500
+```
+
+### Event Logging Rules
+1. **Queen MUST log `queen_spawned` as first action**
+2. **Workers log their OWN `worker_spawned` events** (not the Queen)
+3. **Queen logs `tasks_assigned`** for context preparation
+4. **Scribe logs `worker_spawned` when activated for synthesis**
+
+### File Creation Rules
+- **NO .gitkeep files** in session directories
+- Only create necessary session files: STATE.json, EVENTS.jsonl, etc.
+
+### Spawn Reality
+In Claude Code, "spawning" means:
+- **Context Preparation**: Queen creates worker configs in STATE.json
+- **Task Assignment**: Queen logs `tasks_assigned` events
+- **Worker Activation**: Workers log `worker_spawned` when they actually start
+- **State Updates**: Workers update their status to `in_progress`
+
+---
+
 ## Summary
 
 This spawn protocol ensures:
@@ -207,3 +236,4 @@ This spawn protocol ensures:
 3. **Validated Decisions**: Pre-spawn validation prevents gaps
 4. **Continuous Learning**: Pattern library improves over time
 5. **Token Optimization**: Balanced resource usage
+6. **Proper Implementation**: Correct session IDs, event logging, and file creation

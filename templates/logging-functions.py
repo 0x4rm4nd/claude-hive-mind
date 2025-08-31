@@ -58,8 +58,11 @@ def extract_session_id(prompt_text, worker_type):
         match = re.search(r"session[_\s]?id[:\s]+([^\s\n,]+)", prompt_text, re.IGNORECASE)
         session_id = match.group(1).strip() if match else None
     else:
-        # Fallback: Generate from context
-        task_slug = re.sub(r'[^a-zA-Z0-9]+', '-', prompt_text[:100].lower())[:50]
+        # Fallback: Generate from context using correct format
+        # Extract meaningful task description from prompt
+        task_words = re.findall(r'\b[a-zA-Z]+\b', prompt_text[:100].lower())[:3]
+        task_slug = '-'.join(task_words) if task_words else 'task'
+        # Format: YYYY-MM-DD-HH-mm-shorttaskdescription
         from datetime import datetime
         timestamp = datetime.utcnow().strftime('%Y-%m-%d-%H-%M')
         session_id = f"{timestamp}-{task_slug}"
