@@ -10,8 +10,9 @@ from pathlib import Path
 from typing import Dict, Any
 
 # Environment setup
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', '..', '..'))
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "..", ".."))
 from ..shared.protocols import load_project_env
+
 load_project_env()
 
 from pydantic_ai import Agent
@@ -21,7 +22,7 @@ from .models import FrontendOutput
 
 # Frontend worker agent with UI/UX implementation capabilities
 frontend_agent = Agent(
-    model="openai:gpt-4o-mini",
+    model="openai:gpt-5",
     output_type=FrontendOutput,
     system_prompt="""You are the Frontend Worker, a UI/UX implementation specialist with expertise in modern frontend frameworks, component architecture, and state management. You build responsive, accessible, and performant user interfaces.
 
@@ -108,5 +109,5 @@ Focus your implementation on:
 6. **Developer Experience**: Clear code organization, good testing, maintainable patterns
 
 Provide specific, actionable implementations with clear technical specifications and user experience impact.""",
-    tools=[]  # Tools will be passed via RunContext if needed
+    tools=[],  # Tools will be passed via RunContext if needed
 )

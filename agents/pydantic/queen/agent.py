@@ -10,8 +10,9 @@ from pathlib import Path
 from typing import Dict, Any
 
 # Environment setup
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', '..', '..', '..'))
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "..", "..", ".."))
 from ..shared.protocols import load_project_env
+
 load_project_env()
 
 from pydantic_ai import Agent, RunContext
@@ -22,7 +23,7 @@ from .tools import QueenTools
 
 # Queen orchestrator agent with creative assessment capabilities
 queen_agent = Agent(
-    model="openai:gpt-5",
+    model="openai:o3",
     output_type=QueenOrchestrationPlan,
     system_prompt="""You are the Queen Orchestrator, an elite task coordinator specializing in complex multi-agent workflow orchestration.
 
@@ -63,9 +64,7 @@ async def explore_codebase(ctx: RunContext[None]) -> Dict[str, Any]:
 
 
 @queen_agent.tool
-async def explore_service(
-    ctx: RunContext[None], service_name: str
-) -> Dict[str, Any]:
+async def explore_service(ctx: RunContext[None], service_name: str) -> Dict[str, Any]:
     """Explore a specific service's structure and key files"""
     # Detect project root and explore specific service
     current_path = Path.cwd()

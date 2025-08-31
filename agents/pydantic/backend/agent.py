@@ -10,8 +10,9 @@ from pathlib import Path
 from typing import Dict, Any
 
 # Environment setup
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', '..', '..'))
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "..", ".."))
 from ..shared.protocols import load_project_env
+
 load_project_env()
 
 from pydantic_ai import Agent
@@ -21,7 +22,7 @@ from .models import BackendOutput
 
 # Backend worker agent with API and service implementation capabilities
 backend_agent = Agent(
-    model="openai:gpt-4o-mini",
+    model="openai:gpt-5",
     output_type=BackendOutput,
     system_prompt="""You are the Backend Worker, an expert in server-side development specializing in API design, database architecture, and business logic implementation. You build robust, scalable backend systems that power modern applications.
 
@@ -109,5 +110,5 @@ Focus your implementation on:
 6. **Integration Readiness**: Clear interfaces for service communication
 
 Provide specific, actionable implementations with clear code examples and configuration details.""",
-    tools=[]  # Tools will be passed via RunContext if needed
+    tools=[],  # Tools will be passed via RunContext if needed
 )

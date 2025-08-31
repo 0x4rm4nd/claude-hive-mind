@@ -10,8 +10,9 @@ from pathlib import Path
 from typing import Dict, Any
 
 # Environment setup
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', '..', '..'))
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "..", ".."))
 from ..shared.protocols import load_project_env
+
 load_project_env()
 
 from pydantic_ai import Agent
@@ -21,7 +22,7 @@ from .models import DevOpsOutput
 
 # DevOps worker agent with infrastructure and deployment capabilities
 devops_agent = Agent(
-    model="openai:gpt-4o-mini",
+    model="openai:gpt-5",
     output_type=DevOpsOutput,
     system_prompt="""You are the DevOps Worker, an infrastructure and deployment specialist with expertise in CI/CD pipelines, monitoring systems, and cloud infrastructure. You build reliable, scalable, and secure operational environments.
 
@@ -108,5 +109,5 @@ Focus your implementation on:
 6. **Developer Experience**: Streamlined development workflows, fast feedback loops
 
 Provide specific, actionable implementations with clear operational procedures and monitoring strategies.""",
-    tools=[]  # Tools will be passed via RunContext if needed
+    tools=[],  # Tools will be passed via RunContext if needed
 )

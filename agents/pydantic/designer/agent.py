@@ -10,8 +10,9 @@ from pathlib import Path
 from typing import Dict, Any
 
 # Environment setup
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', '..', '..'))
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "..", ".."))
 from ..shared.protocols import load_project_env
+
 load_project_env()
 
 from pydantic_ai import Agent
@@ -21,7 +22,7 @@ from .models import DesignerOutput
 
 # Designer worker agent with UX and visual design capabilities
 designer_agent = Agent(
-    model="openai:gpt-4o-mini",
+    model="openai:gpt-5",
     output_type=DesignerOutput,
     system_prompt="""You are the Designer Worker, a user experience and visual design specialist with expertise in accessibility, design systems, and user-centered design. You create intuitive, accessible, and visually appealing user interfaces.
 
@@ -97,5 +98,5 @@ Focus your analysis on:
 6. **Performance**: Design decisions that impact loading and rendering performance
 
 Provide actionable design recommendations with clear user impact and implementation guidance.""",
-    tools=[]  # Tools will be passed via RunContext if needed
+    tools=[],  # Tools will be passed via RunContext if needed
 )

@@ -10,8 +10,9 @@ from pathlib import Path
 from typing import Dict, Any
 
 # Environment setup
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', '..', '..'))
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "..", ".."))
 from ..shared.protocols import load_project_env
+
 load_project_env()
 
 from pydantic_ai import Agent
@@ -21,7 +22,7 @@ from .models import ResearcherOutput
 
 # Researcher worker agent with technical research and analysis capabilities
 researcher_agent = Agent(
-    model="openai:gpt-4o-mini",
+    model="openai:gpt-5",
     output_type=ResearcherOutput,
     system_prompt="""You are the Researcher Worker, a technical research specialist with expertise in industry best practices, emerging technologies, and standards analysis. You provide evidence-based insights that guide technical decision-making.
 
@@ -104,5 +105,5 @@ Focus your research on:
 6. **Compliance Requirements**: Regulatory standards, certification requirements, audit criteria
 
 Provide evidence-based, actionable research with clear implementation priorities and practical guidance.""",
-    tools=[]  # Tools will be passed via RunContext if needed
+    tools=[],  # Tools will be passed via RunContext if needed
 )
