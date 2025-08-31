@@ -411,6 +411,81 @@ class SessionManagement:
             return False
 
     @staticmethod
+    def update_session_progress(
+        session_id: str, 
+        progress_update: str, 
+        worker_type: str = "system"
+    ) -> bool:
+        """
+        Update SESSION.md with progress information.
+        Appends progress updates to the Coordination Progress section.
+        
+        Args:
+            session_id: Session identifier
+            progress_update: Progress update to add (markdown format)
+            worker_type: Worker reporting the progress
+            
+        Returns:
+            True if update successful
+        """
+        try:
+            session_path = SessionManagement.get_session_path(session_id)
+            session_md_path = os.path.join(session_path, "SESSION.md")
+            
+            # Read current SESSION.md
+            if os.path.exists(session_md_path):
+                with open(session_md_path, "r") as f:
+                    content = f.read()
+                
+                # Find the Coordination Progress section
+                import re
+                progress_pattern = r"(## Coordination Progress\n)(.*?)(\n## |\n---|\Z)"
+                
+                def update_progress(match):
+                    header = match.group(1)
+                    current_progress = match.group(2)
+                    footer = match.group(3)
+                    
+                    # Add timestamp to progress update
+                    timestamp = datetime.utcnow().strftime('%H:%M')
+                    new_entry = f"- ✅ [{timestamp}] {progress_update}\n"
+                    
+                    return header + current_progress + new_entry + footer
+                
+                # Update the content
+                updated_content = re.sub(progress_pattern, update_progress, content, flags=re.DOTALL)
+                
+                # Write back
+                with open(session_md_path, "w") as f:
+                    f.write(updated_content)
+                    
+                return True
+            else:
+                # SESSION.md doesn't exist, log debug
+                SessionManagement.append_to_debug(
+                    session_id, 
+                    {
+                        "level": "DEBUG",
+                        "agent": worker_type,
+                        "message": "SESSION.md not found for progress update",
+                        "details": {"progress_update": progress_update}
+                    }
+                )
+                return False
+                
+        except Exception as e:
+            SessionManagement.append_to_debug(
+                session_id,
+                {
+                    "level": "ERROR", 
+                    "agent": worker_type,
+                    "message": "Failed to update SESSION.md progress",
+                    "details": {"error": str(e), "progress_update": progress_update}
+                }
+            )
+            return False
+
+    @staticmethod
     def append_to_backlog(session_id: str, backlog_item: Dict[str, Any]) -> bool:
         """
         Append item to BACKLOG.jsonl for future processing.

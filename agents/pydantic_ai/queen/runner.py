@@ -64,7 +64,7 @@ def log_debug(session_id: str, message: str, details: Any):
 def update_session_state(session_id: str, state_update: Dict[str, Any]):
     """Update session state using protocol infrastructure"""
     try:
-        SessionManagement.update_session_state(session_id, state_update)
+        SessionManagement.update_state_atomically(session_id, state_update)
         log_debug(
             session_id, "Session state updated", {"keys": list(state_update.keys())}
         )
@@ -121,35 +121,38 @@ def run_orchestration(
         detailed_state_update = create_detailed_state_update(
             session_id, task_description, orchestration_plan
         )
-        update_session_state(session_id, detailed_state_update)
+        SessionManagement.update_state_atomically(session_id, detailed_state_update)
+        
+        # Update SESSION.md with human-readable summary
+        update_session_summary(session_id, task_description, orchestration_plan)
 
-        # Log task assignment events for each worker
-        for assignment in orchestration_plan.worker_assignments:
-            log_event(
-                session_id,
-                "tasks_assigned",
-                worker,
-                {
-                    "worker_type": assignment.worker_type,
-                    "task_focus": assignment.task_focus,
-                    "priority": assignment.priority,
-                    "complexity_level": orchestration_plan.complexity_assessment,
-                },
-            )
+        # Log consolidated task assignment event for all workers
+        log_event(
+            session_id,
+            "tasks_assigned",
+            worker,
+            {
+                "worker_assignments": [
+                    {
+                        "worker_type": assignment.worker_type,
+                        "task_focus": assignment.task_focus,
+                        "priority": assignment.priority,
+                        "dependencies": assignment.dependencies,
+                        "estimated_duration": assignment.estimated_duration,
+                        "rationale": assignment.rationale
+                    }
+                    for assignment in orchestration_plan.worker_assignments
+                ],
+                "total_workers": len(orchestration_plan.worker_assignments),
+                "complexity_level": orchestration_plan.complexity_assessment,
+                "execution_strategy": orchestration_plan.execution_strategy,
+            },
+        )
 
         # Create worker prompt files (framework-enforced)
         try:
             created_prompts = create_worker_prompts_from_plan(session_id, orchestration_plan)
-            log_event(
-                session_id,
-                "worker_prompts_created",
-                worker,
-                {
-                    "prompt_files": list(created_prompts.values()),
-                    "worker_count": len(created_prompts),
-                    "workers": list(created_prompts.keys())
-                }
-            )
+            # Logging is handled by prompt_generator with batch_logging=True (default)
         except Exception as e:
             log_debug(
                 session_id,
@@ -218,6 +221,72 @@ def run_orchestration(
         # Max retries exceeded, re-raise the exception
         log_debug(session_id, "Max retries exceeded, giving up", {"max_retries": max_retries})
         raise e
+
+
+def update_session_summary(
+    session_id: str, task_description: str, orchestration_plan: QueenOrchestrationPlan
+) -> bool:
+    """Update SESSION.md with human-readable summary"""
+    try:
+        session_path = SessionManagement.get_session_path(session_id)
+        session_md_path = os.path.join(session_path, "SESSION.md")
+        
+        # Parse session ID for date
+        date_part = session_id.split("-")[:3]  # 2025-08-31-10
+        session_date = "-".join(date_part[:3]) if len(date_part) >= 3 else "unknown"
+        
+        # Generate worker assignments section
+        worker_assignments_md = ""
+        for assignment in orchestration_plan.worker_assignments:
+            worker_assignments_md += f"- **{assignment.worker_type}**: {assignment.task_focus}\n"
+        
+        # Create SESSION.md content
+        session_content = f"""# {task_description.title()} Session
+
+## Session Details
+- **Session ID**: {session_id}
+- **Date**: {session_date}
+- **Coordinator**: queen-orchestrator
+- **Status**: Workers Assigned - {len(orchestration_plan.worker_assignments)} workers ready
+- **Complexity**: Level {orchestration_plan.complexity_assessment}/4
+- **Strategy**: {orchestration_plan.execution_strategy}
+
+## Task Overview
+{task_description}
+
+## Worker Assignments
+{worker_assignments_md}
+## Orchestration Plan
+- **Estimated Duration**: {orchestration_plan.estimated_total_duration}
+- **Worker Count**: {len(orchestration_plan.worker_assignments)}
+- **Execution Strategy**: {orchestration_plan.execution_strategy}
+
+## Coordination Progress
+- ✅ Queen orchestrator activated
+- ✅ Task analysis completed
+- ✅ Worker assignments generated
+- ✅ Worker prompts created
+- ⏳ Waiting for worker deployment
+
+## Success Metrics
+{chr(10).join(f"- {metric}" for metric in orchestration_plan.success_metrics) if orchestration_plan.success_metrics else "- Standard completion criteria"}
+
+## Quality Gates
+{chr(10).join(f"- {gate}" for gate in orchestration_plan.quality_gates) if orchestration_plan.quality_gates else "- Framework-enforced validation"}
+
+---
+*Generated by Queen Orchestrator at {orchestration_plan.timestamp}*
+"""
+        
+        # Write SESSION.md
+        with open(session_md_path, "w") as f:
+            f.write(session_content)
+            
+        return True
+        
+    except Exception as e:
+        log_debug(session_id, "SESSION.md update failed", {"error": str(e)})
+        return False
 
 
 def create_detailed_state_update(
@@ -318,7 +387,7 @@ async def monitor_worker_progress(
     while not all_workers_complete:
         try:
             # Check worker status in STATE.json
-            session_state = SessionManagement.get_session_state(session_id)
+            session_state = SessionManagement.read_state(session_id)
 
             if not session_state:
                 log_event(

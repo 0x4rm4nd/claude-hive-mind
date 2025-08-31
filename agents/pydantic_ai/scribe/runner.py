@@ -44,15 +44,21 @@ class SessionCreation(BaseModel):
 # Remove local iso_now function - using shared version
 
 
-def log_bulk_event(events_file: Path, event_type: str, worker_type: str, bulk_data: list, metadata: dict = None):
+def log_bulk_event(
+    events_file: Path,
+    event_type: str,
+    worker_type: str,
+    bulk_data: list,
+    metadata: dict = None,
+):
     """
     Log a single bulk event instead of multiple individual events.
     This consolidates multiple related actions into one event for efficiency.
-    
+
     Usage example for Queen integration:
     - Instead of: multiple "tasks_assigned" events (one per task)
     - Use: single "tasks_assigned_bulk" event with all tasks
-    
+
     Args:
         events_file: Path to EVENTS.jsonl file
         event_type: Type of event (e.g., "tasks_assigned_bulk", "worker_prompts_created_bulk")
@@ -62,33 +68,31 @@ def log_bulk_event(events_file: Path, event_type: str, worker_type: str, bulk_da
     """
     bulk_event = {
         "timestamp": shared_iso_now(),
-        "event_type": event_type,
+        "type": event_type,
         "worker_type": worker_type,
-        "data": {
-            "items": bulk_data,
-            "count": len(bulk_data),
-            **(metadata or {})
-        }
+        "data": {"items": bulk_data, "count": len(bulk_data), **(metadata or {})},
     }
-    
+
     with open(events_file, "a") as f:
         f.write(json.dumps(bulk_event) + "\n")
 
 
 def generate_ai_session_id(task_description: str, model: str) -> tuple[str, int]:
     """Generate session ID using AI to create better short description"""
-    timestamp = datetime.utcnow().strftime('%Y-%m-%d-%H-%M')
-    
+    timestamp = datetime.utcnow().strftime("%Y-%m-%d-%H-%M")
+
     # Check if API key is available - FAIL HARD if not
-    if not os.getenv('OPENAI_API_KEY'):
-        raise ValueError("OPENAI_API_KEY environment variable is required for AI session ID generation")
-    
+    if not os.getenv("OPENAI_API_KEY"):
+        raise ValueError(
+            "OPENAI_API_KEY environment variable is required for AI session ID generation"
+        )
+
     # Use AI to generate a concise description
     class SessionDescription(BaseModel):
         short_name: str  # 1-3 words, lowercase, hyphens for spaces
-    
+
     desc_agent = Agent(model, output_type=SessionDescription)
-    
+
     prompt = f"""Create a very short description (1-3 words) for this task: {task_description}
     
     Requirements:
@@ -102,16 +106,16 @@ def generate_ai_session_id(task_description: str, model: str) -> tuple[str, int]
     - "fix database connection issues" -> "db-fix"  
     - "implement payment processing" -> "payment-proc"
     """
-    
+
     result = desc_agent.run_sync(prompt)
     short_desc = result.output.short_name
     # Clean and validate the description
-    short_desc = re.sub(r'[^a-z0-9\-]', '', short_desc.lower())
-    short_desc = re.sub(r'-+', '-', short_desc).strip('-')
-    
+    short_desc = re.sub(r"[^a-z0-9\-]", "", short_desc.lower())
+    short_desc = re.sub(r"-+", "-", short_desc).strip("-")
+
     if len(short_desc) > 20:
         short_desc = short_desc[:20]
-    
+
     session_id = f"{timestamp}-{short_desc}"
     return session_id, len(short_desc)
 
@@ -130,18 +134,16 @@ def create_session(task_description: str, model: str) -> dict:
     (session_path / "workers").mkdir(exist_ok=True)
     (session_path / "workers" / "notes").mkdir(exist_ok=True)
     (session_path / "workers" / "prompts").mkdir(exist_ok=True)
-    (session_path / "workers" / "outputs").mkdir(exist_ok=True)
-    (session_path / "workers" / "logs").mkdir(exist_ok=True)
     (session_path / "workers" / "json").mkdir(exist_ok=True)
 
     # Create EVENTS.jsonl
     events_file = session_path / "EVENTS.jsonl"
     events_file.touch()
-    
+
     # Log session creation event
     session_created_event = {
         "timestamp": shared_iso_now(),
-        "event_type": "session_created",
+        "type": "session_created",
         "worker_type": "scribe",
         "data": {
             "session_id": session_id,
@@ -149,23 +151,23 @@ def create_session(task_description: str, model: str) -> dict:
             "model": model,
             "session_path": f"Docs/hive-mind/sessions/{session_id}",
             "generated_by": "scribe",
-            "description_length": desc_length
-        }
+            "description_length": desc_length,
+        },
     }
     with open(events_file, "a") as f:
         f.write(json.dumps(session_created_event) + "\n")
-    
+
     # Log scribe spawn event
     worker_spawned_event = {
         "timestamp": shared_iso_now(),
-        "event_type": "worker_spawned", 
+        "type": "worker_spawned",
         "worker_type": "scribe",
         "data": {
             "worker_type": "scribe",
             "mode": "create",
             "model": model,
-            "purpose": "session_creation"
-        }
+            "purpose": "session_creation",
+        },
     }
     with open(events_file, "a") as f:
         f.write(json.dumps(worker_spawned_event) + "\n")
@@ -173,7 +175,7 @@ def create_session(task_description: str, model: str) -> dict:
     # Create DEBUG.jsonl
     debug_file = session_path / "DEBUG.jsonl"
     debug_file.touch()
-    
+
     # Create BACKLOG.jsonl
     backlog_file = session_path / "BACKLOG.jsonl"
     backlog_file.touch()
@@ -198,7 +200,7 @@ Session created for task analysis and worker coordination.
 ## Notes
 Session ready for Queen orchestration.
 """
-    
+
     with open(session_path / "SESSION.md", "w") as f:
         f.write(session_md_content)
 
@@ -214,9 +216,9 @@ Session ready for Queen orchestration.
             "scribe": {
                 "status": "active",
                 "spawned_at": shared_iso_now(),
-                "mode": "create"
+                "mode": "create",
             }
-        }
+        },
     }
 
     with open(session_path / "STATE.json", "w") as f:

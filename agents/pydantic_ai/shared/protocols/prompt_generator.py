@@ -45,7 +45,7 @@ class PromptGenerator:
         self.logger = LoggingProtocol(self.config)
 
     def create_worker_prompts(
-        self, worker_specs: List[WorkerPromptSpec]
+        self, worker_specs: List[WorkerPromptSpec], batch_logging: bool = True
     ) -> Dict[str, str]:
         """
         Create prompt files for all assigned workers.
@@ -58,6 +58,7 @@ class PromptGenerator:
         os.makedirs(prompts_dir, exist_ok=True)
 
         created_files = {}
+        failed_prompts = []
 
         for spec in worker_specs:
             try:
@@ -70,18 +71,25 @@ class PromptGenerator:
 
                 created_files[spec.worker_type] = prompt_file
 
-                # Log creation (framework-enforced event)
-                self.logger.log_event(
-                    "worker_prompt_created",
-                    {
-                        "worker_type": spec.worker_type,
-                        "prompt_file": prompt_file,
-                        "task_focus": spec.task_focus,
-                        "complexity": spec.complexity_level,
-                    },
-                )
+                # Individual logging (only if batch_logging is disabled)
+                if not batch_logging:
+                    self.logger.log_event(
+                        "worker_prompt_created",
+                        {
+                            "worker_type": spec.worker_type,
+                            "prompt_file": prompt_file,
+                            "task_focus": spec.task_focus,
+                            "complexity": spec.complexity_level,
+                        },
+                    )
 
             except Exception as e:
+                failed_prompts.append({
+                    "worker_type": spec.worker_type,
+                    "error": str(e),
+                    "exception_type": str(type(e))
+                })
+
                 # Log error (framework-enforced error handling)
                 self.logger.log_event(
                     "worker_prompt_creation_failed",
@@ -92,6 +100,28 @@ class PromptGenerator:
                     },
                 )
                 raise
+
+        # Consolidated batch logging (default behavior)
+        if batch_logging and created_files:
+            self.logger.log_event(
+                "worker_prompts_created",
+                {
+                    "created_prompts": [
+                        {
+                            "worker_type": worker_type,
+                            "prompt_file": prompt_file,
+                            "task_focus": next(
+                                (spec.task_focus for spec in worker_specs if spec.worker_type == worker_type),
+                                "unknown"
+                            )
+                        }
+                        for worker_type, prompt_file in created_files.items()
+                    ],
+                    "total_prompts": len(created_files),
+                    "prompts_directory": prompts_dir,
+                    "complexity_level": worker_specs[0].complexity_level if worker_specs else 1,
+                },
+            )
 
         return created_files
 
@@ -341,7 +371,7 @@ created_by: queen-orchestrator
 
 
 def create_worker_prompts_from_plan(
-    session_id: str, orchestration_plan
+    session_id: str, orchestration_plan, batch_logging: bool = True
 ) -> Dict[str, str]:
     """
     Convenience function to create worker prompts from Queen orchestration plan.
@@ -368,4 +398,4 @@ def create_worker_prompts_from_plan(
         )
         worker_specs.append(spec)
 
-    return generator.create_worker_prompts(worker_specs)
+    return generator.create_worker_prompts(worker_specs, batch_logging=batch_logging)
