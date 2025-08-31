@@ -123,6 +123,21 @@ def run_orchestration(
         )
         SessionManagement.update_state_atomically(session_id, detailed_state_update)
         
+        # Spawn the Pydantic AI workers
+        spawn_result = spawn_pydantic_workers(session_id, task_description, orchestration_plan.worker_assignments)
+        
+        log_event(
+            session_id,
+            "workers_deployed",
+            "queen-orchestrator",
+            {
+                "spawned_count": spawn_result["spawn_count"],
+                "failed_count": len(spawn_result["failed_spawns"]),
+                "spawned_workers": [w["worker_type"] for w in spawn_result["spawned_workers"]],
+                "failed_workers": [f["worker_type"] for f in spawn_result["failed_spawns"]]
+            }
+        )
+        
         # Update SESSION.md with human-readable summary
         update_session_summary(session_id, task_description, orchestration_plan)
 
@@ -470,6 +485,134 @@ async def monitor_worker_progress(
         worker,
         {"status": "all_workers_finished", "final_check": "ready_for_synthesis"},
     )
+
+
+def spawn_pydantic_workers(session_id: str, task_description: str, worker_assignments: List[WorkerAssignment]) -> Dict[str, Any]:
+    """Spawn Pydantic AI worker agents using bash commands"""
+    import subprocess
+    
+    # Map worker types to agent directory names  
+    worker_type_mapping = {
+        "analyzer-worker": "analyzer",
+        "architect-worker": "architect", 
+        "backend-worker": "backend",
+        "frontend-worker": "frontend",
+        "designer-worker": "designer",
+        "devops-worker": "devops",
+        "researcher-worker": "researcher",
+        "test-worker": "test"
+    }
+    
+    spawned_workers = []
+    failed_spawns = []
+    
+    # Get the base path for agents
+    base_path = Path(__file__).parent.parent
+    
+    # Prepare all worker commands first
+    worker_commands = []
+    project_root = Path(__file__).parent.parent.parent.parent
+    
+    for assignment in worker_assignments:
+        worker_type = assignment.worker_type
+        task_focus = assignment.task_focus
+            
+        agent_name = worker_type_mapping.get(worker_type)
+        
+        if not agent_name:
+            failed_spawns.append({
+                "worker_type": worker_type,
+                "error": f"Unknown worker type: {worker_type}"
+            })
+            continue
+            
+        # Construct the bash command to spawn the worker as a module
+        # Use -m to run as module to handle relative imports correctly
+        cmd = [
+            "python", 
+            "-m", f"agents.pydantic_ai.{agent_name}.runner",
+            "--session", session_id,
+            "--task", task_focus
+        ]
+        
+        worker_commands.append({
+            "worker_type": worker_type,
+            "agent_name": agent_name,
+            "task_focus": task_focus,
+            "cmd": cmd
+        })
+    
+    # Spawn all workers in parallel
+    processes = []
+    for worker_config in worker_commands:
+        try:
+            # Spawn the worker process in background
+            # Change to project root directory to ensure module imports work
+            process = subprocess.Popen(
+                worker_config["cmd"],
+                cwd=str(project_root),
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE,
+                text=True
+            )
+            processes.append((process, worker_config))
+            
+            spawned_workers.append({
+                "worker_type": worker_config["worker_type"],
+                "agent_name": worker_config["agent_name"],
+                "process_id": process.pid,
+                "command": " ".join(worker_config["cmd"]),
+                "task_focus": worker_config["task_focus"]
+            })
+            
+            # Log the worker spawn
+            log_event(
+                session_id,
+                "worker_spawned",
+                worker_config["agent_name"],
+                {
+                    "worker_type": worker_config["worker_type"],
+                    "task_focus": worker_config["task_focus"],
+                    "process_id": process.pid,
+                    "spawned_by": "queen-orchestrator"
+                }
+            )
+            
+        except Exception as e:
+            failed_spawns.append({
+                "worker_type": worker_config["worker_type"],
+                "error": str(e)
+            })
+            log_event(
+                session_id,
+                "worker_spawn_failed", 
+                "queen-orchestrator",
+                {
+                    "worker_type": worker_config["worker_type"],
+                    "error": str(e)
+                }
+            )
+    
+    # Log parallel deployment completion
+    if spawned_workers:
+        log_event(
+            session_id,
+            "parallel_worker_deployment_completed",
+            "queen-orchestrator", 
+            {
+                "total_spawned": len(spawned_workers),
+                "worker_types": [w["worker_type"] for w in spawned_workers],
+                "spawn_strategy": "parallel",
+                "deployment_time": "simultaneous"
+            }
+        )
+    
+    return {
+        "spawned_workers": spawned_workers,
+        "failed_spawns": failed_spawns,
+        "spawn_count": len(spawned_workers),
+        "session_id": session_id
+    }
 
 
 def main():
