@@ -25,7 +25,7 @@ def run_queen(args):
         "--task",
         args.task,
         "--model",
-        args.model or "openai:gpt-o3",
+        args.model or "openai:gpt-4o",
     ]
 
     if args.monitor:

@@ -1,7 +1,7 @@
 """
 Queen Orchestrator Agent
 ========================
-Pydantic AI agent for intelligent task orchestration.
+Lightweight Pydantic AI agent for efficient task orchestration.
 """
 
 import sys
@@ -22,113 +22,181 @@ load_project_env()
 from pydantic_ai import Agent, RunContext
 
 from .models import QueenOrchestrationPlan
-from .tools import QueenTools
 
 
-# Queen orchestrator agent with creative assessment capabilities
+# Lightweight Queen orchestrator agent - keyword-based assignment
 queen_agent = Agent(
-    model="openai:o3",
+    model="openai:gpt-4o",
     output_type=QueenOrchestrationPlan,
-    system_prompt="""You are the Queen Orchestrator, an elite task coordinator specializing in complex multi-agent workflow orchestration.
+    system_prompt="""You are the Queen Orchestrator - a lean, efficient task coordinator that assigns workers based on task keywords.
 
-IMPORTANT: You must return a valid QueenOrchestrationPlan JSON structure. All fields are required unless marked optional.
+IMPORTANT: Return a valid QueenOrchestrationPlan JSON structure. All fields are required.
 
-## Core Responsibilities
-1. **Strategic Analysis**: Deep analysis of complex tasks to understand requirements, scope, and challenges
-2. **Worker Selection**: Intelligent matching of task requirements to optimal worker expertise profiles  
-3. **Risk Assessment**: Identify potential blockers, dependencies, and mitigation strategies
-4. **Quality Orchestration**: Design execution strategies with proper coordination and quality gates
+## Available Workers
+- **analyzer-worker**: Security, performance, code quality assessment  
+- **architect-worker**: System design, technical architecture, scalability
+- **backend-worker**: API development, service implementation, database design
+- **frontend-worker**: UI/UX implementation, component architecture
+- **designer-worker**: Visual design, user experience, accessibility
+- **devops-worker**: Infrastructure, deployment, monitoring, CI/CD
+- **researcher-worker**: Technical research, best practices, standards
+- **test-worker**: Testing strategy, quality assurance, coverage
 
-## Available Workers (choose 2-5 appropriate ones for the task)
-- **analyzer-worker**: Security, performance, code quality assessment, vulnerability analysis
-- **architect-worker**: System design, technical architecture, scalability patterns, design principles  
-- **backend-worker**: API development, service implementation, database design, business logic
-- **frontend-worker**: UI/UX implementation, component architecture, state management, user experience
-- **designer-worker**: Visual design, user experience, accessibility, design systems
-- **devops-worker**: Infrastructure, deployment, monitoring, CI/CD pipelines, containerization
-- **researcher-worker**: Technical research, best practices, industry standards, technology evaluation
-- **test-worker**: Testing strategy, quality assurance, test coverage, automated testing
+## Assignment Rules by Task Keywords
+- **"security"/"vulnerability"** → analyzer-worker + architect-worker (+ backend-worker if Level 4)
+- **"performance"/"optimization"** → analyzer-worker + backend-worker (+ architect-worker if Level 4)  
+- **"architecture"/"design"** → architect-worker + backend-worker (+ analyzer-worker if Level 4)
+- **"comprehensive"/"detailed"** → 4-5 workers for full coverage
+
+## Complexity Levels (based on task keywords)
+- **Level 1**: Single focus (1-2 workers) - "fix", "simple", specific issue
+- **Level 2**: Moderate scope (2-3 workers) - "analyze", "review", "assess"
+- **Level 3**: Complex task (3-4 workers) - "improve", "optimize", multiple areas
+- **Level 4**: Comprehensive (4-5 workers) - "comprehensive", "detailed", "architecture", "security", "performance", "scalability" together
 
 ## Response Requirements
-- complexity_assessment: Must be integer 1-4 based on task scope
-- worker_assignments: List of 2-5 workers with specific task_focus for each
-- execution_strategy: Must be "parallel", "sequential", or "hybrid"
-- All list fields can be empty [] but must exist as arrays
-- estimated_total_duration: Format like "2-4h" or "30min-1h"
+- complexity_assessment: Integer 1-4 based on keyword analysis
+- worker_assignments: Follow complexity rules (Level 4 = 4-5 workers)
+- execution_strategy: "parallel" for most tasks
+- estimated_total_duration: Based on complexity and worker count
 
-Be strategic, thorough, and precise in your orchestration planning.""",
+Analyze task keywords, determine complexity level, assign appropriate number of workers. DO NOT perform deep code exploration.""",
 )
 
 
-# Tool functions for the AI agent
 @queen_agent.tool
-async def explore_codebase(ctx: RunContext[None]) -> Dict[str, Any]:
-    """Explore the overall project structure to understand the codebase"""
-    return QueenTools.analyze_project_structure()
+async def analyze_task_keywords(ctx: RunContext[None], task_description: str) -> Dict[str, Any]:
+    """Simple keyword-based task analysis"""
+    
+    task_lower = task_description.lower()
+    
+    # Complexity indicators
+    high_complexity_keywords = [
+        "comprehensive", "architecture", "security", "performance", "scalability",
+        "detailed", "full", "complete", "thorough"
+    ]
+    
+    medium_complexity_keywords = [
+        "analyze", "review", "audit", "assess", "evaluate", "improve"
+    ]
+    
+    # Count matches
+    high_matches = sum(1 for keyword in high_complexity_keywords if keyword in task_lower)
+    medium_matches = sum(1 for keyword in medium_complexity_keywords if keyword in task_lower)
+    
+    # Determine complexity
+    if high_matches >= 3 or ("comprehensive" in task_lower and any(word in task_lower for word in ["architecture", "security", "performance"])):
+        complexity = 4
+    elif high_matches >= 2:
+        complexity = 3  
+    elif high_matches >= 1 or medium_matches >= 2:
+        complexity = 2
+    else:
+        complexity = 1
+    
+    # Extract service hints
+    service_hints = []
+    if "crypto-data" in task_lower or "market" in task_lower:
+        service_hints.append("crypto-data")
+    if "api" in task_lower or "backend" in task_lower:
+        service_hints.append("api")
+    if "frontend" in task_lower or "ui" in task_lower:
+        service_hints.append("frontend")
+    
+    return {
+        "complexity": complexity,
+        "high_complexity_matches": high_matches,
+        "medium_complexity_matches": medium_matches,
+        "service_hints": service_hints,
+        "task_keywords": [word for word in ["security", "performance", "architecture", "comprehensive"] if word in task_lower]
+    }
 
 
-@queen_agent.tool
-async def explore_service(ctx: RunContext[None], service_name: str) -> Dict[str, Any]:
-    """Explore a specific service's structure and key files"""
-    # Detect project root and explore specific service
-    current_path = Path.cwd()
-    for path in [current_path] + list(current_path.parents):
-        if (path / "api").exists() and (path / "frontend").exists():
-            service_path = path / service_name
-            if service_path.exists():
-                structure = QueenTools.explore_service_structure(str(service_path))
-                key_files = QueenTools.find_key_files(str(service_path))
-                return {
-                    "structure": structure,
-                    "key_files": key_files,
-                    "service_path": str(service_path),
-                }
-    return {"error": f"Service {service_name} not found"}
-
-
-@queen_agent.tool
-async def search_security_patterns(
-    ctx: RunContext[None], service_name: str
-) -> Dict[str, Any]:
-    """Search for security-related patterns in a service"""
-    current_path = Path.cwd()
-    for path in [current_path] + list(current_path.parents):
-        if (path / "api").exists():
-            service_path = path / service_name
-            if service_path.exists():
-                patterns = [
-                    "auth",
-                    "password",
-                    "token",
-                    "jwt",
-                    "encrypt",
-                    "decrypt",
-                    "hash",
-                    "security",
-                ]
-                return QueenTools.search_for_patterns(str(service_path), patterns)
-    return {"error": f"Could not search {service_name}"}
-
-
-@queen_agent.tool
-async def search_performance_patterns(
-    ctx: RunContext[None], service_name: str
-) -> Dict[str, Any]:
-    """Search for performance-related patterns in a service"""
-    current_path = Path.cwd()
-    for path in [current_path] + list(current_path.parents):
-        if (path / "api").exists():
-            service_path = path / service_name
-            if service_path.exists():
-                patterns = [
-                    "cache",
-                    "redis",
-                    "database",
-                    "query",
-                    "async",
-                    "await",
-                    "performance",
-                    "optimization",
-                ]
-                return QueenTools.search_for_patterns(str(service_path), patterns)
-    return {"error": f"Could not search {service_name}"}
+@queen_agent.tool 
+async def suggest_workers(ctx: RunContext[None], task_description: str, complexity: int) -> Dict[str, Any]:
+    """Suggest optimal workers based on task analysis"""
+    
+    task_lower = task_description.lower()
+    suggested_workers = []
+    
+    # Core workers based on keywords
+    if any(word in task_lower for word in ["security", "vulnerability", "performance", "quality"]):
+        suggested_workers.append({
+            "type": "analyzer-worker",
+            "rationale": "Security and performance analysis required",
+            "priority": "high"
+        })
+    
+    if any(word in task_lower for word in ["architecture", "design", "scalability", "patterns"]):
+        suggested_workers.append({
+            "type": "architect-worker", 
+            "rationale": "System architecture and design analysis needed",
+            "priority": "high"
+        })
+    
+    if any(word in task_lower for word in ["api", "database", "backend", "service", "endpoint"]):
+        suggested_workers.append({
+            "type": "backend-worker",
+            "rationale": "Backend system analysis required", 
+            "priority": "medium"
+        })
+    
+    if any(word in task_lower for word in ["test", "testing", "quality", "coverage"]):
+        suggested_workers.append({
+            "type": "test-worker",
+            "rationale": "Testing and quality analysis needed",
+            "priority": "low"
+        })
+    
+    if any(word in task_lower for word in ["research", "best", "practices", "standards"]):
+        suggested_workers.append({
+            "type": "researcher-worker",
+            "rationale": "Research and best practices analysis required",
+            "priority": "low"
+        })
+    
+    # Ensure we have appropriate number based on complexity
+    if complexity == 4 and len(suggested_workers) < 4:
+        # Add missing workers for comprehensive tasks
+        if not any(w["type"] == "analyzer-worker" for w in suggested_workers):
+            suggested_workers.append({
+                "type": "analyzer-worker",
+                "rationale": "Comprehensive analysis requires security and performance review",
+                "priority": "high"
+            })
+        if not any(w["type"] == "architect-worker" for w in suggested_workers):
+            suggested_workers.append({
+                "type": "architect-worker",
+                "rationale": "Architecture analysis essential for comprehensive review",
+                "priority": "high"
+            })
+        if not any(w["type"] == "backend-worker" for w in suggested_workers):
+            suggested_workers.append({
+                "type": "backend-worker",
+                "rationale": "Backend implementation analysis needed",
+                "priority": "medium"
+            })
+        if len(suggested_workers) < 4:
+            suggested_workers.append({
+                "type": "researcher-worker",
+                "rationale": "Best practices research for comprehensive analysis",
+                "priority": "medium"
+            })
+    
+    # Ensure proper count based on complexity
+    if complexity == 4:
+        target_workers = min(5, max(4, len(suggested_workers)))
+    elif complexity == 3:
+        target_workers = min(4, max(3, len(suggested_workers)))
+    elif complexity == 2:
+        target_workers = min(3, max(2, len(suggested_workers)))
+    else:
+        target_workers = min(2, max(1, len(suggested_workers)))
+    
+    suggested_workers = suggested_workers[:target_workers]
+    
+    return {
+        "suggested_workers": suggested_workers,
+        "target_workers": target_workers,
+        "task_keywords_found": [word for word in ["security", "performance", "architecture", "api", "comprehensive"] if word in task_lower]
+    }

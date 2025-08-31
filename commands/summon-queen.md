@@ -14,13 +14,13 @@ The `/summon-queen` command follows a strict, two-phase process. You must execut
 
 ### Phase 1: Session Creation via Pydantic AI Scribe
 
-**Your first action is to run the Pydantic AI scribe to create the session.** This ensures reliable session creation with proper logging.
+**Your first action is to ensure you're in the .claude directory, then run the Pydantic AI scribe to create the session.** This ensures reliable session creation with proper logging.
 
 **MANDATORY BASH EXECUTION:**
-Use the `Bash` tool to run the Pydantic AI scribe with these exact parameters:
+First, navigate to the .claude directory, then use the `Bash` tool to run the Pydantic AI scribe with these exact parameters:
 
 ```bash
-cd .claude && python agents/pydantic_ai/scribe/runner.py create --task "$ARGUMENTS" --model openai:gpt-5
+python agents/pydantic_ai/scribe/runner.py create --task "$ARGUMENTS" --model openai:gpt-5-mini
 ```
 
 The Pydantic AI scribe will:
@@ -37,10 +37,10 @@ Parse the JSON response to extract the `session_id` for the next phase.
 **Once you have the `session_id` from the Scribe, your second action is to run the Pydantic AI Queen orchestrator to perform the strategic analysis.**
 
 **MANDATORY BASH EXECUTION:**
-Use the `Bash` tool to run the Pydantic AI Queen orchestrator with these exact parameters:
+From the .claude directory, use the `Bash` tool to run the Pydantic AI Queen orchestrator with these exact parameters:
 
 ```bash
-cd .claude && python agents/pydantic_ai/queen/runner.py --session [session_id_from_scribe] --task "$ARGUMENTS" --model openai:o3
+python agents/pydantic_ai/queen/runner.py --session [session_id_from_scribe] --task "$ARGUMENTS" --model openai:o3
 ```
 
 The Pydantic AI Queen will:

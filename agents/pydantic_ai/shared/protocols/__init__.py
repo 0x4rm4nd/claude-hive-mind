@@ -9,6 +9,7 @@ from .logging_protocol import LoggingProtocol
 from .protocol_loader import ProtocolConfig, BaseProtocol
 from .worker_prompt_protocol import WorkerPromptProtocol
 from .env_loader import load_project_env
+from .prompt_generator import PromptGenerator, create_worker_prompts_from_plan
 
 __all__ = [
     'SessionManagement',
@@ -16,5 +17,7 @@ __all__ = [
     'ProtocolConfig', 
     'BaseProtocol',
     'WorkerPromptProtocol',
-    'load_project_env'
+    'load_project_env',
+    'PromptGenerator',
+    'create_worker_prompts_from_plan'
 ]

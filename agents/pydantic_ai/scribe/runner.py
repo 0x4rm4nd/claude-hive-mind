@@ -12,14 +12,22 @@ import re
 import sys
 from datetime import datetime
 from pathlib import Path
+from dotenv import load_dotenv
 
-# Simple approach: just add project root to path and use direct imports
-project_root = Path(__file__).parent.parent.parent.parent.parent
-sys.path.insert(0, str(project_root))
+# Load environment variables - explicit path to .claude/.env
+env_path = Path(__file__).resolve().parent.parent.parent / ".env"
+if not env_path.exists():
+    # Fallback: look in current directory
+    env_path = Path.cwd() / ".env"
+load_dotenv(env_path)
 
 # Direct imports
 from pydantic_ai import Agent
 from pydantic import BaseModel
+
+# Import shared tools for consistency
+sys.path.insert(0, str(Path(__file__).parent.parent / "shared"))
+from tools import iso_now as shared_iso_now
 
 
 class SessionCreation(BaseModel):
@@ -29,8 +37,38 @@ class SessionCreation(BaseModel):
     task_description: str
 
 
-def iso_now() -> str:
-    return datetime.utcnow().isoformat() + "Z"
+# Remove local iso_now function - using shared version
+
+
+def log_bulk_event(events_file: Path, event_type: str, worker_type: str, bulk_data: list, metadata: dict = None):
+    """
+    Log a single bulk event instead of multiple individual events.
+    This consolidates multiple related actions into one event for efficiency.
+    
+    Usage example for Queen integration:
+    - Instead of: multiple "tasks_assigned" events (one per task)
+    - Use: single "tasks_assigned_bulk" event with all tasks
+    
+    Args:
+        events_file: Path to EVENTS.jsonl file
+        event_type: Type of event (e.g., "tasks_assigned_bulk", "worker_prompts_created_bulk")
+        worker_type: Type of worker creating the event
+        bulk_data: List of individual items that would have been separate events
+        metadata: Additional metadata for the bulk event
+    """
+    bulk_event = {
+        "timestamp": shared_iso_now(),
+        "event_type": event_type,
+        "worker_type": worker_type,
+        "data": {
+            "items": bulk_data,
+            "count": len(bulk_data),
+            **(metadata or {})
+        }
+    }
+    
+    with open(events_file, "a") as f:
+        f.write(json.dumps(bulk_event) + "\n")
 
 
 def generate_ai_session_id(task_description: str, model: str) -> tuple[str, int]:
@@ -45,7 +83,7 @@ def generate_ai_session_id(task_description: str, model: str) -> tuple[str, int]
     class SessionDescription(BaseModel):
         short_name: str  # 1-3 words, lowercase, hyphens for spaces
     
-    desc_agent = Agent(model, result_type=SessionDescription)
+    desc_agent = Agent(model, output_type=SessionDescription)
     
     prompt = f"""Create a very short description (1-3 words) for this task: {task_description}
     
@@ -62,7 +100,7 @@ def generate_ai_session_id(task_description: str, model: str) -> tuple[str, int]
     """
     
     result = desc_agent.run_sync(prompt)
-    short_desc = result.data.short_name
+    short_desc = result.output.short_name
     # Clean and validate the description
     short_desc = re.sub(r'[^a-z0-9\-]', '', short_desc.lower())
     short_desc = re.sub(r'-+', '-', short_desc).strip('-')
@@ -87,7 +125,10 @@ def create_session(task_description: str, model: str) -> dict:
     session_path.mkdir(parents=True, exist_ok=True)
     (session_path / "workers").mkdir(exist_ok=True)
     (session_path / "workers" / "notes").mkdir(exist_ok=True)
-    (session_path / "prompts").mkdir(exist_ok=True)
+    (session_path / "workers" / "prompts").mkdir(exist_ok=True)
+    (session_path / "workers" / "outputs").mkdir(exist_ok=True)
+    (session_path / "workers" / "logs").mkdir(exist_ok=True)
+    (session_path / "workers" / "json").mkdir(exist_ok=True)
 
     # Create EVENTS.jsonl
     events_file = session_path / "EVENTS.jsonl"
@@ -95,14 +136,14 @@ def create_session(task_description: str, model: str) -> dict:
     
     # Log session creation event
     session_created_event = {
-        "timestamp": iso_now(),
+        "timestamp": shared_iso_now(),
         "event_type": "session_created",
         "worker_type": "scribe",
         "data": {
             "session_id": session_id,
             "task_description": task_description,
             "model": model,
-            "session_path": str(session_path),
+            "session_path": f"Docs/hive-mind/sessions/{session_id}",
             "generated_by": "scribe",
             "description_length": desc_length
         }
@@ -112,7 +153,7 @@ def create_session(task_description: str, model: str) -> dict:
     
     # Log scribe spawn event
     worker_spawned_event = {
-        "timestamp": iso_now(),
+        "timestamp": shared_iso_now(),
         "event_type": "worker_spawned", 
         "worker_type": "scribe",
         "data": {
@@ -136,7 +177,7 @@ def create_session(task_description: str, model: str) -> dict:
     # Create SESSION.md
     session_md_content = f"""# Session: {session_id}
 
-**Created:** {iso_now()}  
+**Created:** {shared_iso_now()}  
 **Task:** {task_description}  
 **Model:** {model}  
 **Status:** Created  
@@ -160,7 +201,7 @@ Session ready for Queen orchestration.
     # Create complete STATE.json
     initial_state = {
         "session_id": session_id,
-        "created": iso_now(),
+        "created": shared_iso_now(),
         "task_description": task_description,
         "model": model,
         "status": "created",
@@ -168,7 +209,7 @@ Session ready for Queen orchestration.
         "workers": {
             "scribe": {
                 "status": "active",
-                "spawned_at": iso_now(),
+                "spawned_at": shared_iso_now(),
                 "mode": "create"
             }
         }
@@ -179,11 +220,11 @@ Session ready for Queen orchestration.
 
     return {
         "session_id": session_id,
-        "timestamp": iso_now(),
+        "timestamp": shared_iso_now(),
         "status": "completed",
         "task_description": task_description,
         "complexity_level": 2,
-        "session_path": str(session_path),
+        "session_path": f"Docs/hive-mind/sessions/{session_id}",
     }
 
 
@@ -199,7 +240,7 @@ def run_synthesis(session_id: str) -> dict:
 
     synthesis = f"""# Synthesis - {session_id}
 
-Generated: {iso_now()}
+Generated: {shared_iso_now()}
 
 ## Summary
 Session synthesis completed.
@@ -210,7 +251,7 @@ Ready for worker coordination.
 
     return {
         "session_id": session_id,
-        "timestamp": iso_now(),
+        "timestamp": shared_iso_now(),
         "status": "completed",
         "synthesis_markdown": synthesis,
     }

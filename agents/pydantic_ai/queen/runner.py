@@ -13,13 +13,13 @@ from datetime import datetime
 from typing import List, Dict, Any
 from pathlib import Path
 import sys
+import os
 
-# Simple approach: just add project root to path and use direct imports
-project_root = Path(__file__).parent.parent.parent.parent.parent
-sys.path.insert(0, str(project_root))
+# Environment setup
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "..", ".."))
 
-# Add the pydantic_ai directory to path for direct imports
-pydantic_ai_path = Path(__file__).parent.parent
+# Add agents/pydantic_ai to path for imports
+pydantic_ai_path = os.path.join(os.path.dirname(__file__), "..")
 sys.path.insert(0, str(pydantic_ai_path))
 
 from shared.protocols import (
@@ -27,7 +27,12 @@ from shared.protocols import (
     LoggingProtocol,
     ProtocolConfig,
     WorkerPromptProtocol,
+    create_worker_prompts_from_plan,
+    load_project_env
 )
+
+# Use helper function to load project environment
+load_project_env()
 
 from queen.models import QueenOrchestrationPlan, WorkerAssignment
 from queen.agent import queen_agent
@@ -68,11 +73,12 @@ def update_session_state(session_id: str, state_update: Dict[str, Any]):
 
 
 def run_orchestration(
-    session_id: str, task_description: str, model: str
+    session_id: str, task_description: str, model: str, retry_count: int = 0
 ) -> QueenOrchestrationPlan:
-    """Run Queen orchestration with AI analysis"""
+    """Run Queen orchestration with AI analysis and intelligent retry"""
     worker = "queen-orchestrator"
     timestamp = iso_now()
+    max_retries = 3
 
     # Validate session exists using protocol infrastructure
     try:
@@ -93,11 +99,11 @@ def run_orchestration(
         session_id,
         "queen_spawned",
         worker,
-        {"note": "Queen orchestrator initialized for session"},
+        {"note": "Queen orchestrator initialized for session", "retry": retry_count},
     )
 
     if not queen_agent:
-        return create_fallback_orchestration(session_id, task_description)
+        raise RuntimeError("Queen agent not available")
 
     try:
         # Run AI orchestration
@@ -131,6 +137,31 @@ def run_orchestration(
                 },
             )
 
+        # Create worker prompt files (framework-enforced)
+        try:
+            created_prompts = create_worker_prompts_from_plan(session_id, orchestration_plan)
+            log_event(
+                session_id,
+                "worker_prompts_created",
+                worker,
+                {
+                    "prompt_files": list(created_prompts.values()),
+                    "worker_count": len(created_prompts),
+                    "workers": list(created_prompts.keys())
+                }
+            )
+        except Exception as e:
+            log_debug(
+                session_id,
+                "Worker prompts creation failed",
+                {
+                    "error": str(e),
+                    "exception_type": str(type(e)),
+                    "impact": "Workers may not have proper task instructions"
+                }
+            )
+            # Continue execution - workers can use fallback extraction
+
         # Log successful orchestration
         log_event(
             session_id,
@@ -146,19 +177,47 @@ def run_orchestration(
         return orchestration_plan
 
     except Exception as e:
-        # Log error and create fallback
-        log_event(
+        error_str = str(e).lower()
+        
+        # Log error to debug
+        log_debug(
             session_id,
-            "orchestration_failed",
-            worker,
+            f"Queen orchestration attempt {retry_count + 1} failed",
             {
                 "error": str(e),
                 "exception_type": str(type(e)),
-                "fallback": "Creating basic orchestration plan",
+                "retry_count": retry_count,
+                "original_model": model,
             },
         )
-
-        return create_fallback_orchestration(session_id, task_description)
+        
+        # Check if we should retry with different parameters
+        if retry_count < max_retries:
+            new_model = model
+            
+            # Adjust model based on error type
+            if "model_not_found" in error_str or "does not exist" in error_str:
+                if "o3" in model or "o1" in model:
+                    new_model = "openai:gpt-4o"
+                    log_debug(session_id, "Switching to available model", {"new_model": new_model})
+                elif "gpt-5" in model:
+                    new_model = "openai:gpt-4o" 
+                    log_debug(session_id, "Switching to available model", {"new_model": new_model})
+            elif "rate_limit" in error_str:
+                import time
+                wait_time = (retry_count + 1) * 2  # Exponential backoff
+                log_debug(session_id, f"Rate limit hit, waiting {wait_time}s", {"wait_time": wait_time})
+                time.sleep(wait_time)
+            elif "context_length" in error_str or "too long" in error_str:
+                # Could adjust prompt length here if needed
+                log_debug(session_id, "Context length exceeded, using simpler prompt", {})
+            
+            # Retry with adjusted parameters
+            return run_orchestration(session_id, task_description, new_model, retry_count + 1)
+        
+        # Max retries exceeded, re-raise the exception
+        log_debug(session_id, "Max retries exceeded, giving up", {"max_retries": max_retries})
+        raise e
 
 
 def create_detailed_state_update(
@@ -231,54 +290,6 @@ def create_detailed_state_update(
     return state_update
 
 
-def create_fallback_orchestration(
-    session_id: str, task_description: str
-) -> QueenOrchestrationPlan:
-    """Create fallback orchestration when AI is unavailable"""
-    timestamp = iso_now()
-
-    # Basic complexity assessment
-    task_lower = task_description.lower()
-    complexity = 1
-
-    if any(
-        word in task_lower
-        for word in ["architecture", "comprehensive", "security", "performance"]
-    ):
-        complexity = 3
-    elif any(word in task_lower for word in ["analyze", "review", "audit"]):
-        complexity = 2
-
-    # Basic worker assignments
-    assignments = []
-
-    # Always include analyzer for comprehensive tasks
-    if complexity >= 2:
-        assignments.append(
-            WorkerAssignment(
-                worker_type="analyzer-worker",
-                priority="high",
-                task_focus="Security and performance analysis",
-                estimated_duration="2-3h",
-                rationale="Essential for comprehensive analysis",
-            )
-        )
-
-    return QueenOrchestrationPlan(
-        session_id=session_id,
-        timestamp=timestamp,
-        status="completed",
-        task_analysis={"summary": task_description},
-        complexity_assessment=complexity,
-        estimated_total_duration="2-6h",
-        worker_assignments=assignments,
-        execution_strategy="parallel",
-        coordination_notes=["Fallback orchestration - basic worker assignment"],
-        identified_risks=["Limited AI analysis available"],
-        mitigation_strategies=["Manual coordination may be required"],
-        success_metrics=["Workers complete assigned analysis"],
-        quality_gates=["Review worker outputs for completeness"],
-    )
 
 
 async def monitor_worker_progress(
@@ -377,10 +388,9 @@ async def monitor_worker_progress(
             await asyncio.sleep(monitoring_interval)
 
         except Exception as e:
-            log_event(
+            log_debug(
                 session_id,
-                "monitoring_error",
-                worker,
+                "Worker monitoring error",
                 {"error": str(e), "action": "continuing_monitoring"},
             )
             await asyncio.sleep(monitoring_interval)
@@ -397,7 +407,7 @@ def main():
     parser = argparse.ArgumentParser(description="Pydantic AI Queen Orchestrator")
     parser.add_argument("--session", required=True, help="Session ID")
     parser.add_argument("--task", required=True, help="Task description")
-    parser.add_argument("--model", default="openai:gpt-5", help="AI model to use")
+    parser.add_argument("--model", default="openai:gpt-4o", help="AI model to use")
     parser.add_argument(
         "--monitor", action="store_true", help="Enable continuous monitoring"
     )

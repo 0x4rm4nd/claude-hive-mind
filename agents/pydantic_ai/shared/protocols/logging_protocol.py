@@ -17,18 +17,15 @@ class LoggingProtocol(BaseProtocol):
     def __init__(self, config: ProtocolConfig):
         super().__init__(config)
         self.log_buffer = []
-        self.event_counter = 0
     
     def log_event(self, event_type: str, details: Any, level: str = "INFO") -> Dict[str, Any]:
         """
         Atomic event logging to EVENTS.jsonl using append-safe operations
         """
         timestamp = datetime.utcnow().strftime('%Y-%m-%dT%H:%M:%SZ')
-        self.event_counter += 1
         
         event = {
             "timestamp": timestamp,
-            "sequence": self.event_counter,
             "type": event_type,
             "agent": self.config.agent_name or "system",
             "details": details,
