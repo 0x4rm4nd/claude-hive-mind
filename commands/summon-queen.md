@@ -12,38 +12,52 @@ This command initiates a new session by first using the `scribe-worker` to creat
 
 The `/summon-queen` command follows a strict, two-phase process. You must execute these steps in order.
 
-### Phase 1: Session Creation via Scribe
+### Phase 1: Session Creation via Pydantic AI Scribe
 
-**Your first action is to spawn the `scribe-worker` to create the session.** Its job is purely mechanical.
+**Your first action is to run the Pydantic AI scribe to create the session.** This ensures reliable session creation with proper logging.
 
-**MANDATORY TASK TOOL EXECUTION:**
-Use the `Task` tool to spawn the `scribe-worker` with these exact parameters:
-- `subagent_type`: "scribe-worker"
-- `description`: "Create and initialize a new hive-mind session."
-- `prompt`: "Create a session to house the following task description: '$ARGUMENTS'. **Do not analyze the task.** Just create the session files and return the new session_id."
+**MANDATORY BASH EXECUTION:**
+Use the `Bash` tool to run the Pydantic AI scribe with these exact parameters:
+```bash
+cd .claude && python -m agents.pydantic.run_scribe create --task "$ARGUMENTS" --model openai:gpt-4o-mini
+```
 
-The `scribe-worker` will create the session structure and return a JSON object containing the `session_id`. You must parse this response to get the ID for the next phase.
+The Pydantic AI scribe will:
+- Generate proper session ID in YYYY-MM-DD-HH-mm-shorttaskdescription format
+- Create complete session directory structure (no .gitkeep files)  
+- Log `worker_spawned` and `session_created` events automatically
+- Return JSON with `session_id`, `session_path`, and other metadata
 
-### Phase 2: Orchestration via Queen
+Parse the JSON response to extract the `session_id` for the next phase.
 
-**Once you have the `session_id` from the Scribe, your second action is to spawn the `queen-orchestrator` to perform the strategic analysis.**
+### Phase 2: Orchestration via Pydantic AI Queen
 
-**MANDATORY TASK TOOL EXECUTION:**
-Use the `Task` tool to spawn the `queen-orchestrator` with these exact parameters:
-- `subagent_type`: "queen-orchestrator"
-- `description`: "Analyze the session task and orchestrate workers to complete it."
-- `prompt`: "Session ID: [session_id_from_scribe]. The session has been prepared. **Your task is to analyze the mandate within the session's STATE.json and begin orchestration.**"
+**Once you have the `session_id` from the Scribe, your second action is to run the Pydantic AI Queen orchestrator to perform the strategic analysis.**
 
-**CRITICAL**: You must pass the `session_id` received from the `scribe-worker` to the `queen-orchestrator`.
+**MANDATORY BASH EXECUTION:**
+Use the `Bash` tool to run the Pydantic AI Queen orchestrator with these exact parameters:
+```bash
+cd .claude && python -m agents.pydantic.run_queen --session [session_id_from_scribe] --task "$ARGUMENTS" --model openai:gpt-4o-mini
+```
+
+The Pydantic AI Queen will:
+- Perform intelligent codebase exploration using built-in tools
+- Generate comprehensive orchestration plan with worker assignments
+- Create detailed worker prompts in the session's `prompts/` directory
+- Log all orchestration events automatically to EVENTS.jsonl
+- Update SESSION.json with orchestration strategy and assigned workers
+- Return structured QueenOrchestrationPlan with complete coordination details
+
+**CRITICAL**: You must pass the exact `session_id` received from the Pydantic AI scribe to the Queen orchestrator.
 
 ---
 
 ## Orchestration Lifecycle
 
 1.  **Summon:** You, the top-level agent, receive the `/summon-queen` command.
-2.  **Delegate Creation:** You spawn the `scribe-worker` to mechanically create the session.
-3.  **Delegate Orchestration:** You spawn the `queen-orchestrator` with the new `session_id` to perform task analysis and worker management.
-4.  **Queen Manages:** The Queen plans and manages the specialist workers.
-5.  **Delegate Synthesis:** Once the specialist workers are done, the Queen spawns the `scribe-worker` again to synthesize the results.
+2.  **Run Pydantic Scribe:** You run the Pydantic AI scribe to create the session with guaranteed logging.
+3.  **Run Pydantic Queen:** You run the Pydantic AI Queen orchestrator with the new `session_id` to perform intelligent task analysis and worker coordination.
+4.  **Deploy Workers:** Use the generated worker prompts and orchestration plan to spawn specialist workers via Task tool.
+5.  **Run Pydantic Synthesis:** Once the specialist workers are done, run the Pydantic AI scribe again for synthesis.
 
 Your role is to initiate and connect this two-step delegation process correctly, ensuring the roles remain distinct.

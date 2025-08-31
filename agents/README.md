@@ -2,65 +2,111 @@
 
 Production-ready agent definitions for the hive-mind orchestration system.
 
-## Agent Types
+## 🚀 **Migration Complete: Framework-Enforced AI**
 
-### Orchestrator
-- **queen-orchestrator.md**: Master coordinator that plans and synthesizes
+**All agents have been successfully migrated to Pydantic AI** - moving from instruction-dependent behavior to framework-enforced reliability through code validation.
 
-### Workers (8 Specialists)
-- **researcher-worker.md**: Context7 research and best practices
-- **architect-worker.md**: System design and architecture patterns
-- **backend-worker.md**: API and database implementation
-- **frontend-worker.md**: UI components and client-side logic
-- **designer-worker.md**: UX/UI design and accessibility
-- **test-worker.md**: Testing strategy and quality assurance
-- **devops-worker.md**: Infrastructure and deployment
-- **analyzer-worker.md**: Security and performance analysis
+## Agent Architecture
 
-## Configuration Structure
+### 🏗️ **Framework-Enforced Agents (Pydantic AI)** - Production Ready
 
-Each agent file contains:
+**Orchestration & Management:**
+- **pydantic/queen/**: Master coordinator with continuous monitoring ([Full Documentation](pydantic/README.md))
+- **pydantic/scribe/**: Session creation and synthesis management
 
-```yaml
----
-name: agent-name
-type: specialization
-color: hex-color
-description: brief description
-capabilities: [list of capabilities]
-priority: critical|high|medium|low
----
+**Worker Specialists (8 Complete):**
+- **pydantic/analyzer/**: Security analysis, performance optimization, code quality assessment  
+- **pydantic/architect/**: System design, scalability patterns, technical architecture
+- **pydantic/backend/**: API development, database design, service implementation
+- **pydantic/designer/**: User experience design, visual design, accessibility
+- **pydantic/devops/**: Infrastructure, deployment, monitoring, CI/CD pipelines
+- **pydantic/frontend/**: UI/UX implementation, component architecture, state management
+- **pydantic/researcher/**: Technical research, best practices, industry standards analysis
+- **pydantic/test/**: Testing strategy, quality assurance, test coverage analysis
+
+### 🏗️ **Meta-Development**
+- **agent-architect.md**: Pydantic AI expert for designing framework-enforced agent architectures
+
+### 📚 **Archived Legacy Agents**
+- **archived/**: Contains all previous Markdown-based agent definitions
+  - `queen-orchestrator.md` (superseded by `pydantic/queen/`)
+  - 8 worker agents (superseded by `pydantic/[worker]/` implementations)
+
+## 🚀 **Usage - Unified CLI Interface**
+
+All agents are now accessible through a single CLI entry point:
+
+```bash
+cd .claude/agents/pydantic/
+python cli.py [agent] [options]
 ```
 
-## Worker Standards
+### **Orchestration & Session Management**
+```bash
+# Create session with AI-powered session ID
+python cli.py scribe create --task "Analyze crypto-data architecture focusing on security"
 
-All workers follow:
+# Run Queen orchestrator with continuous monitoring  
+python cli.py queen --session SESSION_ID --task "..." --monitor
 
-1. **Mandatory Startup Protocol** (`.claude/protocols/startup_protocol_instructions.md`)
-2. **Standardized Output Format** (JSON response + markdown notes)
-3. **Coordination Patterns** (blocking/unblocking events)
-4. **Research Integration** (Context7 for complexity >= 2)
-
-## Output Requirements
-
-### JSON Response
-```json
-{
-  "worker": "worker-type",
-  "status": "completed",
-  "summary": {...},
-  "findings": [...],
-  "recommendations": [...]
-}
+# Generate final synthesis from completed workers
+python cli.py scribe synthesis --session SESSION_ID
 ```
 
-### Notes File
-```markdown
-# [Worker Type] Analysis
-## Executive Summary
-## Detailed Findings
-## Recommendations
-## Evidence
+### **Worker Agents**
+```bash
+# Security, performance, and code quality analysis
+python cli.py analyzer --session SESSION_ID --task "Security audit of crypto-data service"
+
+# System design and architecture review
+python cli.py architect --session SESSION_ID --task "Review scalability patterns"
+
+# API and database implementation
+python cli.py backend --session SESSION_ID --task "Design API endpoints"
+
+# UX/UI design and accessibility  
+python cli.py designer --session SESSION_ID --task "Design user dashboard"
+
+# Infrastructure and deployment
+python cli.py devops --session SESSION_ID --task "Setup monitoring infrastructure"
+
+# Frontend development and optimization
+python cli.py frontend --session SESSION_ID --task "Implement responsive components"
+
+# Technical research and best practices
+python cli.py researcher --session SESSION_ID --task "Research React patterns"
+
+# Testing strategy and quality assurance
+python cli.py test --session SESSION_ID --task "Design test coverage strategy"
+```
+
+## 🔧 **Framework Benefits**
+
+### **Before (Markdown Instructions)**
+- ❌ Hope agents follow 500+ line instructions
+- ❌ Unstructured output (can return anything)  
+- ❌ Manual protocol compliance (error-prone)
+- ❌ Debugging: "Why didn't it follow instructions?"
+
+### **After (Framework-Enforced)**
+- ✅ Code-enforced behavior (impossible to ignore)
+- ✅ Schema-validated output (Pydantic models only)
+- ✅ Built-in protocol compliance (automatic)
+- ✅ Python stack traces for debugging
+
+### **Structured Output Examples**
+```python
+# Analyzer Output
+class AnalyzerOutput(BaseModel):
+    security_findings: List[SecurityFinding]
+    performance_issues: List[PerformanceIssue] 
+    recommendations: List[str]
+    
+# Backend Output  
+class BackendOutput(BaseModel):
+    api_endpoints: List[APIEndpoint]
+    database_changes: List[DatabaseChange]
+    implementation_notes: List[str]
 ```
 
 ## Coordination
