@@ -20,7 +20,7 @@ The `/summon-queen` command follows a strict, two-phase process. You must execut
 Use the `Bash` tool to run the Pydantic AI scribe with these exact parameters:
 
 ```bash
-cd .claude/agents/pydantic && python cli.py scribe create --task "$ARGUMENTS" --model openai:gpt-5
+cd .claude && python agents/pydantic_ai/scribe/runner.py create --task "$ARGUMENTS" --model openai:gpt-5
 ```
 
 The Pydantic AI scribe will:
@@ -40,7 +40,7 @@ Parse the JSON response to extract the `session_id` for the next phase.
 Use the `Bash` tool to run the Pydantic AI Queen orchestrator with these exact parameters:
 
 ```bash
-cd .claude/agents/pydantic && python cli.py queen --session [session_id_from_scribe] --task "$ARGUMENTS" --model openai:o3
+cd .claude && python agents/pydantic_ai/queen/runner.py --session [session_id_from_scribe] --task "$ARGUMENTS" --model openai:o3
 ```
 
 The Pydantic AI Queen will:

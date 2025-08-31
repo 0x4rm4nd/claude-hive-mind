@@ -11,11 +11,13 @@ Production-ready agent definitions for the hive-mind orchestration system.
 ### 🏗️ **Framework-Enforced Agents (Pydantic AI)** - Production Ready
 
 **Orchestration & Management:**
+
 - **pydantic/queen/**: Master coordinator with continuous monitoring ([Full Documentation](pydantic/README.md))
 - **pydantic/scribe/**: Session creation and synthesis management
 
 **Worker Specialists (8 Complete):**
-- **pydantic/analyzer/**: Security analysis, performance optimization, code quality assessment  
+
+- **pydantic/analyzer/**: Security analysis, performance optimization, code quality assessment
 - **pydantic/architect/**: System design, scalability patterns, technical architecture
 - **pydantic/backend/**: API development, database design, service implementation
 - **pydantic/designer/**: User experience design, visual design, accessibility
@@ -25,9 +27,11 @@ Production-ready agent definitions for the hive-mind orchestration system.
 - **pydantic/test/**: Testing strategy, quality assurance, test coverage analysis
 
 ### 🏗️ **Meta-Development**
+
 - **agent-architect.md**: Pydantic AI expert for designing framework-enforced agent architectures
 
 ### 📚 **Archived Legacy Agents**
+
 - **archived/**: Contains all previous Markdown-based agent definitions
   - `queen-orchestrator.md` (superseded by `pydantic/queen/`)
   - 8 worker agents (superseded by `pydantic/[worker]/` implementations)
@@ -37,16 +41,17 @@ Production-ready agent definitions for the hive-mind orchestration system.
 All agents are now accessible through a single CLI entry point:
 
 ```bash
-cd .claude/agents/pydantic/
+cd .claude/agents/pydantic_ai/
 python cli.py [agent] [options]
 ```
 
 ### **Orchestration & Session Management**
+
 ```bash
 # Create session with AI-powered session ID
 python cli.py scribe create --task "Analyze crypto-data architecture focusing on security"
 
-# Run Queen orchestrator with continuous monitoring  
+# Run Queen orchestrator with continuous monitoring
 python cli.py queen --session SESSION_ID --task "..." --monitor
 
 # Generate final synthesis from completed workers
@@ -54,6 +59,7 @@ python cli.py scribe synthesis --session SESSION_ID
 ```
 
 ### **Worker Agents**
+
 ```bash
 # Security, performance, and code quality analysis
 python cli.py analyzer --session SESSION_ID --task "Security audit of crypto-data service"
@@ -64,7 +70,7 @@ python cli.py architect --session SESSION_ID --task "Review scalability patterns
 # API and database implementation
 python cli.py backend --session SESSION_ID --task "Design API endpoints"
 
-# UX/UI design and accessibility  
+# UX/UI design and accessibility
 python cli.py designer --session SESSION_ID --task "Design user dashboard"
 
 # Infrastructure and deployment
@@ -83,26 +89,29 @@ python cli.py test --session SESSION_ID --task "Design test coverage strategy"
 ## 🔧 **Framework Benefits**
 
 ### **Before (Markdown Instructions)**
+
 - ❌ Hope agents follow 500+ line instructions
-- ❌ Unstructured output (can return anything)  
+- ❌ Unstructured output (can return anything)
 - ❌ Manual protocol compliance (error-prone)
 - ❌ Debugging: "Why didn't it follow instructions?"
 
 ### **After (Framework-Enforced)**
+
 - ✅ Code-enforced behavior (impossible to ignore)
 - ✅ Schema-validated output (Pydantic models only)
 - ✅ Built-in protocol compliance (automatic)
 - ✅ Python stack traces for debugging
 
 ### **Structured Output Examples**
+
 ```python
 # Analyzer Output
 class AnalyzerOutput(BaseModel):
     security_findings: List[SecurityFinding]
-    performance_issues: List[PerformanceIssue] 
+    performance_issues: List[PerformanceIssue]
     recommendations: List[str]
-    
-# Backend Output  
+
+# Backend Output
 class BackendOutput(BaseModel):
     api_endpoints: List[APIEndpoint]
     database_changes: List[DatabaseChange]
@@ -112,11 +121,13 @@ class BackendOutput(BaseModel):
 ## Coordination
 
 Workers coordinate through:
+
 - **EVENTS.jsonl**: Real-time coordination events
 - **STATE.json**: Session configuration and status
 - **Protocol adherence**: Shared execution patterns
 
 ### Event Example (Schema-Compliant)
+
 ```json
 {
   "timestamp": "2025-01-01T12:00:00Z",
@@ -131,6 +142,7 @@ Workers coordinate through:
 ## Optimization
 
 All agents optimized for:
+
 - **Token efficiency**: Minimal verbose content
 - **Fast startup**: Streamlined initialization
 - **Clear focus**: Single responsibility principle

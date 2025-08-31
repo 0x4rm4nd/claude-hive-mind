@@ -21,7 +21,7 @@ This directory implements a **framework-enforced agent ecosystem** using Pydanti
 ## 📁 Directory Structure
 
 ```
-.claude/agents/pydantic/
+.claude/agents/pydantic_ai/
 ├── README.md                    # This file - architecture documentation
 ├── __init__.py                  # Main package exports
 ├── cli.py                       # Unified CLI entry point
@@ -293,7 +293,7 @@ analyzer_parser = subparsers.add_parser('analyzer')
 - Unstructured output (can return anything)
 - Hope-based behavior ("please remember to...")
 
-**After** (`.claude/agents/pydantic/queen/`):
+**After** (`.claude/agents/pydantic_ai/queen/`):
 
 - Code-enforced behavior (impossible to ignore)
 - Automatic protocol compliance (built-in)
