@@ -4,11 +4,19 @@ Scribe Worker Runner
 Execution runner for the Scribe Worker - provides session lifecycle management and synthesis.
 """
 
-import re
+import sys
 import os
+from pathlib import Path
+
+# Ensure imports work when run directly or from CLI
+current_dir = Path(__file__).parent
+pydantic_ai_root = current_dir.parent
+if str(pydantic_ai_root) not in sys.path:
+    sys.path.insert(0, str(pydantic_ai_root))
+
+import re
 import json
 from datetime import datetime
-from pathlib import Path
 from typing import Dict, Any
 
 from shared.base_worker import BaseWorker

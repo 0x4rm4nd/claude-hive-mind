@@ -7,7 +7,7 @@ Pydantic models for structured test worker outputs.
 from typing import List, Dict, Any, Literal, Optional
 from pydantic import BaseModel, Field
 
-from ..shared.models import WorkerOutput
+from shared.models import WorkerOutput
 
 
 class TestImplementation(BaseModel):

@@ -5,8 +5,17 @@ Queen Orchestrator Runner
 BaseWorker implementation for strategic multi-worker orchestration.
 """
 
-from typing import Dict, Any
+import sys
+import os
 from pathlib import Path
+
+# Ensure imports work when run directly or from CLI
+current_dir = Path(__file__).parent
+pydantic_ai_root = current_dir.parent
+if str(pydantic_ai_root) not in sys.path:
+    sys.path.insert(0, str(pydantic_ai_root))
+
+from typing import Dict, Any
 
 from shared.base_worker import BaseWorker
 from queen.models import QueenOutput

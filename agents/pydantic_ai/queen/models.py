@@ -7,7 +7,7 @@ Pydantic models specific to Queen orchestrator functionality.
 from typing import List, Dict, Any, Literal
 from pydantic import BaseModel, Field
 
-from ..shared.models import WorkerOutput
+from shared.models import WorkerOutput
 
 
 class WorkerAssignment(BaseModel):

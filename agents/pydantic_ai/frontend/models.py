@@ -7,7 +7,7 @@ Pydantic models for structured frontend worker outputs.
 from typing import List, Dict, Any, Literal, Optional
 from pydantic import BaseModel, Field
 
-from ..shared.models import WorkerOutput
+from shared.models import WorkerOutput
 
 
 class ComponentImplementation(BaseModel):
