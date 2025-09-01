@@ -21,25 +21,32 @@ This directory implements a **framework-enforced agent ecosystem** using Pydanti
 ## 📁 Directory Structure
 
 ```
-.claude/agents/pydantic_ai/
+agents/pydantic_ai/
 ├── README.md                    # This file - architecture documentation
 ├── __init__.py                  # Main package exports
 ├── cli.py                       # Unified CLI entry point
 ├── shared/                      # Common components
 │   ├── __init__.py
+│   ├── base_worker.py          # BaseWorker framework
+│   ├── base_agent.py           # BaseAgentConfig pattern
 │   ├── models.py               # Base models used across agents
-│   └── tools.py                # Shared utilities (env loading, etc.)
+│   ├── worker_config.py        # Worker configuration models
+│   └── tools.py                # Shared utilities
 ├── queen/                       # 👑 Queen Orchestrator Agent
 │   ├── __init__.py
 │   ├── agent.py                # Pydantic AI agent + tools
-│   ├── runner.py               # Execution with monitoring
-│   ├── models.py               # Queen-specific schemas
-│   └── tools.py                # Codebase exploration tools
-└── scribe/                      # 📝 Scribe Agent
+│   ├── runner.py               # BaseWorker implementation
+│   └── models.py               # Queen-specific schemas
+├── scribe/                      # 📝 Scribe Agent
+│   ├── __init__.py
+│   ├── agent.py                # Pydantic AI agent
+│   ├── runner.py               # BaseWorker implementation
+│   └── models.py               # Scribe-specific schemas
+└── [worker]/                    # 🔧 Specialist Workers
     ├── __init__.py
-    ├── agent.py                # Pydantic AI agent
-    ├── runner.py               # Session creation & synthesis
-    └── models.py               # Scribe-specific schemas
+    ├── agent.py                # BaseAgentConfig pattern
+    ├── runner.py               # BaseWorker implementation
+    └── models.py               # Worker-specific schemas
 ```
 
 ### **Scalability Design**
@@ -82,7 +89,7 @@ This structure is designed for **easy expansion**. Adding a new agent is straigh
 
 ```bash
 # Basic orchestration
-python cli.py queen --session SESSION_ID --task "Analyze crypto-data security"
+python cli.py queen --session SESSION_ID --task "Analyze application security"
 
 # With continuous monitoring
 python cli.py queen --session SESSION_ID --task "..." --monitor --monitor-interval 30
@@ -123,10 +130,10 @@ class QueenOrchestrationPlan(BaseModel):
 
 ```bash
 # Create new session
-python cli.py scribe create --task "Comprehensive security audit of crypto-data service"
+python cli.py scribe create --task "Comprehensive security audit of application services"
 
 # Generate synthesis from completed workers
-python cli.py scribe synthesis --session 2024-01-15-14-30-crypto-security-audit
+python cli.py scribe synthesis --session 2024-01-15-14-30-application-security-audit
 ```
 
 **Schema Outputs**:
@@ -152,18 +159,18 @@ class TaskSummaryOutput(BaseModel):
 
 ```bash
 # 1. Create session with AI-powered session ID
-python cli.py scribe create --task "Analyze crypto-data architecture focusing on security, performance, and scalability"
-# Output: session_id: "2024-01-15-14-30-crypto-security-analysis"
+python cli.py scribe create --task "Analyze application architecture focusing on security, performance, and scalability"
+# Output: session_id: "2024-01-15-14-30-architecture-security-analysis"
 
 # 2. Run Queen orchestrator with monitoring
-python cli.py queen --session 2024-01-15-14-30-crypto-security-analysis --task "..." --monitor
+python cli.py queen --session 2024-01-15-14-30-architecture-security-analysis --task "..." --monitor
 
 # 3. Queen monitors workers continuously (every 30s)
 # ✅ Workers spawn and complete their analysis
 # 🔍 Queen tracks: analysis_started, progress_update, worker_completed
 
 # 4. Generate final synthesis
-python cli.py scribe synthesis --session 2024-01-15-14-30-crypto-security-analysis
+python cli.py scribe synthesis --session 2024-01-15-14-30-architecture-security-analysis
 ```
 
 ### **Advanced Queen Monitoring**
@@ -284,21 +291,23 @@ analyzer_parser = subparsers.add_parser('analyzer')
 
 ---
 
-## 🔄 Migration from Claude Code Agents
+## 🔄 Migration from Instruction-Based Agents
 
-**Before** (`.claude/agents/queen-orchestrator.md`):
+**Before** (Traditional markdown-based agents):
 
-- 500+ lines of markdown instructions
+- 500+ lines of markdown instructions per agent
 - Manual protocol compliance (error-prone)
 - Unstructured output (can return anything)
 - Hope-based behavior ("please remember to...")
+- Inconsistent execution patterns across agents
 
-**After** (`.claude/agents/pydantic_ai/queen/`):
+**After** (Framework-enforced Pydantic AI agents):
 
 - Code-enforced behavior (impossible to ignore)
 - Automatic protocol compliance (built-in)
-- Schema-validated output (`QueenOrchestrationPlan`)
+- Schema-validated output (`WorkerOutput` subclasses)
 - Framework-guaranteed behavior ("cannot skip steps")
+- 100% consistent BaseWorker pattern across all agents
 
 This represents the evolution from **instruction-dependent AI** to **framework-enforced AI** - moving from hoping agents follow instructions to making compliance structurally impossible to avoid.
 
