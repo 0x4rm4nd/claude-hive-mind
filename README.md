@@ -1,106 +1,130 @@
-# .claude Hive-Mind Orchestration System
+# SmartWalletFX Framework-Enforced Agent System
 
-Production-ready multi-agent coordination system optimized for complex software development tasks.
+Production-ready Pydantic AI agents with guaranteed behavior compliance and structured outputs.
 
-## Architecture Overview
+## 🏗️ Architecture: Framework-Enforced vs Instruction-Dependent
 
-### Queen-Worker Model
-- **👑 Queen Orchestrator**: Strategic coordinator that analyzes tasks, plans worker deployment, and synthesizes results
-- **👷 8 Specialized Workers**: Domain experts that execute all technical work
+### **Paradigm Shift**
+From hope-based markdown instructions to code-enforced behavior:
 
-## Worker Specializations
+| Aspect | Previous (Markdown) | Current (Pydantic AI) |
+|--------|-------------------|---------------------|
+| **Compliance** | Hope agents follow 500+ line instructions | Framework enforces behavior through code |
+| **Outputs** | Unstructured text (requires parsing) | Schema-validated Pydantic models |
+| **Debugging** | "Why didn't it follow instructions?" | Python stack traces |
+| **Reliability** | Probabilistic behavior | Deterministic code execution |
 
-| Worker | Focus | Primary Capabilities |
-|--------|-------|---------------------|
-| 🔬 **Researcher** | Best practices & documentation | Context7 research, pattern discovery |
-| 🏗️ **Architect** | System design & patterns | Architecture, scalability, conflict resolution |
-| ⚙️ **Backend** | Server-side implementation | APIs, databases, business logic |
-| 🎨 **Frontend** | Client-side implementation | UI components, state management |
-| 🎯 **Designer** | UX/UI design | Design systems, accessibility |
-| 🧪 **Test** | Quality assurance | Test strategy, coverage analysis |
-| 🚀 **DevOps** | Infrastructure | CI/CD, containerization, monitoring |
-| 🔍 **Analyzer** | Code quality | Security, performance, dependencies |
+### **Agent Categories**
 
-## Complexity-Adaptive Workflow
+**Orchestration & Management:**
+- **👑 Queen**: Task coordination with continuous monitoring and schema-validated planning
+- **📝 Scribe**: Session lifecycle management and AI-powered synthesis
 
-| Level | Duration | Workers | Escalation | Use Case |
-|-------|----------|---------|------------|----------|
-| **1** | <1hr | 1 | 15min | Simple tasks |
-| **2** | 1-2hr | 1-2 | 10min | Research-informed tasks |
-| **3** | 2-6hr | 2-3 | 5min | Cross-domain tasks |
-| **4** | >6hr | 3-5 | 2min | Complex projects |
+**Specialized Workers (Framework-Enforced):**
+- **🔍 Analyzer**: Security, performance, code quality (→ `AnalyzerOutput`)
+- **🏗️ Architect**: System design, scalability patterns (→ `ArchitectOutput`)  
+- **⚙️ Backend**: API development, database design (→ `BackendOutput`)
+- **🎨 Designer**: UX/UI design, accessibility (→ `DesignerOutput`)
+- **🚀 DevOps**: Infrastructure, CI/CD, monitoring (→ `DevOpsOutput`)
+- **💻 Frontend**: UI components, state management (→ `FrontendOutput`)
+- **🔬 Researcher**: Technical research, best practices (→ `ResearcherOutput`)
+- **🧪 Test**: Testing strategy, quality assurance (→ `TestOutput`)
 
-## Session Management
+## 🚀 Unified CLI Interface
 
-Sessions track all coordination activity in `Docs/hive-mind/sessions/{session-id}/`:
-
-- **STATE.json**: Single source of truth for session state
-- **EVENTS.jsonl**: Immutable coordination event log
-- **notes/RESEARCH_SYNTHESIS.md**: Cross-worker findings synthesis
-- **Worker outputs**: Individual worker notes and JSON responses
-
-## Key Commands
+All agents accessible through single entry point:
 
 ```bash
-/summon-queen "task description"   # Start new coordinated task
-/resume-session <session-id>       # Resume interrupted session
-/analyze-session <session-id>      # Get session progress report
-/archive-session <session-id>      # Complete and archive session
+cd .claude/agents/pydantic_ai/
+python cli.py [agent] [options]
 ```
 
-## Protocol System
+### **Core Workflow**
 
-Core protocols in `.claude/protocols/`:
+1. **Create Session** (mandatory for all tasks):
+   ```bash
+   python cli.py scribe create --task "DETAILED_TASK_DESCRIPTION"  
+   ```
 
-- **worker-startup-protocol.md**: Standardized worker initialization
-- **session-coordination.md**: Complexity assessment and coordination
-- **conflict-resolution.md**: Technical dispute resolution
-- **pattern-library.md**: Reusable solution patterns
+2. **Execute Work**:
+   - **Simple tasks**: `python cli.py [worker] --session SESSION_ID --task "TASK"`
+   - **Complex coordination**: `python cli.py queen --session SESSION_ID --task "TASK" --monitor`
 
-## Production Features
+3. **Generate Reports**:
+   ```bash
+   python cli.py scribe synthesis --session SESSION_ID
+   ```
 
-### Token Efficiency
-- 60-80% reduction through selective context loading
-- Fail-fast on critical dependencies
-- Research depth scaled to task complexity
+## 📁 Session Management
 
-### Coordination Speed
-- Priority-based escalation (2-15 min timeouts)
-- Direct worker-to-worker coordination
-- Non-blocking parallel execution
+Framework creates structured sessions in `Docs/hive-mind/sessions/[SESSION_ID]/`:
 
-### Knowledge Retention
-- Pattern extraction from successful implementations
-- Session resumption with complete state preservation
-- Systematic learning pipeline to memory bank
+- **STATE.json**: Session configuration and worker status
+- **EVENTS.jsonl**: Real-time coordination events  
+- **DEBUG.jsonl**: Debug and execution logs
+- **worker_outputs/**: Schema-validated individual results
+- **synthesis/**: Final consolidated reports
 
-## Technical Decisions
+## 🏗️ Framework-Enforced Protocols
 
-Key architecture choices documented in `TECHNICAL_DECISIONS.md`:
+Built-in protocol compliance through Python code:
 
-- Research-first approach for all complexity >= 2 tasks
-- Hard failure on Archon MCP dependency (task management)
-- 8-worker specialization validated by production usage
-- 4-level complexity system sized for actual workload
+- **BaseProtocol**: Foundation class with automatic logging
+- **ProtocolConfig**: Standardized configuration management
+- **SessionManagement**: Session lifecycle automation
+- **Event Logging**: Structured logging to EVENTS.jsonl and DEBUG.jsonl
 
-## Directory Structure
+## 🎯 Production Benefits
+
+### **Framework Reliability**
+- **100% Schema Compliance**: Impossible to return malformed outputs
+- **Automatic Protocol Adherence**: Built into execution flow (cannot skip)
+- **Type Safety**: Full Pydantic validation with IDE support
+- **Python Stack Traces**: Real debugging instead of instruction-compliance guesswork
+
+### **Operational Efficiency**
+- **Single CLI Entry**: Unified interface for all agents
+- **Continuous Monitoring**: Real-time worker progress tracking (Queen)
+- **AI-Powered Sessions**: Intelligent session ID generation (Scribe)
+- **Structured Outputs**: Schema-validated results ready for integration
+
+### **Developer Experience**
+- **Easy Extension**: Add new agents without touching existing code
+- **Clean Separation**: Agents, shared framework, and protocols isolated
+- **Built-in Coordination**: Event logging and session management automatic
+- **Scalable Architecture**: Framework handles complexity scaling
+
+## 📁 Directory Structure
 
 ```
 .claude/
-├── agents/           # Worker and orchestrator configurations
-├── protocols/        # Coordination and execution protocols
-├── commands/         # User-facing command definitions
-├── README.md         # This file
-└── TECHNICAL_DECISIONS.md  # Architecture rationale
+├── agents/
+│   ├── pydantic_ai/           # Production framework-enforced agents
+│   │   ├── cli.py             # Unified CLI entry point
+│   │   ├── queen/             # Orchestrator with continuous monitoring
+│   │   ├── scribe/            # Session management and synthesis
+│   │   ├── [8-workers]/       # Specialized domain workers
+│   │   └── shared/            # Common protocols and utilities
+│   ├── archived_agents/       # Legacy markdown agents (superseded)
+│   └── README.md              # Agent system documentation
+├── commands/                  # User-facing command definitions  
+├── README.md                  # This documentation
+└── CLAUDE.md                  # Instructions for Claude Code agents
 ```
 
-## Success Metrics
+## 🚀 Migration Impact
 
-- **Research Quality**: Implementation success from research-backed decisions
-- **Coordination Efficiency**: 40-60% reduction in blocker resolution time
-- **Knowledge Reuse**: Pattern library reducing research duplication
-- **Session Continuity**: 90%+ successful resumption after interruptions
+**Legacy System → Production System:**
+- Markdown instructions → Framework-enforced Python code
+- Hope-based compliance → Guaranteed behavior through code structure  
+- Unstructured outputs → Schema-validated Pydantic models
+- Manual debugging → Python stack traces with proper error handling
+
+## 🔗 References
+
+- **Pydantic AI KnownModelName**: https://ai.pydantic.dev/api/models/base/#pydantic_ai.models.KnownModelName
+  - Official documentation for supported model formats (e.g., `openai:gpt-5`, `google-gla:gemini-2.5-flash`)
 
 ---
 
-*System validated through production usage on SmartWalletFX financial application development*
+**Framework-enforced reliability eliminates instruction-compliance issues and ensures predictable, debuggable AI agent coordination.** 🏗️

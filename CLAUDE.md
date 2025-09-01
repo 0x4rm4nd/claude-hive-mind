@@ -1,155 +1,251 @@
-# SmartWalletFX Hive-Mind Coordination System
+# SmartWalletFX Agent Coordination Instructions
 
-> **CRITICAL**: This system enforces mandatory protocol compliance for all agents and Queen orchestrator. No steps can be skipped.
+> **MANDATORY**: All Claude Code agents must follow these coordination protocols when working on SmartWalletFX tasks.
 
-## 🎯 Mandatory Agent Initialization
+## 🎯 Agent Spawning Architecture
 
-### For ALL Workers and Queen Orchestrator
-**BEFORE any task execution, you MUST:**
+### **Claude Code Agent → Pydantic AI Agent Chain**
 
-1. **Protocol Compliance Check**
-   - Read your specific agent configuration from `.claude/agents/[your-type].md`
-   - Identify required protocols from your agent's `protocols:` field
-   - Load protocol instructions from `.claude/protocols/` directory
+**YOU (Claude Code) do NOT run Pydantic agents directly.** Instead:
 
-2. **Session Join** (Workers join existing session created by Queen)
-   - Locate active session from `Docs/hive-mind/sessions/` directory
-   - Load session context from `STATE.json` 
-   - Log worker spawn event to `EVENTS.jsonl`
+1. **You spawn a Claude Agent** using the `Task` tool
+2. **That Claude Agent** navigates to `.claude/agents/pydantic_ai/` and executes the Python CLI
+3. **The Python CLI** spawns the appropriate Pydantic AI agent with framework-enforced behavior
 
-3. **Protocol Adherence**
-   - Complete startup protocol checklist from referenced protocols
-   - Update worker status to indicate compliance
-   - Begin assigned task execution
+### **Agent Spawning Process:**
 
-## 🔄 Centralized Protocol System
-
-### Protocol Reference Structure
 ```
-.claude/protocols/
-├── worker-startup-protocol.md     # ALL agents follow this
-├── research-protocol.md           # Research-first enforcement
-├── logging-protocol.md            # Event logging standards  
-├── coordination-protocol.md       # Inter-agent communication
-├── session-coordination.md        # Session management
-└── pattern-library.md            # Knowledge patterns
+Claude Code (you) 
+    ↓ (uses Task tool)
+Claude Agent (spawned agent)
+    ↓ (executes python cli.py)
+Pydantic AI Agent (framework-enforced)
+    ↓ (returns structured output)
+Back to Claude Agent → Back to Claude Code
 ```
 
-### Protocol Enforcement Rules
+### **Available Pydantic AI Agents**
+The spawned Claude Agent will access via: `cd .claude/agents/pydantic_ai/ && python cli.py [agent] [options]`
 
-**When spawned, ALL agents must immediately:**
+**Orchestration:**
+- **queen**: Complex tasks requiring worker coordination and continuous monitoring
+- **scribe**: Session creation and synthesis reports
 
-1. **Load Required Protocols** - Read and follow the specific protocol files referenced in their agent configuration
-2. **Complete Startup Sequence** - Execute the mandatory initialization steps defined in `worker-startup-protocol.md`
-3. **Maintain Compliance** - Continuously follow protocol requirements throughout task execution
-4. **Log All Activities** - Use the standardized logging functions from `unified-logging-protocol.md`
+**Specialist Workers:**
+- **analyzer**: Security analysis, performance optimization, code quality
+- **architect**: System design, scalability patterns, technical architecture
+- **backend**: API development, database design, service implementation
+- **designer**: User experience, visual design, accessibility
+- **devops**: Infrastructure, deployment, monitoring, CI/CD
+- **frontend**: UI/UX implementation, component architecture, state management
+- **researcher**: Technical research, best practices, industry standards
+- **test**: Testing strategy, quality assurance, coverage analysis
 
-**Key Protocol Categories:**
-- **Startup Protocol**: Mandatory initialization sequence for all agents
-- **Research Protocol**: Research-first enforcement before implementation
-- **Logging Protocol**: Standardized event and debug logging
-- **Coordination Protocol**: Inter-agent communication and escalation
-- **Session Protocol**: Session management and state tracking
+## 🚀 How YOU (Claude Code) Spawn Agents
 
-## 👑 Queen Orchestrator Unique Responsibilities
+### **Step 1: Use Task Tool to Spawn Claude Agent**
 
-### Session Management (Queen Only)
-- **Session Creation**: Create session directory structure with complexity-appropriate layout
-- **Worker Spawning**: Deploy required workers based on task complexity assessment
-- **Coordination Oversight**: Monitor cross-worker dependencies and resolve conflicts
+```
+Use Task tool with appropriate subagent_type:
+- general-purpose: For most Pydantic AI agent tasks
+- [specific-worker]: For targeted domain work (analyzer-worker, backend-worker, etc.)
+```
 
-### Protocol Compliance Monitoring
-- **Real-time Verification**: Analyze STATE.json and EVENTS.jsonl for protocol violations
-- **Smart Correction**: Deliver guidance during natural workflow breaks
-- **Escalation Resolution**: Handle complex coordination issues requiring arbitration
+### **Step 2: Claude Agent Executes Pydantic AI Commands**
 
-## 🛠️ Worker Specialization Compliance
+**For Complex Multi-Domain Tasks:**
+The spawned Claude Agent will run:
 
-### All Workers Must:
-1. **Load Domain Context**: Use tag-based filtering for relevant memory bank sections
-2. **Follow Startup Protocol**: Complete initialization checklist before task work
-3. **Maintain Event Stream**: Log significant operations and coordination needs
-4. **Complete Research Phase**: Document findings before implementation
-5. **Signal Completion**: Update STATE.json and log completion events
+1. **Create Session First:**
+   ```bash
+   cd .claude/agents/pydantic_ai/
+   python cli.py scribe create --task "YOUR_DETAILED_TASK_DESCRIPTION"
+   # Note the returned SESSION_ID
+   ```
 
-### Worker Protocol Compliance
+2. **Use Queen for Orchestration:**
+   ```bash
+   python cli.py queen --session SESSION_ID --task "TASK_DESCRIPTION" --monitor
+   ```
 
-**Each worker agent declares their required protocols in their individual configuration files** (`.claude/agents/[worker-name].md`). When spawned, workers must:
+3. **Generate Final Report:**
+   ```bash
+   python cli.py scribe synthesis --session SESSION_ID
+   ```
 
-1. **Read their agent configuration** to identify required protocols
-2. **Load and follow each protocol** from `.claude/protocols/` directory  
-3. **Execute protocol requirements** in the specified order
-4. **Maintain compliance** throughout their task execution
+**For Single-Domain Tasks:**
+The spawned Claude Agent will run:
+```bash
+cd .claude/agents/pydantic_ai/
+python cli.py [worker] --session SESSION_ID --task "SPECIFIC_TASK"
+```
 
-**Common Protocol Patterns:**
-- All workers follow `worker-startup-protocol.md` and `logging-protocol.md`
-- Implementation-focused workers additionally follow `research-protocol.md`
-- Coordination-heavy workers additionally follow `coordination-protocol.md`
+## 🔄 Model Fallback Strategy
 
-## ⚡ Token Efficiency Optimizations
+### **Primary Model: GPT-5**
+- All Pydantic AI agents default to `openai:gpt-5` for maximum capability
+- Used for complex reasoning, planning, and structured output generation
 
-### Context Loading Strategy
-- **Level 1 Tasks**: Single-tag context, minimal session files
-- **Level 2 Tasks**: Related-tag context, basic coordination  
-- **Level 3 Tasks**: Multi-domain context, cross-worker patterns
-- **Level 4 Tasks**: Full context access, comprehensive coordination
+### **Fallback Model: Gemini-2.5-Flash**
+- **When to use**: If GPT-5 quota limits hit (429 errors) or unavailable
+- **How spawned agents handle**: Built-in fallback in Pydantic AI framework
+- **Claude Agent instruction**: "Use `--model google-gla:gemini-2.5-flash` if GPT-5 fails"
 
-### Hard Failure Rules
-- **Protocol Violations**: Self-correction required before proceeding
-- **Context7/Serena Unavailable**: Graceful degradation to WebSearch + built-in tools
-- **Session Corruption**: Create new session if STATE.json/EVENTS.jsonl corrupted
-- **Pydantic AI Model 429 Error**: Fallback to `gemini-2.5-flash` model when quota limits hit
+### **Model Selection Examples:**
+```bash
+# Primary (default)
+python cli.py queen --session SESSION_ID --task "TASK" --monitor
 
-## 🔧 Implementation Patterns
+# Fallback (when GPT-5 unavailable)
+python cli.py queen --session SESSION_ID --task "TASK" --monitor --model google-gla:gemini-2.5-flash
+```
 
-### Agent Startup Flow
+## 🛠️ Task Complexity Decision Tree
 
-**All agents follow this high-level startup flow:**
+### **Level 1 - Simple Single-Service Tasks**
+**ALWAYS create session first**, then use individual Pydantic worker:
+```bash
+# Example: Single file edit or simple feature
+python cli.py scribe create --task "Fix authentication bug in user service"  
+python cli.py backend --session SESSION_ID --task "TASK_DESCRIPTION"
+```
 
-1. **Load Agent Configuration** - Read individual agent file from `.claude/agents/`
-2. **Join Active Session** - Locate session directory created by Queen
-3. **Execute Startup Protocol** - Follow `worker-startup-protocol.md` requirements exactly
-4. **Begin Task Execution** - Start assigned work while maintaining protocol compliance
+### **Level 2 - Service-Specific Complex Tasks**
+**Create session first** + use individual Pydantic worker:
+```bash
+# Example: Complex frontend component with state management
+python cli.py scribe create --task "Implement responsive dashboard with real-time portfolio updates"
+python cli.py frontend --session SESSION_ID --task "TASK_DESCRIPTION"
+```
 
-**Implementation details are defined in the individual protocol files** - agents must reference and follow the specific protocols rather than implementing custom startup logic.
+### **Level 3 - Cross-Service Coordination**
+**Use Queen orchestrator** for automatic worker coordination:
+```bash
+# Example: Feature requiring API + frontend + database changes  
+python cli.py scribe create --task "Add portfolio rebalancing feature with real-time notifications"
+python cli.py queen --session SESSION_ID --task "TASK_DESCRIPTION" --monitor
+```
 
-### Protocol Reference
+### **Level 4 - Architecture/Security Reviews**
+**Use Queen with specific worker focus**:
+```bash
+# Example: Comprehensive system analysis
+python cli.py scribe create --task "Security audit of crypto-data service focusing on API vulnerabilities and database security"
+python cli.py queen --session SESSION_ID --task "TASK_DESCRIPTION" --monitor
+```
 
-**All event logging, compliance verification, and coordination details are defined in the individual protocol files.** Agents must use the standardized functions provided in:
+## 📋 Mandatory Workflow for Claude Code Agents
 
-- `unified-logging-protocol.md` - Event and debug logging functions
-- `worker-startup-protocol.md` - Mandatory initialization sequence  
-- `coordination-protocol.md` - Inter-agent communication patterns
-- `research-protocol.md` - Research-first implementation requirements
+### **BEFORE starting ANY task using Pydantic AI agents:**
 
-## 🚨 Compliance Verification
+1. **Check Task Complexity** using decision tree above
+2. **ALWAYS**: Create session with Scribe first (mandatory for ALL levels)
+3. **Level 3+**: Use Queen orchestrator for coordination
+4. **Level 4+**: Enable monitoring with Queen
 
-### Self-Correction Process
-1. **Violation Detection**: Agent identifies missing protocol steps
-2. **Immediate Correction**: Complete missing steps before proceeding
-3. **Status Update**: Log correction actions to EVENTS.jsonl
-4. **Continue Workflow**: Resume task after compliance restored
+### **Commands the Spawned Claude Agent Will Execute:**
 
-### Queen Intervention Triggers
-- Missing 2 consecutive EVENTS.jsonl checks during coordination phases  
-- Protocol violations detected in STATE.json analysis
-- Worker timeout exceeded without escalation event
-- Critical priority events ignored for >30 seconds
+```bash
+# Navigate to Pydantic AI directory  
+cd .claude/agents/pydantic_ai/
 
-## 🎯 Success Metrics
+# Create session (MANDATORY for ALL tasks using Pydantic agents)
+python cli.py scribe create --task "DETAILED_TASK_DESCRIPTION"
 
-### Protocol Compliance KPIs
-- **Startup Success Rate**: 100% workers complete initialization
-- **Research Coverage**: All implementation tasks have documented research
-- **Event Stream Integrity**: No gaps >10 minutes in coordination phases
-- **Cross-Worker Sync**: Blocking/unblocking events properly logged
+# Use Queen for complex orchestration (Level 3+)
+python cli.py queen --session SESSION_ID --task "TASK" --monitor
 
-### Operational Efficiency  
-- **Token Usage**: 60-80% reduction through selective context loading
-- **Coordination Speed**: 40-60% faster blocker resolution
-- **Session Resumption**: 90%+ successful restoration after interruptions
-- **Knowledge Reuse**: Pattern library reducing research duplication
+# Use individual worker for focused tasks
+python cli.py [worker] --session SESSION_ID --task "TASK"
+
+# Generate final synthesis report (when work complete)
+python cli.py scribe synthesis --session SESSION_ID
+
+# With fallback model if needed
+python cli.py [agent] --session SESSION_ID --task "TASK" --model google-gla:gemini-2.5-flash
+```
+
+### **Worker Selection Guide:**
+- **analyzer**: Security audits, performance optimization, code quality
+- **architect**: System design decisions, scalability planning, technical architecture  
+- **backend**: API design, database schema, service implementation
+- **designer**: UI/UX design, accessibility, visual design systems
+- **devops**: Infrastructure, deployment, monitoring, CI/CD setup
+- **frontend**: Component development, state management, UI implementation
+- **researcher**: Technology evaluation, best practices, industry research
+- **test**: Test strategy, quality assurance, coverage analysis
+
+### **Expected Outputs:**
+All Pydantic agents return structured, validated data. No unstructured text responses.
+
+## ⚠️ Critical Rules for Claude Code Agents
+
+### **DO NOT (Claude Code Agent Rules):**
+- Try to run Pydantic AI commands directly (use Task tool to spawn Claude Agent instead)
+- Skip session creation for ANY task using Pydantic agents
+- Forget to specify fallback model instructions if GPT-5 might fail
+- Try to parse or interpret Pydantic agent outputs (they're pre-structured)
+
+### **ALWAYS (Claude Code Agent Rules):**
+- Use Task tool to spawn Claude Agent for Pydantic AI work
+- Instruct spawned agent to create session FIRST with `scribe create`
+- Include fallback model instructions: "Use `--model google-gla:gemini-2.5-flash` if GPT-5 unavailable"
+- Specify Level 3+ tasks should use Queen orchestrator with monitoring
+- Request synthesis report when work is complete
+
+### **Session Files Location:**
+Results stored in: `Docs/hive-mind/sessions/[SESSION_ID]/`
+- `STATE.json`: Session configuration and status
+- `EVENTS.jsonl`: Real-time coordination events
+- `DEBUG.jsonl`: Debug and execution logs  
+- `worker_outputs/`: Individual worker results
+- `synthesis/`: Final consolidated reports
+
+## 🔧 Example Task Tool Usage
+
+### **How YOU (Claude Code) Spawn Agents for SmartWalletFX Services:**
+
+**API Service Tasks:**
+```
+Use Task tool:
+subagent_type: backend-worker
+prompt: "Navigate to .claude/agents/pydantic_ai/ and run:
+1. python cli.py scribe create --task 'Design REST endpoints for crypto portfolio management'
+2. python cli.py backend --session SESSION_ID --task 'TASK'
+3. Use --model google-gla:gemini-2.5-flash if GPT-5 unavailable"
+```
+
+**Frontend Tasks:**
+```
+Use Task tool:
+subagent_type: frontend-worker  
+prompt: "Navigate to .claude/agents/pydantic_ai/ and run:
+1. python cli.py scribe create --task 'Implement responsive trading dashboard'
+2. python cli.py frontend --session SESSION_ID --task 'TASK'
+3. Use --model google-gla:gemini-2.5-flash if GPT-5 unavailable"
+```
+
+**Complex Cross-Service Features:**
+```
+Use Task tool:
+subagent_type: general-purpose
+prompt: "Navigate to .claude/agents/pydantic_ai/ and run:
+1. python cli.py scribe create --task 'Implement portfolio rebalancing across services'
+2. python cli.py queen --session SESSION_ID --task 'TASK' --monitor
+3. python cli.py scribe synthesis --session SESSION_ID
+4. Use --model google-gla:gemini-2.5-flash if GPT-5 unavailable"
+```
+
+**Security Analysis:**
+```
+Use Task tool:
+subagent_type: analyzer-worker
+prompt: "Navigate to .claude/agents/pydantic_ai/ and run:
+1. python cli.py scribe create --task 'Security analysis of crypto data pipeline'
+2. python cli.py analyzer --session SESSION_ID --task 'TASK'  
+3. Use --model google-gla:gemini-2.5-flash if GPT-5 unavailable"
+```
 
 ---
 
-**This CLAUDE.md file ensures consistent protocol adherence across all agents while maintaining the flexibility and efficiency of the hive-mind coordination system.**
+**These instructions ensure Claude Code agents use the framework-enforced Pydantic AI system for reliable, structured coordination on SmartWalletFX tasks.** ⚡
