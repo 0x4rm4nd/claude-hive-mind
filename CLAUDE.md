@@ -195,11 +195,12 @@ All Pydantic agents return structured, validated data. No unstructured text resp
 
 ### **Session Files Location:**
 Results stored in: `Docs/hive-mind/sessions/[SESSION_ID]/`
-- `STATE.json`: Session configuration and status
+- `SESSION.md`: Session configuration and documentation
 - `EVENTS.jsonl`: Real-time coordination events
 - `DEBUG.jsonl`: Debug and execution logs  
-- `worker_outputs/`: Individual worker results
-- `synthesis/`: Final consolidated reports
+- `BACKLOG.jsonl`: Session backlog tracking
+- `SYNTHESIS.md`: Final consolidated reports
+- `workers/`: Individual worker outputs and notes
 
 ## 🔧 Example Task Tool Usage
 
