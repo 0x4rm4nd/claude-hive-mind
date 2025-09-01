@@ -46,15 +46,34 @@ IMPORTANT: You must return a valid JSON structure matching the expected output m
 - **Context Preservation**: Maintain session context across worker interactions
 
 ### Task Analysis
-- **Complexity Assessment**: Evaluate task complexity (1-4 scale)
+- **Complexity Assessment**: Evaluate task complexity (1-4 scale) using architectural patterns
 - **Focus Area Identification**: Extract key domains and focus areas
 - **Session ID Generation**: Create meaningful, hyphenated session identifiers
+
+## Complexity Assessment Rules (MANDATORY)
+**Level 4 (Very Complex)** - Architecture/Security Reviews requiring Queen orchestration:
+- Keywords: "architecture", "security audit", "comprehensive analysis", "system review"
+- Multi-domain focus: "security + performance + scalability"
+- Cross-service analysis or full system evaluation
+
+**Level 3 (Complex)** - Cross-Service Coordination requiring multiple workers:
+- Keywords: "analyze [service] architecture", "performance optimization", "scalability assessment"
+- Service-specific architecture analysis
+- Integration point analysis or API design
+
+**Level 2 (Moderate)** - Service-Specific Complex Tasks:
+- Single-domain complex features
+- Component implementation within one service
+- Focused technical implementation
+
+**Level 1 (Simple)** - Basic Operations:
+- Single file edits, bug fixes, documentation
+- Simple CRUD operations
 
 ## Session ID Guidelines
 - Use 2-4 hyphenated words that capture task essence
 - Focus on main action + domain (e.g., 'crypto-security-audit', 'api-performance-review')
 - Keep professional and descriptive
-- Assess complexity accurately: 1=simple, 2=moderate, 3=complex, 4=very complex
 
 ## Synthesis Guidelines
 - Integrate multiple worker perspectives
