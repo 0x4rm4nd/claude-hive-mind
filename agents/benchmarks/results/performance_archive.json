@@ -1,0 +1,135 @@
+{
+  "benchmarks": [
+    {
+      "timestamp": "2025-09-01T13:42:51.433245",
+      "benchmark_type": "mock",
+      "results": {
+        "test_timestamp": 1756726953.11492,
+        "test_type": "mock_benchmark",
+        "single_request": {
+          "iterations": 10,
+          "avg_time": 0.5081110000610352,
+          "min_time": 0.5073978900909424,
+          "max_time": 0.5085809230804443,
+          "median_time": 0.508225679397583,
+          "std_dev": 0.0004195373392680034,
+          "raw_times": [
+            0.5085430145263672,
+            0.5074989795684814,
+            0.5083189010620117,
+            0.508223295211792,
+            0.5073978900909424,
+            0.5077769756317139,
+            0.5084459781646729,
+            0.5085809230804443,
+            0.508228063583374,
+            0.5080959796905518
+          ]
+        },
+        "concurrent_requests": {
+          "2": {
+            "total_time": 0.5062510967254639,
+            "successful_requests": 2,
+            "failed_requests": 0,
+            "requests_per_second": 3.9506087254653095,
+            "avg_time_per_request": 0.25312554836273193,
+            "theoretical_speedup": 2
+          },
+          "5": {
+            "total_time": 0.5071632862091064,
+            "successful_requests": 5,
+            "failed_requests": 0,
+            "requests_per_second": 9.858757792531675,
+            "avg_time_per_request": 0.1014326572418213,
+            "theoretical_speedup": 5
+          },
+          "10": {
+            "total_time": 0.5069410800933838,
+            "successful_requests": 10,
+            "failed_requests": 0,
+            "requests_per_second": 19.726158310464594,
+            "avg_time_per_request": 0.05069410800933838,
+            "theoretical_speedup": 10
+          },
+          "20": {
+            "total_time": 0.5068762302398682,
+            "successful_requests": 20,
+            "failed_requests": 0,
+            "requests_per_second": 39.457364158771924,
+            "avg_time_per_request": 0.025343811511993407,
+            "theoretical_speedup": 20
+          }
+        },
+        "model_selection_overhead": {
+          "custom:max-subscription": {
+            "avg_time_microseconds": 0.2471970277838409,
+            "total_iterations": 10000
+          },
+          "custom:claude-opus-4": {
+            "avg_time_microseconds": 0.2679493190953508,
+            "total_iterations": 10000
+          },
+          "custom:claude-sonnet-4": {
+            "avg_time_microseconds": 0.2531821810407564,
+            "total_iterations": 10000
+          },
+          "custom:claude-3-7-sonnet": {
+            "avg_time_microseconds": 0.2530002995627001,
+            "total_iterations": 10000
+          },
+          "custom:claude-3-5-haiku": {
+            "avg_time_microseconds": 0.25292714417446405,
+            "total_iterations": 10000
+          },
+          "unknown-model": {
+            "avg_time_microseconds": 0.24358663358725607,
+            "total_iterations": 10000
+          }
+        },
+        "message_formatting_overhead": {
+          "simple": {
+            "avg_time_microseconds": 1.524284074548632,
+            "total_iterations": 1000,
+            "message_count": 1
+          },
+          "complex": {
+            "avg_time_microseconds": 2.4640063056722283,
+            "total_iterations": 1000,
+            "message_count": 4
+          },
+          "multipart": {
+            "avg_time_microseconds": 1.6817929572425783,
+            "total_iterations": 1000,
+            "message_count": 1
+          }
+        },
+        "analysis": {
+          "recommendations": [],
+          "performance_grade": "A",
+          "observations": [
+            "Successfully tested up to 20 concurrent requests",
+            "Message formatting overhead is negligible"
+          ],
+          "concurrency_efficiency": {
+            "2": {
+              "efficiency_percent": 100.3673875173015,
+              "overhead_factor": 0.9963395727796724
+            },
+            "5": {
+              "efficiency_percent": 100.18686562645584,
+              "overhead_factor": 0.9981348290987306
+            },
+            "10": {
+              "efficiency_percent": 100.23078026492465,
+              "overhead_factor": 0.9976975110408732
+            },
+            "20": {
+              "efficiency_percent": 100.24360381243025,
+              "overhead_factor": 0.9975698817364342
+            }
+          }
+        }
+      }
+    }
+  ]
+}

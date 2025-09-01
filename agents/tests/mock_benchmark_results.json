@@ -1,0 +1,127 @@
+{
+  "test_timestamp": 1756726448.526245,
+  "test_type": "mock_benchmark",
+  "single_request": {
+    "iterations": 10,
+    "avg_time": 0.5080490112304688,
+    "min_time": 0.5073428153991699,
+    "max_time": 0.5086309909820557,
+    "median_time": 0.5080630779266357,
+    "std_dev": 0.0004934829067152647,
+    "raw_times": [
+      0.5074081420898438,
+      0.5085837841033936,
+      0.5079009532928467,
+      0.5082252025604248,
+      0.5084679126739502,
+      0.5078401565551758,
+      0.5073428153991699,
+      0.507606029510498,
+      0.5086309909820557,
+      0.5084841251373291
+    ]
+  },
+  "concurrent_requests": {
+    "2": {
+      "total_time": 0.5053830146789551,
+      "successful_requests": 2,
+      "failed_requests": 0,
+      "requests_per_second": 3.957394573837234,
+      "avg_time_per_request": 0.25269150733947754,
+      "theoretical_speedup": 2
+    },
+    "5": {
+      "total_time": 0.5065679550170898,
+      "successful_requests": 5,
+      "failed_requests": 0,
+      "requests_per_second": 9.870344048571564,
+      "avg_time_per_request": 0.10131359100341797,
+      "theoretical_speedup": 5
+    },
+    "10": {
+      "total_time": 0.5069241523742676,
+      "successful_requests": 10,
+      "failed_requests": 0,
+      "requests_per_second": 19.72681702610392,
+      "avg_time_per_request": 0.050692415237426756,
+      "theoretical_speedup": 10
+    },
+    "20": {
+      "total_time": 0.522907018661499,
+      "successful_requests": 20,
+      "failed_requests": 0,
+      "requests_per_second": 38.24771763667393,
+      "avg_time_per_request": 0.026145350933074952,
+      "theoretical_speedup": 20
+    }
+  },
+  "model_selection_overhead": {
+    "custom:max-subscription": {
+      "avg_time_microseconds": 0.29512692417483777,
+      "total_iterations": 10000
+    },
+    "custom:claude-opus-4": {
+      "avg_time_microseconds": 3.3070953213609755,
+      "total_iterations": 10000
+    },
+    "custom:claude-sonnet-4": {
+      "avg_time_microseconds": 0.2205095865065232,
+      "total_iterations": 10000
+    },
+    "custom:claude-3-7-sonnet": {
+      "avg_time_microseconds": 0.2232245315099135,
+      "total_iterations": 10000
+    },
+    "custom:claude-3-5-haiku": {
+      "avg_time_microseconds": 0.24028411717154083,
+      "total_iterations": 10000
+    },
+    "unknown-model": {
+      "avg_time_microseconds": 0.22824478801339865,
+      "total_iterations": 10000
+    }
+  },
+  "message_formatting_overhead": {
+    "simple": {
+      "avg_time_microseconds": 0.7136042404454201,
+      "total_iterations": 1000,
+      "message_count": 1
+    },
+    "complex": {
+      "avg_time_microseconds": 1.672606245847419,
+      "total_iterations": 1000,
+      "message_count": 4
+    },
+    "multipart": {
+      "avg_time_microseconds": 1.7071978654712439,
+      "total_iterations": 1000,
+      "message_count": 1
+    }
+  },
+  "analysis": {
+    "recommendations": [],
+    "performance_grade": "A",
+    "observations": [
+      "Successfully tested up to 20 concurrent requests",
+      "Message formatting overhead is negligible"
+    ],
+    "concurrency_efficiency": {
+      "2": {
+        "efficiency_percent": 100.52752001434145,
+        "overhead_factor": 0.994752481566578
+      },
+      "5": {
+        "efficiency_percent": 100.29237068762649,
+        "overhead_factor": 0.9970848162664624
+      },
+      "10": {
+        "efficiency_percent": 100.22189884836472,
+        "overhead_factor": 0.9977859245243351
+      },
+      "20": {
+        "efficiency_percent": 97.15857563567175,
+        "overhead_factor": 1.0292452245798982
+      }
+    }
+  }
+}

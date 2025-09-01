@@ -9,9 +9,9 @@ import sys
 from pathlib import Path
 
 # Ensure imports work when run directly from tests folder
-current_dir = Path(__file__).parent.parent  # Go up one level to the pydantic_ai directory
-if str(current_dir) not in sys.path:
-    sys.path.insert(0, str(current_dir))
+pydantic_ai_dir = (Path(__file__).parent.parent / "pydantic_ai").resolve()  # Point to pydantic_ai directory
+if str(pydantic_ai_dir) not in sys.path:
+    sys.path.insert(0, str(pydantic_ai_dir))
 
 def test_model_mapping():
     """Test the model mapping functionality"""
