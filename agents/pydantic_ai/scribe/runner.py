@@ -407,7 +407,15 @@ Session ready for Queen orchestration.
     def create_output_files_base(
         self, session_id: str, output: ScribeOutput, file_prefix: str
     ) -> None:
-        """Override to fix path handling issue in BaseWorker"""
+        """Override to skip file creation for session creation mode"""
+        # For create mode, don't create any worker output files
+        if output.mode == "create":
+            # Only create worker-specific files (SESSION.md, etc.) but no JSON/notes output
+            session_path = Path(SessionManagement.get_session_path(session_id))
+            self.create_worker_specific_files(session_id, output, session_path)
+            return
+        
+        # For synthesis mode, create full output files
         try:
             session_path = Path(SessionManagement.get_session_path(session_id))
             notes_dir = session_path / "workers" / "notes"
