@@ -70,6 +70,14 @@ class LoggingProtocol(BaseProtocol):
 
         return debug_entry
 
+    def log_error(self, message: str, details: Any) -> Dict[str, Any]:
+        """Log error message using debug logging with ERROR level"""
+        return self.log_debug(message, details, "ERROR")
+
+    def log_warning(self, message: str, details: Any) -> Dict[str, Any]:
+        """Log warning message using debug logging with WARNING level"""
+        return self.log_debug(message, details, "WARNING")
+
     def log_backlog(self, item: Dict[str, Any]) -> Dict[str, Any]:
         """
         Log to BACKLOG.jsonl for deferred items using append-safe operations
