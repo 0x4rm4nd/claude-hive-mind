@@ -1,17 +1,21 @@
 """
 Architect Worker Output Models
-=============================
-Pydantic models for structured architect worker outputs.
+==============================
+Pydantic models defining structured output formats for system architecture analysis and design recommendations.
 """
 
 from typing import List, Dict, Any, Literal
 from pydantic import BaseModel, Field
 
-from ..shared.models import WorkerOutput
+from shared.models import WorkerOutput
 
 
 class ArchitecturalRecommendation(BaseModel):
-    """Individual architectural recommendation or design decision"""
+    """Individual architectural recommendation or design decision.
+    
+    Represents a specific architectural improvement with implementation
+    guidance, priority assessment, and risk analysis.
+    """
     category: str = Field(description="Architecture domain (e.g., 'microservices', 'data_architecture', 'security')")
     recommendation: str = Field(description="Specific architectural recommendation")
     rationale: str = Field(description="Why this recommendation is important")
@@ -22,7 +26,11 @@ class ArchitecturalRecommendation(BaseModel):
 
 
 class TechnologyDecision(BaseModel):
-    """Technology selection or evaluation decision"""
+    """Technology selection or evaluation decision.
+    
+    Represents a technology choice with alternatives analysis,
+    selection criteria, and implementation complexity assessment.
+    """
     decision_type: str = Field(description="Type of technology decision (e.g., 'database', 'framework', 'messaging')")
     recommended_technology: str = Field(description="Recommended technology or approach")
     alternatives_considered: List[str] = Field(default_factory=list, description="Alternative technologies evaluated")
@@ -33,7 +41,11 @@ class TechnologyDecision(BaseModel):
 
 
 class ScalabilityAssessment(BaseModel):
-    """Assessment of system scalability characteristics"""
+    """Assessment of system scalability characteristics.
+    
+    Evaluates current and future scaling capabilities with specific
+    bottleneck identification and scaling strategy recommendations.
+    """
     current_architecture_pattern: str = Field(description="Current architectural pattern in use")
     scalability_bottlenecks: List[str] = Field(default_factory=list, description="Identified scaling limitations")
     horizontal_scaling_readiness: float = Field(ge=0.0, le=10.0, description="Readiness for horizontal scaling (0-10)")
@@ -43,7 +55,11 @@ class ScalabilityAssessment(BaseModel):
 
 
 class ArchitectOutput(WorkerOutput):
-    """Architect worker structured output - extends base WorkerOutput"""
+    """Comprehensive architectural analysis output with design recommendations and technology guidance.
+    
+    Extends WorkerOutput with specialized architectural assessment including maturity scoring,
+    design patterns, scalability analysis, and modernization roadmap.
+    """
     
     # Architecture Analysis
     current_architecture_assessment: str = Field(description="Assessment of current architectural state")
