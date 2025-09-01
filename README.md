@@ -59,11 +59,12 @@ python cli.py [agent] [options]
 
 Framework creates structured sessions in `Docs/hive-mind/sessions/[SESSION_ID]/`:
 
-- **STATE.json**: Session configuration and worker status
+- **SESSION.md**: Session configuration and documentation
 - **EVENTS.jsonl**: Real-time coordination events  
 - **DEBUG.jsonl**: Debug and execution logs
-- **worker_outputs/**: Schema-validated individual results
-- **synthesis/**: Final consolidated reports
+- **BACKLOG.jsonl**: Session backlog tracking
+- **SYNTHESIS.md**: Final consolidated reports
+- **workers/**: Schema-validated individual worker outputs
 
 ## 🏗️ Framework-Enforced Protocols
 

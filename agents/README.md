@@ -123,7 +123,7 @@ class BackendOutput(BaseModel):
 Workers coordinate through:
 
 - **EVENTS.jsonl**: Real-time coordination events
-- **STATE.json**: Session configuration and status
+- **SESSION.md**: Session configuration and documentation
 - **Protocol adherence**: Shared execution patterns
 
 ### Event Example (Schema-Compliant)
