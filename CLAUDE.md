@@ -82,22 +82,35 @@ python cli.py [worker] --session SESSION_ID --task "SPECIFIC_TASK"
 
 ## 🔄 Model Fallback Strategy
 
-### **Primary Model: GPT-5**
-- All Pydantic AI agents default to `openai:gpt-5` for maximum capability
-- Used for complex reasoning, planning, and structured output generation
+### **Primary Model: Gemini-2.5-Flash**
+- All Pydantic AI workers default to `google-gla:gemini-2.5-flash` for optimal performance
+- Used for individual worker tasks, analysis, and implementation
 
-### **Fallback Model: Gemini-2.5-Flash**
-- **When to use**: If GPT-5 quota limits hit (429 errors) or unavailable
-- **How spawned agents handle**: Built-in fallback in Pydantic AI framework
-- **Claude Agent instruction**: "Use `--model google-gla:gemini-2.5-flash` if GPT-5 fails"
+### **Queen Model: Gemini-2.5-Pro** 
+- Queen orchestrator uses `google-gla:gemini-2.5-pro` for complex reasoning and planning
+- Used for strategic task decomposition and worker coordination
+
+### **Scribe Model: GPT-5-Mini**
+- Scribe agent uses `openai:gpt-5-mini` for session management and synthesis
+- Optimized for session creation and synthesis tasks
+
+### **Fallback Model: OpenAI GPT-5**
+- **When to use**: If Gemini quotas exhausted or specific compatibility needed
+- **How spawned agents handle**: Manual override with `--model openai:gpt-5`
 
 ### **Model Selection Examples:**
 ```bash
-# Primary (default)
+# Queen with Pro model (default)
 python cli.py queen --session SESSION_ID --task "TASK" --monitor
 
-# Fallback (when GPT-5 unavailable)
-python cli.py queen --session SESSION_ID --task "TASK" --monitor --model google-gla:gemini-2.5-flash
+# Workers with Flash model (default)  
+python cli.py backend --session SESSION_ID --task "TASK"
+
+# Scribe with GPT-5-Mini (default)
+python cli.py scribe create --task "TASK"
+
+# Fallback to OpenAI if needed
+python cli.py queen --session SESSION_ID --task "TASK" --monitor --model openai:gpt-5
 ```
 
 ## 🛠️ Task Complexity Decision Tree
@@ -213,7 +226,7 @@ subagent_type: backend-worker
 prompt: "Navigate to .claude/agents/pydantic_ai/ and run:
 1. python cli.py scribe create --task 'Design REST endpoints for crypto portfolio management'
 2. python cli.py backend --session SESSION_ID --task 'TASK'
-3. Use --model google-gla:gemini-2.5-flash if GPT-5 unavailable"
+3. Use --model openai:gpt-5 if Gemini unavailable"
 ```
 
 **Frontend Tasks:**
@@ -223,7 +236,7 @@ subagent_type: frontend-worker
 prompt: "Navigate to .claude/agents/pydantic_ai/ and run:
 1. python cli.py scribe create --task 'Implement responsive trading dashboard'
 2. python cli.py frontend --session SESSION_ID --task 'TASK'
-3. Use --model google-gla:gemini-2.5-flash if GPT-5 unavailable"
+3. Use --model openai:gpt-5 if Gemini unavailable"
 ```
 
 **Complex Cross-Service Features:**
@@ -244,7 +257,7 @@ subagent_type: analyzer-worker
 prompt: "Navigate to .claude/agents/pydantic_ai/ and run:
 1. python cli.py scribe create --task 'Security analysis of crypto data pipeline'
 2. python cli.py analyzer --session SESSION_ID --task 'TASK'  
-3. Use --model google-gla:gemini-2.5-flash if GPT-5 unavailable"
+3. Use --model openai:gpt-5 if Gemini unavailable"
 ```
 
 ---

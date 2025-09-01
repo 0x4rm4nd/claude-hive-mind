@@ -40,7 +40,7 @@ Parse the JSON response to extract the `session_id` for the next phase.
 From the .claude directory, use the `Bash` tool to run the Pydantic AI Queen orchestrator with these exact parameters:
 
 ```bash
-python agents/pydantic_ai/cli.py queen --session [session_id_from_scribe] --task "$ARGUMENTS" --model openai:o3-mini
+python agents/pydantic_ai/cli.py queen --session [session_id_from_scribe] --task "$ARGUMENTS" --model google-gla:gemini-2.5-pro
 ```
 
 ## 👑 Explicit Queen Orchestrator Responsibilities
@@ -48,15 +48,18 @@ python agents/pydantic_ai/cli.py queen --session [session_id_from_scribe] --task
 The Pydantic AI Queen is **THE CENTRAL ORCHESTRATOR** and MUST perform these critical functions in order:
 
 ### 🔍 Pre-Orchestration Analysis (MANDATORY)
+
 **Before spawning any workers, the Queen MUST:**
 
 1. **Protocol Compliance Self-Check**:
+
    - Read `.claude/agents/queen-orchestrator.md` for configuration
    - Load ALL required protocols from `.claude/protocols/` directory
    - Execute startup protocol checklist from `worker-startup-protocol.md`
    - Log protocol compliance verification to EVENTS.jsonl
 
 2. **System Impact Analysis**:
+
    - Analyze task complexity and cross-service dependencies
    - Identify which SmartWalletFX services will be affected (API, Frontend, Sara, Crypto-Data, Archon)
    - Map domain boundaries and event flow requirements
@@ -69,14 +72,17 @@ The Pydantic AI Queen is **THE CENTRAL ORCHESTRATOR** and MUST perform these cri
    - Establish token efficiency baseline for worker coordination
 
 ### 🎯 Strategic Task Decomposition (MANDATORY)
+
 **The Queen MUST intelligently break down tasks:**
 
 1. **Domain Analysis**:
+
    - Map task requirements to service domains (User/Portfolio → API, UI → Frontend, etc.)
    - Identify cross-domain dependencies and coordination points
    - Assess research requirements vs implementation complexity
 
 2. **Worker Assignment Strategy**:
+
    - Select optimal worker combination based on task complexity
    - Define worker priorities and blocking/dependency relationships
    - Create worker-specific prompts with domain context and protocols
@@ -88,15 +94,18 @@ The Pydantic AI Queen is **THE CENTRAL ORCHESTRATOR** and MUST perform these cri
    - Define success criteria and completion verification methods
 
 ### ⚙️ Orchestration Plan Generation (MANDATORY OUTPUT)
+
 **The Queen MUST generate a comprehensive QueenOrchestrationPlan containing:**
 
 1. **Worker Deployment Manifest**:
+
    - Exact worker types needed with justification
    - Worker spawn order and dependency chain
    - Protocol compliance requirements for each worker
    - Expected deliverables and coordination interfaces
 
 2. **Session Coordination Framework**:
+
    - EVENTS.jsonl monitoring strategy with specific event types
    - Cross-worker communication patterns and escalation rules
    - Token efficiency targets and context loading optimization
@@ -109,15 +118,18 @@ The Pydantic AI Queen is **THE CENTRAL ORCHESTRATOR** and MUST perform these cri
    - Final synthesis and deliverable consolidation plan
 
 ### 📊 Active Coordination Oversight (CONTINUOUS)
+
 **Throughout execution, the Queen MUST:**
 
 1. **Real-time Monitoring**:
+
    - Continuously analyze EVENTS.jsonl for protocol violations
    - Monitor worker progress against established checkpoints
    - Detect blocking dependencies and coordinate resolution
    - Identify performance bottlenecks and optimization opportunities
 
 2. **Protocol Enforcement**:
+
    - Verify all workers complete startup protocols before task work
    - Ensure research-first compliance for implementation tasks
    - Monitor event logging standards and coordination patterns
@@ -130,9 +142,11 @@ The Pydantic AI Queen is **THE CENTRAL ORCHESTRATOR** and MUST perform these cri
    - Trigger escalation procedures for critical path failures
 
 ### 🎯 Completion & Synthesis (FINAL PHASE)
+
 **Upon worker completion, the Queen MUST:**
 
 1. **Results Validation**:
+
    - Verify all workers completed assigned tasks with proper protocols
    - Validate deliverables meet quality and architectural standards
    - Ensure cross-service integration points function correctly
@@ -153,6 +167,7 @@ The Pydantic AI Queen is **THE CENTRAL ORCHESTRATOR** and MUST perform these cri
 **The Queen orchestrator now automatically spawns Claude Worker agents using the Task framework. This establishes the proper hierarchy: Queen → Claude Workers → Pydantic AI Workers.**
 
 **Architecture Flow:**
+
 1. **Queen Analysis Complete**: The Queen has generated the orchestration plan with worker assignments
 2. **Automatic Claude Worker Spawning**: The Queen automatically spawns Claude Worker agents (.md files) using the Task tool
 3. **Claude Worker Initialization**: Each Claude Worker agent loads its configuration, joins the session, and executes startup protocols
@@ -162,7 +177,7 @@ The Pydantic AI Queen is **THE CENTRAL ORCHESTRATOR** and MUST perform these cri
 **Worker Hierarchy Mapping:**
 
 - `analyzer-worker.md` → `pydantic_ai/analyzer/` - Security, performance, and code quality analysis
-- `architect-worker.md` → `pydantic_ai/architect/` - System architecture and design analysis  
+- `architect-worker.md` → `pydantic_ai/architect/` - System architecture and design analysis
 - `backend-worker.md` → `pydantic_ai/backend/` - API, database, and service implementation
 - `devops-worker.md` → `pydantic_ai/devops/` - Infrastructure, deployment, and operations
 - `researcher-worker.md` → `pydantic_ai/researcher/` - Industry standards and best practices research
@@ -180,6 +195,7 @@ The Queen orchestrator handles all worker spawning automatically through the Tas
 **EVERY spawned worker MUST execute this EXACT sequence before beginning task work:**
 
 1. **Protocol Compliance Verification**:
+
    ```
    - Load worker configuration from `.claude/agents/[worker-type].md`
    - Read ALL protocols listed in the `protocols:` field
@@ -188,6 +204,7 @@ The Queen orchestrator handles all worker spawning automatically through the Tas
    ```
 
 2. **Session Integration**:
+
    ```
    - Locate session directory: `Docs/hive-mind/sessions/{session_id}/`
    - Load session context from SESSION.json
@@ -196,6 +213,7 @@ The Queen orchestrator handles all worker spawning automatically through the Tas
    ```
 
 3. **Context Loading & Domain Preparation**:
+
    ```
    - Load domain-specific memory bank context using tags
    - Access relevant architectural patterns from pattern library
@@ -216,18 +234,21 @@ The Queen orchestrator handles all worker spawning automatically through the Tas
 **Throughout task execution, ALL workers MUST:**
 
 1. **Research-First Enforcement**:
+
    - Document research findings before ANY implementation
    - Use Context7/Serena for technical research, Archon for architectural patterns
    - Log research completion event before proceeding to implementation
    - No code changes without documented research justification
 
 2. **Event Stream Maintenance**:
+
    - Log significant operations with standardized event format
    - Report blocking dependencies immediately to coordination system
-   - Update progress checkpoints as defined in orchestration plan  
+   - Update progress checkpoints as defined in orchestration plan
    - Signal completion with deliverable summary and metrics
 
 3. **Quality Assurance Compliance**:
+
    - Follow SOLID principles and architectural constraints
    - Verify domain boundaries are not violated
    - Test cross-service integration points where applicable
@@ -244,12 +265,14 @@ The Queen orchestrator handles all worker spawning automatically through the Tas
 **If protocol violations are detected:**
 
 1. **Self-Correction Process**:
+
    - Immediately identify and log the protocol violation
    - Complete all missing protocol steps before continuing
    - Update EVENTS.jsonl with correction actions taken
    - Resume task execution only after full compliance restored
 
 2. **Queen Intervention Triggers**:
+
    - Missing 2 consecutive event logging checkpoints
    - Research phase bypassed without documentation
    - Domain boundary violations detected
@@ -275,6 +298,7 @@ The Queen orchestrator handles all worker spawning automatically through the Tas
 ### 🔍 Real-time Session Monitoring
 
 **Queen Oversight Dashboard:**
+
 ```bash
 # Monitor active session progress
 tail -f Docs/hive-mind/sessions/{session_id}/EVENTS.jsonl
@@ -290,6 +314,7 @@ cat Docs/hive-mind/sessions/{session_id}/SESSION.json | jq '.orchestration_statu
 ```
 
 **Critical Event Types to Monitor:**
+
 - `worker_spawned` - Worker initialization events
 - `protocol_compliance_verified` - Startup protocol completion
 - `research_phase_complete` - Research-first enforcement compliance
@@ -302,6 +327,7 @@ cat Docs/hive-mind/sessions/{session_id}/SESSION.json | jq '.orchestration_statu
 ### ⚡ Token Efficiency & Performance Metrics
 
 **Session Performance Tracking:**
+
 - **Context Loading Efficiency**: Track memory bank context hits/misses
 - **Protocol Compliance Rate**: Measure startup protocol adherence (target: 100%)
 - **Cross-Worker Coordination Speed**: Average time to resolve blocking events
@@ -313,12 +339,14 @@ cat Docs/hive-mind/sessions/{session_id}/SESSION.json | jq '.orchestration_statu
 **Orchestration Success Metrics:**
 
 1. **Protocol Adherence KPIs**:
+
    - 100% workers complete initialization protocols
    - 0% research phase bypasses without documentation
    - <10 minute average response time for coordination requests
    - <5% protocol violation rate requiring Queen intervention
 
 2. **Delivery Quality Standards**:
+
    - All deliverables meet architectural constraints
    - Domain boundaries maintained with 0% violations
    - Cross-service integration points validated
@@ -333,6 +361,7 @@ cat Docs/hive-mind/sessions/{session_id}/SESSION.json | jq '.orchestration_statu
 ### 🚨 Automated Quality Assurance
 
 **Real-time Quality Checks:**
+
 - Workers write progress events to `EVENTS.jsonl` with standardized format
 - Workers create structured output files in `session_directory/workers/notes/`
 - Cross-worker coordination handled via event system with automatic dependency tracking
@@ -340,8 +369,9 @@ cat Docs/hive-mind/sessions/{session_id}/SESSION.json | jq '.orchestration_statu
 - Completed workers log completion events with deliverable metrics and quality indicators
 
 **Quality Gate Enforcement:**
+
 - Research phase verification before implementation begins
-- Architectural compliance checks at coordination checkpoints  
+- Architectural compliance checks at coordination checkpoints
 - Cross-service integration validation for multi-domain tasks
 - Protocol adherence verification throughout execution lifecycle
 
@@ -367,16 +397,19 @@ session_directory/
 ### Phase-by-Phase Execution with Protocol Enforcement
 
 1. **🚀 Summon Initiation**
+
    - You, the top-level agent, receive the `/summon-queen` command
    - Navigate to `.claude` directory for Pydantic AI execution
    - Validate command arguments and task complexity assessment
 
 2. **📝 Session Creation via Pydantic AI Scribe**
+
    - Execute Pydantic AI scribe with exact parameters for reliable session creation
    - Parse returned JSON to extract `session_id` and session metadata
    - Verify session directory structure creation and initial logging setup
 
 3. **👑 Strategic Orchestration via Pydantic AI Queen**
+
    - Execute Pydantic AI Queen with session context for intelligent task analysis
    - **Queen MUST complete ALL mandatory responsibilities:**
      - Protocol compliance self-check and system impact analysis
@@ -386,6 +419,7 @@ session_directory/
    - Verify QueenOrchestrationPlan generation with specific worker assignments
 
 4. **🛠️ Automatic Worker Deployment with Enhanced Protocol Compliance**
+
    - Queen automatically spawns Claude Worker agents using Task framework
    - **EVERY worker MUST execute mandatory initialization protocol:**
      - Protocol compliance verification and session integration
@@ -395,6 +429,7 @@ session_directory/
    - Verify all workers complete startup protocols before task execution
 
 5. **📊 Active Monitoring with Real-time Quality Assurance**
+
    - Workers coordinate through standardized event system with continuous protocol adherence
    - Queen maintains active oversight with real-time monitoring and protocol enforcement
    - Progress tracked via EVENTS.jsonl with specific event types and quality gates
@@ -409,6 +444,7 @@ session_directory/
 ### 🎪 Your Role as Orchestration Initiator
 
 **Your responsibilities are to:**
+
 - **Initiate the two-phase process correctly** (Scribe → Queen) with exact parameter passing
 - **Ensure protocol enforcement** by verifying Queen executes all mandatory responsibilities
 - **Monitor session health** through the established oversight dashboard commands
@@ -416,9 +452,10 @@ session_directory/
 - **Maintain architectural compliance** throughout the orchestration lifecycle
 
 **Critical Success Factors:**
+
 - Session ID continuity between Scribe and Queen phases
 - Protocol compliance verification at each major phase
-- Quality gate enforcement before phase transitions  
+- Quality gate enforcement before phase transitions
 - Architectural constraint maintenance throughout execution
 
 Your role is to initiate and oversee this comprehensive orchestration process, ensuring protocol adherence and quality standards are maintained throughout the entire lifecycle.

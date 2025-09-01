@@ -19,26 +19,28 @@ SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
 
 def run_queen(args):
     """Execute Queen orchestrator using BaseWorker pattern.
-    
+
     Args:
         args: Parsed command line arguments containing session, task, and model parameters
-    
+
     Returns:
         Exit code from Queen orchestrator execution
     """
     from queen.runner import QueenWorker
-    
+
     # Build task description with monitoring flag if needed
     task_description = args.task
     if args.monitor:
         task_description += " --monitor"
     if args.monitor_interval:
         task_description += f" --monitor-interval {args.monitor_interval}"
-    
+
     # Use BaseWorker pattern consistently
     worker = QueenWorker()
     try:
-        output = worker.run(args.session, task_description, args.model or "openai:o3-mini")
+        output = worker.run(
+            args.session, task_description, args.model or "google-gla:gemini-2.5-pro"
+        )
         print(f"✅ Queen orchestration completed: {worker.get_success_message(output)}")
         return 0
     except Exception as e:
@@ -49,7 +51,7 @@ def run_queen(args):
 def run_scribe(args):
     """Run Scribe agent using BaseWorker pattern consistently"""
     from scribe.runner import ScribeWorker
-    
+
     # Convert mode to task description format
     if args.mode == "create":
         if not args.task:
@@ -59,18 +61,18 @@ def run_scribe(args):
         session_id = ""  # Empty for session creation - will be generated
     elif args.mode == "synthesis":
         if not args.session:
-            print("❌ Error: --session required for synthesis mode") 
+            print("❌ Error: --session required for synthesis mode")
             return 1
         task_desc = f"synthesis for session {args.session}"
         session_id = args.session
     else:
         print(f"❌ Error: Unknown mode {args.mode}")
         return 1
-    
+
     # Use BaseWorker pattern consistently
     worker = ScribeWorker()
     try:
-        output = worker.run(session_id, task_desc, args.model or "openai:gpt-5")
+        output = worker.run(session_id, task_desc, args.model or "openai:gpt-5-mini")
         print(f"✅ Scribe operation completed: {worker.get_success_message(output)}")
         return 0
     except Exception as e:
@@ -89,7 +91,7 @@ def run_worker(worker_name: str, args):
         "--task",
         args.task,
         "--model",
-        args.model or "openai:gpt-5",
+        args.model or "google-gla:gemini-2.5-flash",
     ]
 
     return subprocess.run(cmd)

@@ -214,7 +214,7 @@ class BaseWorker(ABC, Generic[T]):
         )
         parser.add_argument("--session", required=True, help="Session ID")
         parser.add_argument("--task", required=True, help="Analysis task description")
-        parser.add_argument("--model", default="openai:gpt-5", help="AI model to use")
+        parser.add_argument("--model", default="google-gla:gemini-2.5-flash", help="AI model to use")
         return parser
 
     def run_cli_main(self) -> int:
