@@ -18,7 +18,7 @@ SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
 
 
 def run_queen(args):
-    """Execute Queen orchestrator with multi-worker coordination.
+    """Execute Queen orchestrator using BaseWorker pattern.
     
     Args:
         args: Parsed command line arguments containing session, task, and model parameters
@@ -26,24 +26,24 @@ def run_queen(args):
     Returns:
         Exit code from Queen orchestrator execution
     """
-    queen_runner = os.path.join(SCRIPT_DIR, "queen", "runner.py")
-    cmd = [
-        sys.executable,
-        queen_runner,
-        "--session",
-        args.session,
-        "--task",
-        args.task,
-        "--model",
-        args.model or "openai:gpt-4o",
-    ]
-
+    from queen.runner import QueenWorker
+    
+    # Build task description with monitoring flag if needed
+    task_description = args.task
     if args.monitor:
-        cmd.append("--monitor")
+        task_description += " --monitor"
     if args.monitor_interval:
-        cmd.extend(["--monitor-interval", str(args.monitor_interval)])
-
-    return subprocess.run(cmd)
+        task_description += f" --monitor-interval {args.monitor_interval}"
+    
+    # Use BaseWorker pattern consistently
+    worker = QueenWorker()
+    try:
+        output = worker.run(args.session, task_description, args.model or "openai:o3-mini")
+        print(f"✅ Queen orchestration completed: {worker.get_success_message(output)}")
+        return 0
+    except Exception as e:
+        print(f"❌ Queen orchestration failed: {e}")
+        return 1
 
 
 def run_scribe(args):
