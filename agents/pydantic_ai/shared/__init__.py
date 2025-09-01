@@ -12,6 +12,15 @@ from .tools import iso_now
 from .base_worker import BaseWorker
 from .base_agent import BaseAgentConfig
 
+# Import and enable Max subscription provider automatically
+from .max_subscription_provider import (
+    MaxSubscriptionProvider, 
+    enable_max_subscription_globally
+)
+
+# Enable Max subscription support on import
+enable_max_subscription_globally()
+
 __all__ = [
     # Models
     'WorkerOutput',
@@ -26,6 +35,9 @@ __all__ = [
     # Base Classes
     'BaseWorker',
     'BaseAgentConfig',
+    
+    # Max Subscription Support
+    'MaxSubscriptionProvider',
     
     # Utilities
     'iso_now'
