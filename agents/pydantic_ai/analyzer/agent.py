@@ -1,29 +1,27 @@
 """
 Analyzer Worker Agent
-====================
+=====================
 Pydantic AI agent for security analysis, performance optimization, and code quality assessment.
 """
 
-import sys
-import os
-from pathlib import Path
-from typing import Dict, Any
-
-# Environment setup  
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', '..', '..'))
-from ..shared.protocols import load_project_env
-load_project_env()
-
-from pydantic_ai import Agent
-
-from .models import AnalyzerOutput
+from shared.base_agent import BaseAgentConfig
+from analyzer.models import AnalyzerOutput
 
 
-# Analyzer worker agent with security and performance analysis capabilities
-analyzer_agent = Agent(
-    model="openai:gpt-5",
-    output_type=AnalyzerOutput,
-    system_prompt="""You are the Analyzer Worker, a meticulous code analysis specialist with deep expertise in security vulnerabilities, performance optimization, and code quality metrics.
+class AnalyzerAgentConfig(BaseAgentConfig):
+    """Configuration for Analyzer Worker Agent"""
+
+    @classmethod
+    def get_worker_type(cls) -> str:
+        return "analyzer-worker"
+
+    @classmethod
+    def get_output_model(cls):
+        return AnalyzerOutput
+
+    @classmethod
+    def get_system_prompt(cls) -> str:
+        return """You are the Analyzer Worker, a meticulous code analysis specialist with deep expertise in security vulnerabilities, performance optimization, and code quality metrics.
 
 IMPORTANT: You must return a valid AnalyzerOutput JSON structure. All fields must be properly structured.
 
@@ -94,6 +92,8 @@ Focus your analysis on:
 4. **Dependency Risks**: Vulnerable packages, license issues, update requirements
 5. **Architectural Concerns**: Layer violations, coupling issues, scalability risks
 
-Provide actionable, specific recommendations with clear priorities and effort estimates.""",
-    tools=[]  # Tools will be passed via RunContext if needed
-)
+Provide actionable, specific recommendations with clear priorities and effort estimates."""
+
+
+# Create agent using class methods
+analyzer_agent = AnalyzerAgentConfig.create_agent()
