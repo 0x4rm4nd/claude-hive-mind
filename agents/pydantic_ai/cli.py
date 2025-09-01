@@ -47,38 +47,35 @@ def run_queen(args):
 
 
 def run_scribe(args):
-    """Run Scribe agent using BaseWorker pattern"""
-    scribe_runner = os.path.join(SCRIPT_DIR, "scribe", "runner.py")
+    """Run Scribe agent using BaseWorker pattern consistently"""
+    from scribe.runner import ScribeWorker
     
     # Convert mode to task description format
     if args.mode == "create":
         if not args.task:
-            print("Error: --task required for create mode")
-            return subprocess.CompletedProcess([], 1)
+            print("❌ Error: --task required for create mode")
+            return 1
         task_desc = args.task
-        session_id = "temp-session-for-creation"  # Will be overridden by session creation
+        session_id = ""  # Empty for session creation - will be generated
     elif args.mode == "synthesis":
         if not args.session:
-            print("Error: --session required for synthesis mode") 
-            return subprocess.CompletedProcess([], 1)
+            print("❌ Error: --session required for synthesis mode") 
+            return 1
         task_desc = f"synthesis for session {args.session}"
         session_id = args.session
     else:
-        print(f"Error: Unknown mode {args.mode}")
-        return subprocess.CompletedProcess([], 1)
+        print(f"❌ Error: Unknown mode {args.mode}")
+        return 1
     
-    cmd = [
-        sys.executable,
-        scribe_runner,
-        "--session",
-        session_id,
-        "--task", 
-        task_desc,
-        "--model",
-        args.model or "openai:gpt-5",
-    ]
-
-    return subprocess.run(cmd)
+    # Use BaseWorker pattern consistently
+    worker = ScribeWorker()
+    try:
+        output = worker.run(session_id, task_desc, args.model or "openai:gpt-5")
+        print(f"✅ Scribe operation completed: {worker.get_success_message(output)}")
+        return 0
+    except Exception as e:
+        print(f"❌ Scribe operation failed: {e}")
+        return 1
 
 
 def run_worker(worker_name: str, args):
@@ -184,9 +181,9 @@ Examples:
 
     # Route to appropriate agent
     if args.agent == "queen":
-        return run_queen(args).returncode
+        return run_queen(args)
     elif args.agent == "scribe":
-        return run_scribe(args).returncode
+        return run_scribe(args)
     elif args.agent in [
         "analyzer",
         "architect",
