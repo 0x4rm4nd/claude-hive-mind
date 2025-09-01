@@ -50,19 +50,29 @@ class ScribeWorker(BaseWorker[ScribeOutput]):
         """Execute scribe analysis with session lifecycle management.
         
         Args:
-            session_id: Session identifier for tracking (ignored for creation)
+            session_id: Session identifier for tracking (empty for session creation)
             task_description: Task description (determines mode - create vs synthesis)
             model: AI model to use for analysis execution
             
         Returns:
             ScribeOutput: Unified scribe output for both modes
         """
-        # Create worker config at runtime with actual values
-        self.worker_config = ScribeAgentConfig.create_worker_config(
-            session_id, task_description
-        )
+        # Check if this is session creation mode
+        is_create_mode = not session_id or "synthesis" not in task_description.lower()
         
-        return self.run_analysis(session_id, task_description, model)
+        if is_create_mode:
+            # For create mode, generate session_id first, then create config
+            actual_session_id, complexity_level = self._generate_ai_session_id(task_description, model)
+            self.worker_config = ScribeAgentConfig.create_worker_config(
+                actual_session_id, task_description
+            )
+            return self.run_analysis(actual_session_id, task_description, model)
+        else:
+            # For synthesis mode, use provided session_id
+            self.worker_config = ScribeAgentConfig.create_worker_config(
+                session_id, task_description
+            )
+            return self.run_analysis(session_id, task_description, model)
     
     def run_analysis(self, session_id: str, task_description: str, model: str) -> ScribeOutput:
         """
