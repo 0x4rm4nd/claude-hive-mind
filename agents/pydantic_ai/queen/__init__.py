@@ -5,11 +5,12 @@ Intelligent task orchestration with continuous monitoring.
 """
 
 from .agent import queen_agent
-from .models import QueenOrchestrationPlan, WorkerAssignment, CodebaseInsight
+from .models import QueenOrchestrationPlan, WorkerAssignment, CodebaseInsight, QueenOutput
 
 __all__ = [
     'queen_agent',
     'QueenOrchestrationPlan', 
     'WorkerAssignment',
-    'CodebaseInsight'
+    'CodebaseInsight',
+    'QueenOutput'
 ]

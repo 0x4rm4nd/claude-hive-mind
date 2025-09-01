@@ -7,6 +7,8 @@ Pydantic models specific to Queen orchestrator functionality.
 from typing import List, Dict, Any, Literal
 from pydantic import BaseModel, Field
 
+from ..shared.models import WorkerOutput
+
 
 class WorkerAssignment(BaseModel):
     """Individual worker assignment with strategic reasoning"""
@@ -101,4 +103,24 @@ class QueenOrchestrationPlan(BaseModel):
     # Task execution plan for main Claude agent
     task_execution_plan: List[Dict[str, Any]] = Field(
         default_factory=list, description="Claude Code Task parameters for spawning workers"
+    )
+
+
+class QueenOutput(WorkerOutput):
+    """Queen orchestrator unified output extending WorkerOutput"""
+    
+    orchestration_plan: QueenOrchestrationPlan = Field(
+        description="Generated orchestration plan with strategic analysis"
+    )
+    workers_spawned: List[str] = Field(
+        default_factory=list, description="Workers successfully spawned"
+    )
+    coordination_status: Literal["planned", "active", "completed", "failed"] = Field(
+        description="Overall coordination status"
+    )
+    monitoring_active: bool = Field(
+        default=False, description="Whether monitoring is active"
+    )
+    session_path: str = Field(
+        description="Session directory path for coordination files"
     )

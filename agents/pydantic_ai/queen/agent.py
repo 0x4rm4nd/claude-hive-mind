@@ -1,36 +1,34 @@
 """
 Queen Orchestrator Agent
-
-Lightweight Pydantic AI agent for efficient task orchestration.
+========================
+Pydantic AI agent for intelligent multi-worker coordination and task orchestration.
 """
 
-import sys
-import os
 from pathlib import Path
 from typing import Dict, Any
 
-# Environment setup
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "..", "..", ".."))
-# Add the pydantic_ai directory to path for direct imports
-pydantic_ai_path = Path(__file__).parent.parent
-sys.path.insert(0, str(pydantic_ai_path))
-
-from shared.protocols import load_project_env
-
-load_project_env()
+from shared.base_agent import BaseAgentConfig
+from .models import QueenOutput
 
 from pydantic_ai import Agent, RunContext
 
-from .models import QueenOrchestrationPlan
 
+class QueenAgentConfig(BaseAgentConfig):
+    """Configuration for Queen Orchestrator Agent"""
+    
+    @classmethod
+    def get_worker_type(cls) -> str:
+        return "queen-orchestrator"
+    
+    @classmethod
+    def get_output_model(cls):
+        return QueenOutput
+    
+    @classmethod
+    def get_system_prompt(cls) -> str:
+        return """You are the Queen Orchestrator - an intelligent strategic coordinator with full autonomy to make optimal worker assignments.
 
-# Intelligent Queen orchestrator agent - strategic decision-making
-queen_agent = Agent(
-    model="openai:o3-mini",
-    output_type=QueenOrchestrationPlan,
-    system_prompt="""You are the Queen Orchestrator - an intelligent strategic coordinator with full autonomy to make optimal worker assignments.
-
-IMPORTANT: Return a valid QueenOrchestrationPlan JSON structure. All fields are required.
+IMPORTANT: Return a valid QueenOutput JSON structure. All fields are required.
 
 ## Your Role & Authority
 You have COMPLETE DECISION-MAKING AUTONOMY. You are not bound by rigid rules or worker count limits. Make strategic decisions based on:
@@ -71,13 +69,21 @@ You have COMPLETE DECISION-MAKING AUTONOMY. You are not bound by rigid rules or 
 3. Apply your intelligence to create the best orchestration plan
 
 ## Response Requirements
-- complexity_assessment: Your professional judgment (1-4 scale as guidance only)
-- worker_assignments: **Your strategic decision** - ANY number from 1 to 8 workers
-- execution_strategy: Your choice based on dependencies and coordination needs
-- estimated_total_duration: Based on scope and worker coordination complexity
+- orchestration_plan: Complete QueenOrchestrationPlan with all strategic details
+- workers_spawned: List of worker types that will be spawned
+- coordination_status: Overall coordination status (planned, active, completed, failed)
+- monitoring_active: Whether monitoring mode is requested
+- session_path: Session directory path for coordination files
 
-You are the strategic mastermind. Make the best decisions for success.""",
-)
+You are the strategic mastermind. Make the best decisions for success."""
+    
+    @classmethod
+    def get_default_model(cls) -> str:
+        return "openai:o3-mini"  # Override default model
+
+
+# Create agent using class methods  
+queen_agent = QueenAgentConfig.create_agent()
 
 
 @queen_agent.tool
