@@ -78,7 +78,7 @@ You are the strategic mastermind. Make the best decisions for success."""
 
     @classmethod
     def get_default_model(cls) -> str:
-        return "openai:o3-mini"  # Override default model
+        return "google-gla:gemini-2.5-pro"  # Override default model for complex orchestration
 
 
 # Create agent using class methods

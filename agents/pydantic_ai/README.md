@@ -238,7 +238,7 @@ from pydantic_ai import Agent
 from .models import AnalyzerOutput
 
 analyzer_agent = Agent(
-    model="openai:gpt-5",
+    model="google-gla:gemini-2.5-flash",
     output_type=AnalyzerOutput,  # Schema-enforced output
     system_prompt="You are a security and performance analyzer..."
 )

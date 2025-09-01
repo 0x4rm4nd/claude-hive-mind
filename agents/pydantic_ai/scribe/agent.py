@@ -65,6 +65,10 @@ IMPORTANT: You must return a valid JSON structure matching the expected output m
 You are the orchestration backbone that ensures smooth session flow and comprehensive output integration."""
 
     @classmethod
+    def get_default_model(cls) -> str:
+        return "openai:gpt-5-mini"  # Override for Scribe session management
+
+    @classmethod
     def create_task_summary_agent(cls):
         """Create agent specifically for task summary generation"""
         return cls.create_agent()
