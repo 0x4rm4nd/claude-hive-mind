@@ -42,7 +42,7 @@ This Claude agent serves as a wrapper that spawns and manages the Pydantic AI de
 This agent must spawn the Pydantic AI designer worker using the proper module execution:
 
 ```bash
-python -m agents.pydantic_ai.designer.runner --session {session_id} --task "{task_description}" --model openai:gpt-5
+python -m agents.pydantic_ai.designer.runner --session {session_id} --task "{task_description}" --model google-gla:gemini-2.5-flash
 ```
 
 ### Task Execution Pattern

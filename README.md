@@ -124,7 +124,8 @@ Built-in protocol compliance through Python code:
 ## 🔗 References
 
 - **Pydantic AI KnownModelName**: https://ai.pydantic.dev/api/models/base/#pydantic_ai.models.KnownModelName
-  - Official documentation for supported model formats (e.g., `openai:gpt-5`, `google-gla:gemini-2.5-flash`)
+  - Official documentation for supported model formats
+  - **Strategic Model Allocation**: Queen (`gemini-2.5-pro`), Workers (`gemini-2.5-flash`), Scribe (`gpt-5-mini`)
 
 ---
 

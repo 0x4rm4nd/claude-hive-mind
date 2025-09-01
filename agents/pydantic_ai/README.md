@@ -215,7 +215,7 @@ log_event(session_id, "orchestration_completed", worker, {...})  # Guaranteed
 # Real-time worker monitoring loop
 async def monitor_worker_progress(session_id, worker_assignments, interval=30):
     while not all_workers_complete:
-        # Check STATE.json for worker status
+        # Check EVENTS.jsonl for worker status
         # Detect blocked/failed workers
         # Log periodic heartbeats
         await asyncio.sleep(interval)
