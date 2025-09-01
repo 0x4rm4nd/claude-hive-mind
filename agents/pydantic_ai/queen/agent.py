@@ -4,26 +4,25 @@ Queen Orchestrator Agent
 Pydantic AI agent for intelligent multi-worker coordination and task orchestration.
 """
 
-from pathlib import Path
 from typing import Dict, Any
 
 from shared.base_agent import BaseAgentConfig
 from .models import QueenOutput
 
-from pydantic_ai import Agent, RunContext
+from pydantic_ai import RunContext
 
 
 class QueenAgentConfig(BaseAgentConfig):
     """Configuration for Queen Orchestrator Agent"""
-    
+
     @classmethod
     def get_worker_type(cls) -> str:
         return "queen-orchestrator"
-    
+
     @classmethod
     def get_output_model(cls):
         return QueenOutput
-    
+
     @classmethod
     def get_system_prompt(cls) -> str:
         return """You are the Queen Orchestrator - an intelligent strategic coordinator with full autonomy to make optimal worker assignments.
@@ -76,13 +75,13 @@ You have COMPLETE DECISION-MAKING AUTONOMY. You are not bound by rigid rules or 
 - session_path: Session directory path for coordination files
 
 You are the strategic mastermind. Make the best decisions for success."""
-    
+
     @classmethod
     def get_default_model(cls) -> str:
         return "openai:o3-mini"  # Override default model
 
 
-# Create agent using class methods  
+# Create agent using class methods
 queen_agent = QueenAgentConfig.create_agent()
 
 
