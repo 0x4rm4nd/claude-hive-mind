@@ -1,8 +1,11 @@
 #!/usr/bin/env python3
 """
 Pydantic AI Agents CLI
-=====================
-Main CLI entry point that routes to different agents.
+======================
+Main command-line interface for the Pydantic AI agent framework.
+
+Provides unified access to all agents and workers through a single entry point
+with standardized argument handling and execution routing.
 """
 
 import argparse
@@ -15,7 +18,14 @@ SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
 
 
 def run_queen(args):
-    """Run Queen orchestrator"""
+    """Execute Queen orchestrator with multi-worker coordination.
+    
+    Args:
+        args: Parsed command line arguments containing session, task, and model parameters
+    
+    Returns:
+        Exit code from Queen orchestrator execution
+    """
     queen_runner = os.path.join(SCRIPT_DIR, "queen", "runner.py")
     cmd = [
         sys.executable,
@@ -37,20 +47,36 @@ def run_queen(args):
 
 
 def run_scribe(args):
-    """Run Scribe agent"""
+    """Run Scribe agent using BaseWorker pattern"""
     scribe_runner = os.path.join(SCRIPT_DIR, "scribe", "runner.py")
+    
+    # Convert mode to task description format
+    if args.mode == "create":
+        if not args.task:
+            print("Error: --task required for create mode")
+            return subprocess.CompletedProcess([], 1)
+        task_desc = args.task
+        session_id = "temp-session-for-creation"  # Will be overridden by session creation
+    elif args.mode == "synthesis":
+        if not args.session:
+            print("Error: --session required for synthesis mode") 
+            return subprocess.CompletedProcess([], 1)
+        task_desc = f"synthesis for session {args.session}"
+        session_id = args.session
+    else:
+        print(f"Error: Unknown mode {args.mode}")
+        return subprocess.CompletedProcess([], 1)
+    
     cmd = [
         sys.executable,
         scribe_runner,
-        args.mode,
+        "--session",
+        session_id,
+        "--task", 
+        task_desc,
         "--model",
         args.model or "openai:gpt-5",
     ]
-
-    if args.session:
-        cmd.extend(["--session", args.session])
-    if args.task:
-        cmd.extend(["--task", args.task])
 
     return subprocess.run(cmd)
 
