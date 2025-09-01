@@ -313,6 +313,30 @@ This represents the evolution from **instruction-dependent AI** to **framework-e
 
 ---
 
+## 🎯 **Max Subscription Integration**
+
+All agents automatically support **zero-cost operation** via Claude Code's Max subscription through custom model names:
+
+```python
+# Standard usage - routes through Claude Code Max subscription
+from pydantic_ai import Agent
+
+agent = Agent('custom:max-subscription')      # Default: Sonnet 4
+agent = Agent('custom:claude-opus-4')         # Opus 4 model
+agent = Agent('custom:claude-sonnet-4')       # Sonnet 4 model
+agent = Agent('custom:claude-3-7-sonnet')     # Sonnet 3.7 model
+```
+
+**Key Benefits**:
+- ✅ **Zero API costs** - Uses Claude Code subscription instead of direct API calls
+- ✅ **Automatic activation** - Works immediately after importing shared module
+- ✅ **Seamless integration** - Drop-in replacement for standard model names
+- ✅ **Full model support** - Access to latest Claude models via Max subscription
+
+**Implementation**: The `MaxSubscriptionProvider` automatically intercepts `custom:*` model requests and routes them through Claude Code's task execution system with proper model mapping and response formatting.
+
+---
+
 ## 🔧 **Worker Agents** (Specialized Implementation Agents)
 
 ### 🔍 **Analyzer Worker** (`analyzer/`)
