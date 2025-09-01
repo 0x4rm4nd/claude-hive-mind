@@ -29,10 +29,10 @@ class LoggingProtocol(BaseProtocol):
 
         event = {
             "timestamp": timestamp,
+            "level": level,
             "type": event_type,
             "agent": self.config.agent_name or "system",
             "details": details,
-            "level": level,
         }
 
         # Use unified append-safe method - NEVER overwrites

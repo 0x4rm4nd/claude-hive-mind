@@ -1,15 +1,13 @@
 """
 Shared Models for Pydantic AI Agents
 ====================================
+Common model definitions shared across all agents and workers.
 
-This module contains ONLY models that are truly shared across multiple agents.
-Agent-specific models belong in their respective agent directories:
-- Queen-specific models: queen/models.py
-- Scribe-specific models: scribe/models.py  
-- Worker-specific models: [worker]/models.py
+Contains base models and type definitions used by multiple agents.
+Agent-specific models belong in their respective directories.
 """
 
-from typing import List, Dict, Any, Literal
+from typing import List, Dict, Any, Literal, Optional
 from pydantic import BaseModel, Field
 
 
@@ -60,4 +58,10 @@ class WorkerOutput(BaseModel):
     notes_markdown: str = Field(
         default="", 
         description="Full notes content for workers/notes/{worker}_notes.md"
+    )
+    
+    # Worker configuration embedded in output (replaces STATE.json worker_configs)
+    config: Optional[Dict[str, Any]] = Field(
+        default=None,
+        description="Worker configuration including tag_access, escalation_timeout, etc."
     )

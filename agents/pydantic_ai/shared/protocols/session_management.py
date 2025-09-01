@@ -122,9 +122,8 @@ class SessionManagement:
         session_path = SessionManagement.get_session_path(session_id)
 
         required_files = [
-            "STATE.json",
             "EVENTS.jsonl",
-            "BACKLOG.jsonl",
+            "BACKLOG.jsonl", 
             "DEBUG.jsonl",
             "SESSION.md",
         ]
@@ -210,54 +209,86 @@ class SessionManagement:
             return False
 
     @staticmethod
-    def update_state_atomically(session_id: str, updates: Dict[str, Any]) -> bool:
+    def derive_session_state_from_events(session_id: str) -> Dict[str, Any]:
         """
-        Atomically update STATE.json by reading, merging, and writing back.
-        Preserves existing data and only updates specified fields.
+        Derive current session state from EVENTS.jsonl event stream.
+        This replaces STATE.json with event sourcing approach.
 
         Args:
             session_id: Session identifier
-            updates: Dictionary of updates to merge into state
 
         Returns:
-            True if update successful
+            Derived state dictionary
         """
         session_path = SessionManagement.get_session_path(session_id)
-        state_file = os.path.join(session_path, "STATE.json")
+        events_file = os.path.join(session_path, "EVENTS.jsonl")
+
+        state = {
+            "session_id": session_id,
+            "workers": {},
+            "coordination": {
+                "status": "unknown",
+                "workers_spawned": [],
+                "workers_completed": [],
+                "workers_failed": []
+            },
+            "last_event_time": None,
+            "event_count": 0
+        }
 
         try:
-            # Step 1: Read existing state
-            with open(state_file, "r") as f:
-                current_state = json.load(f)
+            with open(events_file, "r") as f:
+                for line in f:
+                    if line.strip():
+                        event = json.loads(line.strip())
+                        state["event_count"] += 1
+                        state["last_event_time"] = event.get("timestamp")
+                        
+                        # Process different event types
+                        event_type = event.get("type", "")
+                        agent = event.get("agent", "")
+                        details = event.get("details", {})
+                        
+                        if event_type == "worker_spawned":
+                            if agent not in state["coordination"]["workers_spawned"]:
+                                state["coordination"]["workers_spawned"].append(agent)
+                                state["workers"][agent] = {
+                                    "status": "spawned",
+                                    "spawn_time": event.get("timestamp"),
+                                    "task": details.get("task", ""),
+                                    "capabilities": details.get("capabilities", [])
+                                }
+                        
+                        elif event_type == "worker_completed":
+                            if agent not in state["coordination"]["workers_completed"]:
+                                state["coordination"]["workers_completed"].append(agent)
+                                if agent in state["workers"]:
+                                    state["workers"][agent]["status"] = "completed"
+                                    state["workers"][agent]["completion_time"] = event.get("timestamp")
+                        
+                        elif event_type == "analysis_started":
+                            if agent in state["workers"]:
+                                state["workers"][agent]["status"] = "in_progress"
+                                state["workers"][agent]["analysis_start"] = event.get("timestamp")
 
-            # Step 2: Deep merge updates into current state
-            merged_state = SessionManagement._deep_merge(current_state, updates)
-
-            # Step 3: Add update metadata
-            merged_state["last_updated"] = datetime.utcnow().strftime(
-                "%Y-%m-%dT%H:%M:%SZ"
-            )
-            if "update_count" in merged_state:
-                merged_state["update_count"] += 1
+            # Determine overall coordination status
+            total_workers = len(state["coordination"]["workers_spawned"])
+            completed_workers = len(state["coordination"]["workers_completed"])
+            
+            if total_workers == 0:
+                state["coordination"]["status"] = "no_workers"
+            elif completed_workers == total_workers:
+                state["coordination"]["status"] = "completed"
+            elif completed_workers > 0:
+                state["coordination"]["status"] = "in_progress"
             else:
-                merged_state["update_count"] = 1
+                state["coordination"]["status"] = "starting"
 
-            # Step 4: Write back atomically (using temp file + rename for atomicity)
-            temp_file = state_file + ".tmp"
-            with open(temp_file, "w") as f:
-                json.dump(merged_state, f, indent=2)
-
-            # Atomic rename
-            os.replace(temp_file, state_file)
-            return True
+            return state
 
         except Exception as e:
-            print(f"Failed to update STATE.json atomically: {e}")
-            # Clean up temp file if exists
-            temp_file = state_file + ".tmp"
-            if os.path.exists(temp_file):
-                os.remove(temp_file)
-            return False
+            print(f"Failed to derive state from events: {e}")
+            return state
 
     @staticmethod
     def _deep_merge(base: Dict[str, Any], updates: Dict[str, Any]) -> Dict[str, Any]:
@@ -287,26 +318,6 @@ class SessionManagement:
 
         return result
 
-    @staticmethod
-    def read_state(session_id: str) -> Optional[Dict[str, Any]]:
-        """
-        Read current session state.
-
-        Args:
-            session_id: Session identifier
-
-        Returns:
-            State dictionary or None if error
-        """
-        session_path = SessionManagement.get_session_path(session_id)
-        state_file = os.path.join(session_path, "STATE.json")
-
-        try:
-            with open(state_file, "r") as f:
-                return json.load(f)
-        except Exception as e:
-            print(f"Failed to read STATE.json: {e}")
-            return None
 
     @staticmethod
     def validate_session_path(
