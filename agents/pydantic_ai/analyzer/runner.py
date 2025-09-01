@@ -1,131 +1,63 @@
 """
 Analyzer Worker Runner
-=====================
-Execution script for analyzer worker with protocol compliance.
+======================
+Execution runner for the Analyzer Worker - provides security, performance, and code quality analysis.
 """
 
-import argparse
-import json
-from datetime import datetime
+from typing import Dict, Any
 from pathlib import Path
-from typing import List, Dict, Any
 
-import sys
-import os
-
-# Environment setup
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "..", ".."))
-
-from ..shared.protocols import (
-    SessionManagement,
-    LoggingProtocol,
-    ProtocolConfig,
-    WorkerPromptProtocol,
-)
-
-from .models import AnalyzerOutput
-from .agent import analyzer_agent
-from ..shared.tools import iso_now
+from shared.base_worker import BaseWorker
+from analyzer.models import AnalyzerOutput
+from analyzer.agent import analyzer_agent, AnalyzerAgentConfig
 
 
-def log_event(session_id: str, event_type: str, agent: str, details: Any):
-    """Log event using protocol infrastructure"""
-    try:
-        cfg = ProtocolConfig({"session_id": session_id, "agent_name": agent})
-        logger = LoggingProtocol(cfg)
-        logger.log_event(event_type, details)
-    except Exception as e:
-        print(f"Logging failed: {e}")
+class AnalyzerWorker(BaseWorker[AnalyzerOutput]):
+    """
+    Security, performance, and code quality analysis worker.
 
+    Analyzes codebases for vulnerabilities, performance bottlenecks, and quality metrics.
+    Provides detailed findings with actionable recommendations and severity ratings.
+    """
 
-def log_debug(session_id: str, message: str, details: Any, level: str = "DEBUG"):
-    """Log debug message using protocol infrastructure"""
-    try:
-        cfg = ProtocolConfig(
-            {"session_id": session_id, "agent_name": "analyzer-worker"}
-        )
-        logger = LoggingProtocol(cfg)
-        logger.log_debug(message, details, level)
-    except Exception as e:
-        print(f"Debug logging failed: {e}")
-
-
-def update_session_state(session_id: str, state_update: Dict[str, Any]):
-    """Update session state using protocol infrastructure"""
-    try:
-        SessionManagement.update_state_atomically(session_id, state_update)
-        log_debug(
-            session_id, "Session state updated", {"keys": list(state_update.keys())}
-        )
-    except Exception as e:
-        log_debug(session_id, "Session state update failed", {"error": str(e)}, "ERROR")
-
-
-def run_analyzer_analysis(
-    session_id: str, task_description: str, model: str
-) -> AnalyzerOutput:
-    """Run analyzer worker with AI analysis"""
-    worker = "analyzer-worker"
-    timestamp = iso_now()
-
-    # Validate session exists using protocol infrastructure
-    try:
-        if not SessionManagement.ensure_session_exists(session_id):
-            raise ValueError(f"Session {session_id} does not exist or is invalid")
-        log_debug(
-            session_id, "Session validation successful", {"session_id": session_id}
-        )
-    except Exception as e:
-        log_debug(
-            session_id,
-            "Session validation failed",
-            {"error": str(e), "session_id": session_id},
+    def __init__(self):
+        super().__init__(
+            worker_type="analyzer-worker",
+            worker_config=None,
+            output_model=AnalyzerOutput,
         )
 
-    # Log worker spawn
-    log_event(
-        session_id,
-        "worker_spawned",
-        worker,
-        {
-            "task": task_description,
-            "model": model,
-            "timestamp": timestamp,
-            "capabilities": [
-                "security_analysis",
-                "performance_optimization",
-                "code_quality_assessment",
-                "dependency_analysis",
-                "static_analysis",
-            ],
-        },
-    )
+    def run(self, session_id: str, task_description: str, model: str) -> AnalyzerOutput:
+        """Execute analysis with comprehensive security, performance, and quality assessment.
 
-    # Update session state
-    update_session_state(
-        session_id,
-        {
-            f"{worker}_status": "running",
-            f"{worker}_started": timestamp,
-            f"{worker}_task": task_description,
-        },
-    )
+        Args:
+            session_id: Session identifier for tracking analysis
+            task_description: Specific analysis requirements and focus areas
+            model: AI model to use for analysis execution
 
-    try:
-        # Log analysis started event for behavior tracking
-        log_event(
-            session_id,
-            "analysis_started",
-            worker,
-            {
-                "task": task_description,
-                "analysis_type": "security_performance_quality",
-                "timestamp": timestamp,
-            },
+        Returns:
+            AnalyzerOutput: Structured analysis results with findings and recommendations
+        """
+        # Create worker config at runtime with actual values
+        self.worker_config = AnalyzerAgentConfig.create_worker_config(
+            session_id, task_description
         )
+        return self.run_analysis(session_id, task_description, model)
 
-        # Execute analyzer agent
-        result = analyzer_agent.run_sync(
+    def execute_ai_analysis(
+        self, session_id: str, task_description: str, model: str
+    ) -> Any:
+        """Execute AI-powered security, performance, and quality analysis.
+
+        Args:
+            session_id: Session identifier for analysis tracking
+            task_description: Detailed analysis requirements
+            model: AI model for analysis execution
+
+        Returns:
+            Analysis results from AI agent processing
+        """
+        return analyzer_agent.run_sync(
             f"""Analyze the codebase for security vulnerabilities, performance issues, and code quality problems.
 
 Task: {task_description}
@@ -142,115 +74,94 @@ Provide specific, actionable findings with clear priorities and effort estimates
             model=model,
         )
 
-        output: AnalyzerOutput = result.output
+    def get_file_prefix(self) -> str:
+        """Return file prefix for analysis output files.
 
-        # Framework-enforced output validation ensures structure
-        if not output.worker:
-            output.worker = worker
-        if not output.session_id:
-            output.session_id = session_id
-        if not output.timestamp:
-            output.timestamp = timestamp
+        Returns:
+            File prefix for analyzer output files
+        """
+        return "analyzer"
 
+    def get_worker_display_name(self) -> str:
+        """Return human-readable name for CLI display.
 
-        # Create analysis file using protocol infrastructure
-        create_analyzer_files(session_id, output)
+        Returns:
+            Display name for the analyzer worker
+        """
+        return "Analyzer Worker"
 
-        # Update session state to completed
-        update_session_state(
-            session_id,
-            {
-                f"{worker}_status": "completed",
-                f"{worker}_completed": timestamp,
-                f"{worker}_security_score": output.security_score,
-                f"{worker}_performance_score": output.performance_score,
-                f"{worker}_quality_score": output.quality_score,
-            },
-        )
+    def get_worker_description(self) -> str:
+        """Return description for CLI help and documentation.
 
-        # Log completion
-        log_event(
-            session_id,
-            "worker_completed",
-            worker,
-            {
-                "duration": "calculated",
-                "security_findings_count": len(output.security_findings),
-                "performance_issues_count": len(output.performance_issues),
-                "quality_metrics_count": len(output.quality_metrics),
-                "status": output.status,
-            },
-        )
+        Returns:
+            Brief description of analyzer capabilities
+        """
+        return "Security and Performance Analysis"
 
-        return output
+    def get_analysis_event_details(self, task_description: str) -> Dict[str, Any]:
+        """Return event details when analysis starts.
 
-    except Exception as e:
-        log_debug(
-            session_id,
-            "Analyzer analysis failed",
-            {"error": str(e), "task": task_description},
-        )
+        Args:
+            task_description: Analysis task description
 
-        # Update session state to failed
-        update_session_state(
-            session_id,
-            {
-                f"{worker}_status": "failed",
-                f"{worker}_error": str(e),
-                f"{worker}_failed": timestamp,
-            },
-        )
+        Returns:
+            Event details for analysis started logging
+        """
+        return {
+            "task": task_description,
+            "analysis_type": "security_performance_quality",
+        }
 
+    def get_completion_event_details(self, output: AnalyzerOutput) -> Dict[str, Any]:
+        """Return event details when analysis completes.
 
-        raise
+        Args:
+            output: Analysis output with findings and metrics
 
+        Returns:
+            Event details for analysis completion logging
+        """
+        return {
+            "duration": "calculated",
+            "security_findings_count": len(output.security_findings),
+            "performance_issues_count": len(output.performance_issues),
+            "quality_metrics_count": len(output.quality_metrics),
+            "status": output.status,
+        }
 
-def create_analyzer_files(session_id: str, output: AnalyzerOutput):
-    """Create analyzer output files using protocol infrastructure"""
-    try:
-        session_path = SessionManagement.get_session_path(session_id)
-        notes_dir = session_path / "workers" / "notes"
-        notes_dir.mkdir(parents=True, exist_ok=True)
+    def get_success_message(self, output: AnalyzerOutput) -> str:
+        """Return success message with analysis summary.
 
-        # Create analyzer notes file if content provided
-        if output.notes_markdown:
-            notes_file = notes_dir / "analyzer_notes.md"
-            notes_file.write_text(output.notes_markdown)
-            log_debug(
-                session_id, "Created analyzer notes file", {"path": str(notes_file)}
-            )
+        Args:
+            output: Analysis output with scores and findings
 
-        # Create structured output JSON
-        output_file = notes_dir / "analyzer_output.json"
-        output_file.write_text(output.model_dump_json(indent=2))
-        log_debug(
-            session_id, "Created analyzer output JSON", {"path": str(output_file)}
-        )
+        Returns:
+            Success message with key analysis metrics
+        """
+        return f"Analysis completed successfully. Security score: {output.security_score}, Performance score: {output.performance_score}, Quality score: {output.quality_score}"
 
-    except Exception as e:
-        log_debug(session_id, "File creation failed", {"error": str(e)}, "ERROR")
+    def create_worker_specific_files(
+        self, session_id: str, output: AnalyzerOutput, session_path: Path
+    ) -> None:
+        """Create additional analyzer-specific output files.
+
+        Args:
+            session_id: Session identifier
+            output: Analysis output data
+            session_path: Path to session directory
+        """
+        # Analyzer worker uses standard file creation - no additional files needed
+        pass
 
 
 def main():
-    """CLI entry point for analyzer worker"""
-    parser = argparse.ArgumentParser(
-        description="Analyzer Worker - Security and Performance Analysis"
-    )
-    parser.add_argument("--session", required=True, help="Session ID")
-    parser.add_argument("--task", required=True, help="Analysis task description")
-    parser.add_argument("--model", default="openai:gpt-5", help="AI model to use")
+    """CLI entry point for analyzer worker execution.
 
-    args = parser.parse_args()
-
-    try:
-        output = run_analyzer_analysis(args.session, args.task, args.model)
-        print(
-            f"Analysis completed successfully. Security score: {output.security_score}, Performance score: {output.performance_score}, Quality score: {output.quality_score}"
-        )
-        return 0
-    except Exception as e:
-        print(f"Analyzer failed: {e}")
-        return 1
+    Returns:
+        Exit code from worker execution
+    """
+    worker = AnalyzerWorker()
+    return worker.run_cli_main()
 
 
 if __name__ == "__main__":

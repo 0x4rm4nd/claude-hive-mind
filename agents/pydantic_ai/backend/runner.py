@@ -1,274 +1,170 @@
 """
 Backend Worker Runner
-====================
-Execution script for backend worker with protocol compliance.
+=====================
+Execution runner for the Backend Worker - provides API development and database design analysis.
 """
 
-import argparse
-import json
-from datetime import datetime
+from typing import Dict, Any
 from pathlib import Path
-from typing import List, Dict, Any
 
-import sys
-import os
-
-# Environment setup
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "..", ".."))
-
-from ..shared.protocols import (
-    SessionManagement,
-    LoggingProtocol,
-    ProtocolConfig,
-    WorkerPromptProtocol,
-)
-
-from .models import BackendOutput
-from .agent import backend_agent
-from ..shared.tools import iso_now
+from shared.base_worker import BaseWorker
+from backend.models import BackendOutput
+from backend.agent import backend_agent, BackendAgentConfig
 
 
-def log_event(session_id: str, event_type: str, agent: str, details: Any):
-    """Log event using protocol infrastructure"""
-    try:
-        cfg = ProtocolConfig({"session_id": session_id, "agent_name": agent})
-        logger = LoggingProtocol(cfg)
-        logger.log_event(event_type, details)
-    except Exception as e:
-        print(f"Logging failed: {e}")
+class BackendWorker(BaseWorker[BackendOutput]):
+    """
+    Backend API development and database design worker.
+    
+    Provides comprehensive analysis for API design, database schema, business logic,
+    security implementation, and performance optimization guidance.
+    """
 
-
-def log_debug(session_id: str, message: str, details: Any, level: str = "DEBUG"):
-    """Log debug message using protocol infrastructure"""
-    try:
-        cfg = ProtocolConfig({"session_id": session_id, "agent_name": "backend-worker"})
-        logger = LoggingProtocol(cfg)
-        logger.log_debug(message, details, level)
-    except Exception as e:
-        print(f"Debug logging failed: {e}")
-
-
-def update_session_state(session_id: str, state_update: Dict[str, Any]):
-    """Update session state using protocol infrastructure"""
-    try:
-        SessionManagement.update_state_atomically(session_id, state_update)
-        log_debug(
-            session_id, "Session state updated", {"keys": list(state_update.keys())}
-        )
-    except Exception as e:
-        log_debug(session_id, "Session state update failed", {"error": str(e)}, "ERROR")
-
-
-def run_backend_implementation(
-    session_id: str, task_description: str, model: str
-) -> BackendOutput:
-    """Run backend worker with AI implementation"""
-    worker = "backend-worker"
-    timestamp = iso_now()
-
-    # Validate session exists using protocol infrastructure
-    try:
-        if not SessionManagement.ensure_session_exists(session_id):
-            raise ValueError(f"Session {session_id} does not exist or is invalid")
-        log_debug(
-            session_id, "Session validation successful", {"session_id": session_id}
-        )
-    except Exception as e:
-        log_debug(
-            session_id,
-            "Session validation failed",
-            {"error": str(e), "session_id": session_id},
+    def __init__(self):
+        super().__init__(
+            worker_type="backend-worker",
+            worker_config=None,
+            output_model=BackendOutput,
         )
 
-    # Log worker spawn
-    log_event(
-        session_id,
-        "worker_spawned",
-        worker,
-        {
-            "task": task_description,
-            "model": model,
-            "timestamp": timestamp,
-            "capabilities": [
-                "architecture_analysis",
-                "api_development",
-                "database_optimization",
-                "system_optimization", 
-                "scalability_assessment",
-            ],
-        },
-    )
-
-    # Update session state
-    update_session_state(
-        session_id,
-        {
-            f"{worker}_status": "running",
-            f"{worker}_started": timestamp,
-            f"{worker}_task": task_description,
-        },
-    )
-
-    try:
-        log_debug(
-            session_id, "Starting backend implementation", {"task": task_description}
-        )
+    def run(self, session_id: str, task_description: str, model: str) -> BackendOutput:
+        """Execute backend analysis with API design and database architecture guidance.
         
-        # Log analysis started event for behavior tracking
-        log_event(
-            session_id,
-            "analysis_started",
-            worker,
-            {
-                "task": task_description,
-                "analysis_type": "backend_implementation",
-                "timestamp": timestamp,
-            },
+        Args:
+            session_id: Session identifier for tracking analysis
+            task_description: Specific backend requirements and focus areas
+            model: AI model to use for analysis execution
+            
+        Returns:
+            BackendOutput: Structured backend analysis with API and database recommendations
+        """
+        # Create worker config at runtime with actual values
+        self.worker_config = BackendAgentConfig.create_worker_config(
+            session_id, task_description
         )
+        return self.run_analysis(session_id, task_description, model)
 
-        # Execute backend agent
-        result = backend_agent.run_sync(
-            f"""Analyze and optimize backend systems, APIs, and architecture.
-
+    def execute_ai_analysis(
+        self, session_id: str, task_description: str, model: str
+    ) -> Any:
+        """Execute AI-powered backend development and architecture analysis.
+        
+        Args:
+            session_id: Session identifier for analysis tracking
+            task_description: Detailed backend requirements
+            model: AI model for analysis execution
+            
+        Returns:
+            Backend analysis results from AI agent processing
+        """
+        return backend_agent.run_sync(
+            f"""Provide comprehensive backend development and API design analysis.
 Task: {task_description}
 Session: {session_id}
-
-Perform comprehensive backend analysis and optimization including:
-1. Architecture assessment and improvement recommendations  
-2. API design patterns and performance optimization
-3. Database schema optimization and query performance tuning
-4. System scalability and performance bottleneck analysis
-5. Integration patterns and service boundary optimization
-6. Security, caching, and resilience pattern recommendations
-
-Provide specific, actionable improvements with detailed technical rationale and implementation guidance.""",
+Perform thorough backend analysis including:
+1. API design and endpoint specifications
+2. Database schema design and optimization strategies
+3. Business logic implementation and service architecture
+4. Security implementation and compliance measures
+5. Performance optimization and scalability planning
+6. Integration patterns and third-party service connections
+Focus on production-ready backend solutions with specific implementation guidance.""",
             model=model,
         )
 
-        output: BackendOutput = result.output
+    def get_file_prefix(self) -> str:
+        """Return file prefix for backend output files.
+        
+        Returns:
+            File prefix for backend output files
+        """
+        return "backend"
 
-        # Framework-enforced output validation ensures structure
-        if not output.worker:
-            output.worker = worker
-        if not output.session_id:
-            output.session_id = session_id
-        if not output.timestamp:
-            output.timestamp = timestamp
+    def get_worker_display_name(self) -> str:
+        """Return human-readable name for CLI display.
+        
+        Returns:
+            Display name for the backend worker
+        """
+        return "Backend Worker"
 
-        log_debug(
-            session_id,
-            "Backend implementation completed",
-            {
-                "api_endpoints": len(output.api_endpoints),
-                "database_changes": len(output.database_changes),
-                "service_implementations": len(output.service_implementations),
-                "api_design_score": output.api_design_score,
-                "database_design_score": output.database_design_score,
-                "service_architecture_score": output.service_architecture_score,
-                "backend_quality_score": output.backend_quality_score,
-            },
+    def get_worker_description(self) -> str:
+        """Return description for CLI help and documentation.
+        
+        Returns:
+            Brief description of backend capabilities
+        """
+        return "API Development and Database Design"
+
+    def get_analysis_event_details(self, task_description: str) -> Dict[str, Any]:
+        """Return event details when backend analysis starts.
+        
+        Args:
+            task_description: Backend analysis task description
+            
+        Returns:
+            Event details for analysis started logging
+        """
+        return {
+            "worker": "backend-worker",
+            "task": task_description,
+            "focus_areas": ["api_design", "database_schema", "security", "performance"],
+        }
+
+    def get_completion_event_details(self, output: BackendOutput) -> Dict[str, Any]:
+        """Return event details when backend analysis completes.
+        
+        Args:
+            output: Backend analysis output with API and database designs
+            
+        Returns:
+            Event details for analysis completion logging
+        """
+        return {
+            "worker": "backend-worker",
+            "api_specifications": len(output.api_specifications),
+            "database_designs": len(output.database_designs),
+            "performance_score": output.performance_score,
+            "security_score": output.security_score,
+        }
+
+    def get_success_message(self, output: BackendOutput) -> str:
+        """Return success message with backend analysis summary.
+        
+        Args:
+            output: Backend analysis output with API and database metrics
+            
+        Returns:
+            Success message with key backend analysis results
+        """
+        return (
+            f"Backend analysis completed. API specifications: {len(output.api_specifications)}, "
+            f"Database designs: {len(output.database_designs)}, "
+            f"Performance score: {output.performance_score}"
         )
 
-        # Create implementation files using protocol infrastructure
-        create_backend_files(session_id, output)
-
-        # Update session state to completed
-        update_session_state(
-            session_id,
-            {
-                f"{worker}_status": "completed",
-                f"{worker}_completed": timestamp,
-                f"{worker}_api_design": output.api_design_score,
-                f"{worker}_database_design": output.database_design_score,
-                f"{worker}_service_architecture": output.service_architecture_score,
-                f"{worker}_backend_quality": output.backend_quality_score,
-            },
-        )
-
-        # Log completion
-        log_event(
-            session_id,
-            "worker_completed",
-            worker,
-            {
-                "duration": "calculated",
-                "api_endpoints_count": len(output.api_endpoints),
-                "database_changes_count": len(output.database_changes),
-                "service_implementations_count": len(output.service_implementations),
-                "status": output.status,
-            },
-        )
-
-        return output
-
-    except Exception as e:
-        log_debug(
-            session_id,
-            "Backend implementation failed",
-            {"error": str(e), "task": task_description},
-            "ERROR"
-        )
-
-        # Update session state to failed
-        update_session_state(
-            session_id,
-            {
-                f"{worker}_status": "failed",
-                f"{worker}_error": str(e),
-                f"{worker}_failed": timestamp,
-            },
-        )
-
-
-        raise
-
-
-def create_backend_files(session_id: str, output: BackendOutput):
-    """Create backend output files using protocol infrastructure"""
-    try:
-        session_path = SessionManagement.get_session_path(session_id)
-        notes_dir = session_path / "workers" / "notes"
-        notes_dir.mkdir(parents=True, exist_ok=True)
-
-        # Create backend notes file if content provided
-        if output.notes_markdown:
-            notes_file = notes_dir / "backend_notes.md"
-            notes_file.write_text(output.notes_markdown)
-            log_debug(
-                session_id, "Created backend notes file", {"path": str(notes_file)}
-            )
-
-        # Create structured output JSON
-        output_file = notes_dir / "backend_output.json"
-        output_file.write_text(output.model_dump_json(indent=2))
-        log_debug(session_id, "Created backend output JSON", {"path": str(output_file)})
-
-    except Exception as e:
-        log_debug(session_id, "File creation failed", {"error": str(e)}, "ERROR")
+    def create_worker_specific_files(
+        self, session_id: str, output: BackendOutput, session_path: Path
+    ) -> None:
+        """Create additional backend-specific output files.
+        
+        Args:
+            session_id: Session identifier
+            output: Backend analysis output data
+            session_path: Path to session directory
+        """
+        # Backend worker uses standard file creation - no additional files needed
+        pass
 
 
 def main():
-    """CLI entry point for backend worker"""
-    parser = argparse.ArgumentParser(
-        description="Backend Worker - API and Service Implementation"
-    )
-    parser.add_argument("--session", required=True, help="Session ID")
-    parser.add_argument(
-        "--task", required=True, help="Backend implementation task description"
-    )
-    parser.add_argument("--model", default="openai:gpt-5", help="AI model to use")
-
-    args = parser.parse_args()
-
-    try:
-        output = run_backend_implementation(args.session, args.task, args.model)
-        print(
-            f"Backend implementation completed. Quality score: {output.backend_quality_score}, API design: {output.api_design_score}, Database design: {output.database_design_score}"
-        )
-        return 0
-    except Exception as e:
-        print(f"Backend worker failed: {e}")
-        return 1
+    """CLI entry point for backend worker execution.
+    
+    Returns:
+        Exit code from worker execution
+    """
+    worker = BackendWorker()
+    return worker.run_cli_main()
 
 
 if __name__ == "__main__":

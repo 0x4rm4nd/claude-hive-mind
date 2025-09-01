@@ -1,270 +1,110 @@
 """
 Test Worker Runner
-=================
-Execution script for test worker with protocol compliance.
+==================
+Execution runner for the Test Worker - provides testing strategy and quality assurance analysis.
 """
 
-import argparse
-import json
-from datetime import datetime
+from typing import Dict, Any
 from pathlib import Path
-from typing import List, Dict, Any
 
-import sys
-import os
-
-# Environment setup
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "..", ".."))
-
-from ..shared.protocols import (
-    SessionManagement,
-    LoggingProtocol,
-    ProtocolConfig,
-    WorkerPromptProtocol,
-)
-
-from .models import TestOutput
-from .agent import test_agent
-from ..shared.tools import iso_now
+from shared.base_worker import BaseWorker
+from test.models import TestOutput
+from test.agent import test_agent, TestAgentConfig
 
 
-def log_event(session_id: str, event_type: str, agent: str, details: Any):
-    """Log event using protocol infrastructure"""
-    try:
-        cfg = ProtocolConfig({"session_id": session_id, "agent_name": agent})
-        logger = LoggingProtocol(cfg)
-        logger.log_event(event_type, details)
-    except Exception as e:
-        print(f"Logging failed: {e}")
+class TestWorker(BaseWorker[TestOutput]):
+    """
+    Testing strategy and quality assurance analysis worker.
+    
+    Provides comprehensive testing analysis including test strategy design,
+    coverage assessment, automation recommendations, and quality metrics evaluation.
+    """
 
-
-def log_debug(session_id: str, message: str, details: Any, level: str = "DEBUG"):
-    """Log debug message using protocol infrastructure"""
-    try:
-        cfg = ProtocolConfig({"session_id": session_id, "agent_name": "test-worker"})
-        logger = LoggingProtocol(cfg)
-        logger.log_debug(message, details, level)
-    except Exception as e:
-        print(f"Debug logging failed: {e}")
-
-
-def update_session_state(session_id: str, state_update: Dict[str, Any]):
-    """Update session state using protocol infrastructure"""
-    try:
-        SessionManagement.update_state_atomically(session_id, state_update)
-        log_debug(
-            session_id, "Session state updated", {"keys": list(state_update.keys())}
-        )
-    except Exception as e:
-        log_debug(session_id, "Session state update failed", {"error": str(e)}, "ERROR")
-
-
-def run_test_implementation(
-    session_id: str, task_description: str, model: str
-) -> TestOutput:
-    """Run test worker with AI implementation"""
-    worker = "test-worker"
-    timestamp = iso_now()
-
-    # Validate session exists using protocol infrastructure
-    try:
-        if not SessionManagement.ensure_session_exists(session_id):
-            raise ValueError(f"Session {session_id} does not exist or is invalid")
-        log_debug(
-            session_id, "Session validation successful", {"session_id": session_id}
-        )
-    except Exception as e:
-        log_debug(
-            session_id,
-            "Session validation failed",
-            {"error": str(e), "session_id": session_id},
+    def __init__(self):
+        super().__init__(
+            worker_type="test-worker", worker_config=None, output_model=TestOutput
         )
 
-    # Log worker spawn
-    log_event(
-        session_id,
-        "worker_spawned",
-        worker,
-        {
-            "task": task_description,
-            "model": model,
-            "timestamp": timestamp,
-            "capabilities": [
-                "test_strategy_design",
-                "test_automation",
-                "quality_assurance",
-                "coverage_analysis",
-                "performance_testing",
-            ],
-        },
-    )
-
-    # Update session state
-    update_session_state(
-        session_id,
-        {
-            f"{worker}_status": "running",
-            f"{worker}_started": timestamp,
-            f"{worker}_task": task_description,
-        },
-    )
-
-    try:
-        log_debug(
-            session_id, "Starting test implementation", {"task": task_description}
+    def run(self, session_id: str, task_description: str, model: str) -> TestOutput:
+        """Run test worker with runtime worker config"""
+        # Create worker config at runtime with actual values
+        self.worker_config = TestAgentConfig.create_worker_config(
+            session_id, task_description
         )
-        
-        # Log analysis started event for behavior tracking
-        log_event(
-            session_id,
-            "analysis_started",
-            worker,
-            {
-                "task": task_description,
-                "analysis_type": "test_implementation",
-                "timestamp": timestamp,
-            },
-        )
+        return self.run_analysis(session_id, task_description, model)
 
-        # Execute test agent
-        result = test_agent.run_sync(
-            f"""Design and implement comprehensive testing strategies and implementations.
-
+    def execute_ai_analysis(
+        self, session_id: str, task_description: str, model: str
+    ) -> Any:
+        """Execute test-specific AI analysis"""
+        return test_agent.run_sync(
+            f"""Provide comprehensive testing strategy and quality assurance analysis.
 Task: {task_description}
 Session: {session_id}
-
-Perform comprehensive testing analysis including:
-1. Test strategy design and framework selection
-2. Test implementation planning and coverage analysis
-3. Quality gate definition and automation integration
-4. Performance testing strategy and load testing
-5. Security testing approach and vulnerability validation
-6. Accessibility testing and WCAG compliance verification
-
-Focus on comprehensive quality assurance with automated testing and continuous validation.""",
+Perform thorough testing analysis including:
+1. Testing strategy design and test coverage planning
+2. Test automation framework recommendations
+3. Quality assurance process optimization
+4. Performance and security testing approaches
+5. CI/CD testing integration strategies
+6. Test metrics and quality validation procedures
+Focus on comprehensive testing solutions with specific implementation guidance.""",
             model=model,
         )
 
-        output: TestOutput = result.output
+    def get_file_prefix(self) -> str:
+        """Return file prefix for test output files"""
+        return "test"
 
-        # Framework-enforced output validation ensures structure
-        if not output.worker:
-            output.worker = worker
-        if not output.session_id:
-            output.session_id = session_id
-        if not output.timestamp:
-            output.timestamp = timestamp
+    def get_worker_display_name(self) -> str:
+        """Return human-readable worker name for CLI and logging"""
+        return "Test Worker"
 
-        log_debug(
-            session_id,
-            "Test implementation completed",
-            {
-                "test_implementations": len(output.test_implementations),
-                "testing_strategies": len(output.testing_strategies),
-                "quality_gates": len(output.quality_gates),
-                "test_implementation_score": output.test_implementation_score,
-                "testing_maturity_score": output.testing_maturity_score,
-                "overall_test_quality_score": output.overall_test_quality_score,
-            },
+    def get_worker_description(self) -> str:
+        """Return worker description for CLI help"""
+        return "Testing and Quality Assurance"
+
+    def get_analysis_event_details(self, task_description: str) -> Dict[str, Any]:
+        """Return worker-specific event details for analysis_started event"""
+        return {
+            "worker": "test-worker",
+            "task": task_description,
+            "focus_areas": [
+                "unit_testing",
+                "integration_testing",
+                "test_coverage",
+                "quality_assurance",
+            ],
+        }
+
+    def get_completion_event_details(self, output: TestOutput) -> Dict[str, Any]:
+        """Return worker-specific event details for worker_completed event"""
+        return {
+            "worker": "test-worker",
+            "test_strategies": len(output.test_strategies),
+            "coverage_score": output.coverage_score,
+            "quality_score": output.quality_score,
+        }
+
+    def get_success_message(self, output: TestOutput) -> str:
+        """Return worker-specific CLI success message"""
+        return (
+            f"Test analysis completed. Test strategies: {len(output.test_strategies)}, "
+            f"Coverage score: {output.coverage_score}, Quality score: {output.quality_score}"
         )
 
-        # Create test files using protocol infrastructure
-        create_test_files(session_id, output)
-
-        # Update session state to completed
-        update_session_state(
-            session_id,
-            {
-                f"{worker}_status": "completed",
-                f"{worker}_completed": timestamp,
-                f"{worker}_test_implementation": output.test_implementation_score,
-                f"{worker}_testing_maturity": output.testing_maturity_score,
-                f"{worker}_test_quality": output.overall_test_quality_score,
-                f"{worker}_defect_prevention": output.defect_prevention_score,
-            },
-        )
-
-        # Log completion
-        log_event(
-            session_id,
-            "worker_completed",
-            worker,
-            {
-                "duration": "calculated",
-                "test_implementations_count": len(output.test_implementations),
-                "testing_strategies_count": len(output.testing_strategies),
-                "quality_gates_count": len(output.quality_gates),
-                "status": output.status,
-            },
-        )
-
-        return output
-
-    except Exception as e:
-        log_debug(
-            session_id,
-            "Test implementation failed",
-            {"error": str(e), "task": task_description},
-            "ERROR"
-        )
-
-        # Update session state to failed
-        update_session_state(
-            session_id,
-            {
-                f"{worker}_status": "failed",
-                f"{worker}_error": str(e),
-                f"{worker}_failed": timestamp,
-            },
-        )
-
-        )
-
-        raise
-
-
-def create_test_files(session_id: str, output: TestOutput):
-    """Create test output files using protocol infrastructure"""
-    try:
-        session_path = SessionManagement.get_session_path(session_id)
-        notes_dir = session_path / "workers" / "notes"
-        notes_dir.mkdir(parents=True, exist_ok=True)
-
-        # Create test notes file if content provided
-        if output.notes_markdown:
-            notes_file = notes_dir / "test_notes.md"
-            notes_file.write_text(output.notes_markdown)
-            log_debug(session_id, "Created test notes file", {"path": str(notes_file)})
-
-        # Create structured output JSON
-        output_file = notes_dir / "test_output.json"
-        output_file.write_text(output.model_dump_json(indent=2))
-        log_debug(session_id, "Created test output JSON", {"path": str(output_file)})
-
-    except Exception as e:
-        log_debug(session_id, "File creation failed", {"error": str(e)}, "ERROR")
+    def create_worker_specific_files(
+        self, session_id: str, output: TestOutput, session_path: Path
+    ) -> None:
+        """Create test-specific output files beyond standard notes/JSON"""
+        # Test worker uses standard file creation - no additional files needed
+        pass
 
 
 def main():
     """CLI entry point for test worker"""
-    parser = argparse.ArgumentParser(
-        description="Test Worker - Testing Strategy and Quality Assurance"
-    )
-    parser.add_argument("--session", required=True, help="Session ID")
-    parser.add_argument("--task", required=True, help="Testing task description")
-    parser.add_argument("--model", default="openai:gpt-5", help="AI model to use")
-
-    args = parser.parse_args()
-
-    try:
-        output = run_test_implementation(args.session, args.task, args.model)
-        print(
-            f"Test implementation completed. Quality score: {output.overall_test_quality_score}, Maturity: {output.testing_maturity_score}, Defect prevention: {output.defect_prevention_score}"
-        )
-        return 0
-    except Exception as e:
-        print(f"Test worker failed: {e}")
-        return 1
+    worker = TestWorker()
+    return worker.run_cli_main()
 
 
 if __name__ == "__main__":

@@ -1,271 +1,168 @@
 """
 Architect Worker Runner
-======================
-Execution script for architect worker with protocol compliance.
+=======================
+Execution runner for the Architect Worker - provides system design and architecture analysis.
 """
 
-import argparse
-import json
-from datetime import datetime
+from typing import Dict, Any
 from pathlib import Path
-from typing import List, Dict, Any
 
-import sys
-import os
-
-# Environment setup
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "..", ".."))
-
-from ..shared.protocols import (
-    SessionManagement,
-    LoggingProtocol,
-    ProtocolConfig,
-    WorkerPromptProtocol,
-)
-
-from .models import ArchitectOutput
-from .agent import architect_agent
-from ..shared.tools import iso_now
+from shared.base_worker import BaseWorker
+from architect.models import ArchitectOutput
+from architect.agent import architect_agent, ArchitectAgentConfig
 
 
-def log_event(session_id: str, event_type: str, agent: str, details: Any):
-    """Log event using protocol infrastructure"""
-    try:
-        cfg = ProtocolConfig({"session_id": session_id, "agent_name": agent})
-        logger = LoggingProtocol(cfg)
-        logger.log_event(event_type, details)
-    except Exception as e:
-        print(f"Logging failed: {e}")
+class ArchitectWorker(BaseWorker[ArchitectOutput]):
+    """
+    System design and architecture analysis worker.
+    
+    Evaluates system architecture, provides design recommendations, and assesses
+    technology stack decisions with scalability and modernization guidance.
+    """
 
-
-def log_debug(session_id: str, message: str, details: Any, level: str = "DEBUG"):
-    """Log message using protocol infrastructure with specified level"""
-    try:
-        cfg = ProtocolConfig(
-            {"session_id": session_id, "agent_name": "architect-worker"}
-        )
-        logger = LoggingProtocol(cfg)
-        if level == "ERROR":
-            logger.log_error(message, details)
-        elif level == "WARNING":
-            logger.log_warning(message, details)
-        else:
-            logger.log_debug(message, details)
-    except Exception as e:
-        print(f"Debug logging failed: {e}")
-
-
-def update_session_state(session_id: str, state_update: Dict[str, Any]):
-    """Update session state using protocol infrastructure"""
-    try:
-        SessionManagement.update_state_atomically(session_id, state_update)
-        log_debug(
-            session_id, "Session state updated", {"keys": list(state_update.keys())}
-        )
-    except Exception as e:
-        log_debug(session_id, "Session state update failed", {"error": str(e)}, "ERROR")
-
-
-def run_architect_analysis(
-    session_id: str, task_description: str, model: str
-) -> ArchitectOutput:
-    """Run architect worker with AI analysis"""
-    worker = "architect-worker"
-    timestamp = iso_now()
-
-    # Validate session exists using protocol infrastructure
-    try:
-        if not SessionManagement.ensure_session_exists(session_id):
-            raise ValueError(f"Session {session_id} does not exist or is invalid")
-        log_debug(
-            session_id, "Session validation successful", {"session_id": session_id}
-        )
-    except Exception as e:
-        log_debug(
-            session_id,
-            "Session validation failed",
-            {"error": str(e), "session_id": session_id},
-            "ERROR"
+    def __init__(self):
+        super().__init__(
+            worker_type="architect-worker",
+            worker_config=None,
+            output_model=ArchitectOutput,
         )
 
-    # Log worker spawn
-    log_event(
-        session_id,
-        "worker_spawned",
-        worker,
-        {
-            "task": task_description,
-            "model": model,
-            "timestamp": timestamp,
-            "capabilities": [
-                "system_architecture",
-                "scalability_patterns",
-                "design_patterns",
-                "technology_evaluation",
-                "api_design",
-            ],
-        },
-    )
-
-    # Update session state
-    update_session_state(
-        session_id,
-        {
-            f"{worker}_status": "running",
-            f"{worker}_started": timestamp,
-            f"{worker}_task": task_description,
-        },
-    )
-
-    try:
-        # Log analysis started event for behavior tracking
-        log_event(
-            session_id,
-            "analysis_started",
-            worker,
-            {
-                "task": task_description,
-                "analysis_type": "architecture_analysis",
-                "timestamp": timestamp,
-            },
+    def run(
+        self, session_id: str, task_description: str, model: str
+    ) -> ArchitectOutput:
+        """Execute architectural analysis with design recommendations and technology guidance.
+        
+        Args:
+            session_id: Session identifier for tracking analysis
+            task_description: Specific architectural requirements and focus areas
+            model: AI model to use for analysis execution
+            
+        Returns:
+            ArchitectOutput: Structured architecture analysis with recommendations
+        """
+        # Create worker config at runtime with actual values
+        self.worker_config = ArchitectAgentConfig.create_worker_config(
+            session_id, task_description
         )
+        return self.run_analysis(session_id, task_description, model)
 
-        # Execute architect agent
-        result = architect_agent.run_sync(
+    def execute_ai_analysis(
+        self, session_id: str, task_description: str, model: str
+    ) -> Any:
+        """Execute AI-powered architectural analysis and design recommendations.
+        
+        Args:
+            session_id: Session identifier for analysis tracking
+            task_description: Detailed architectural requirements
+            model: AI model for analysis execution
+            
+        Returns:
+            Architecture analysis results from AI agent processing
+        """
+        return architect_agent.run_sync(
             f"""Analyze the system architecture and provide design recommendations.
 
 Task: {task_description}
 Session: {session_id}
 
 Perform comprehensive architectural analysis including:
-1. Current architecture assessment and pattern recognition
-2. Scalability evaluation and bottleneck identification
-3. Technology decisions and stack evaluation
-4. Design pattern application and SOLID principles adherence
-5. Integration pattern analysis and API design review
-6. Evolution roadmap and modernization opportunities
+1. Current architecture assessment and maturity evaluation
+2. Scalability and performance architecture review
+3. Technology stack evaluation and recommendations
+4. Design pattern identification and suggestions
+5. Migration and modernization strategies
 
-Focus on strategic, high-impact architectural improvements with clear implementation priorities.""",
+Focus on providing specific, actionable architectural guidance with clear implementation priorities.""",
             model=model,
         )
 
-        output: ArchitectOutput = result.output
+    def get_file_prefix(self) -> str:
+        """Return file prefix for architecture output files.
+        
+        Returns:
+            File prefix for architect output files
+        """
+        return "architect"
 
-        # Framework-enforced output validation ensures structure
-        if not output.worker:
-            output.worker = worker
-        if not output.session_id:
-            output.session_id = session_id
-        if not output.timestamp:
-            output.timestamp = timestamp
+    def get_worker_display_name(self) -> str:
+        """Return human-readable name for CLI display.
+        
+        Returns:
+            Display name for the architect worker
+        """
+        return "Architect Worker"
 
+    def get_worker_description(self) -> str:
+        """Return description for CLI help and documentation.
+        
+        Returns:
+            Brief description of architect capabilities
+        """
+        return "System Design and Architecture Analysis"
 
-        # Create analysis file using protocol infrastructure
-        create_architect_files(session_id, output)
+    def get_analysis_event_details(self, task_description: str) -> Dict[str, Any]:
+        """Return event details when architectural analysis starts.
+        
+        Args:
+            task_description: Architecture analysis task description
+            
+        Returns:
+            Event details for analysis started logging
+        """
+        return {
+            "task": task_description,
+            "analysis_type": "architecture_analysis",
+        }
 
-        # Update session state to completed
-        update_session_state(
-            session_id,
-            {
-                f"{worker}_status": "completed",
-                f"{worker}_completed": timestamp,
-                f"{worker}_architectural_maturity": output.architectural_maturity_score,
-                f"{worker}_architecture_quality": output.architecture_quality_score,
-                f"{worker}_maintainability": output.maintainability_score,
-                f"{worker}_extensibility": output.extensibility_score,
-            },
-        )
+    def get_completion_event_details(self, output: ArchitectOutput) -> Dict[str, Any]:
+        """Return event details when architectural analysis completes.
+        
+        Args:
+            output: Architecture analysis output with recommendations
+            
+        Returns:
+            Event details for analysis completion logging
+        """
+        return {
+            "duration": "calculated",
+            "recommendations_count": len(output.architectural_recommendations),
+            "technology_decisions_count": len(output.technology_decisions),
+            "status": output.status,
+        }
 
-        # Log completion
-        log_event(
-            session_id,
-            "worker_completed",
-            worker,
-            {
-                "duration": "calculated",
-                "recommendations_count": len(output.architectural_recommendations),
-                "technology_decisions_count": len(output.technology_decisions),
-                "status": output.status,
-            },
-        )
+    def get_success_message(self, output: ArchitectOutput) -> str:
+        """Return success message with architectural analysis summary.
+        
+        Args:
+            output: Architecture analysis output with scores and recommendations
+            
+        Returns:
+            Success message with key architecture metrics
+        """
+        return f"Architecture analysis completed successfully. Maturity score: {output.architectural_maturity_score}, Recommendations: {len(output.architectural_recommendations)}, Technology decisions: {len(output.technology_decisions)}"
 
-        return output
-
-    except Exception as e:
-        log_debug(
-            session_id,
-            "Architect analysis failed",
-            {"error": str(e), "task": task_description},
-            "ERROR"
-        )
-
-        # Update session state to failed
-        update_session_state(
-            session_id,
-            {
-                f"{worker}_status": "failed",
-                f"{worker}_error": str(e),
-                f"{worker}_failed": timestamp,
-            },
-        )
-
-
-        raise
-
-
-def create_architect_files(session_id: str, output: ArchitectOutput):
-    """Create architect output files using protocol infrastructure"""
-    current_file = None
-    try:
-        session_path = Path(SessionManagement.get_session_path(session_id))
-        notes_dir = session_path / "workers" / "notes"
-        notes_dir.mkdir(parents=True, exist_ok=True)
-
-        # Create architect notes file if content provided
-        if output.notes_markdown:
-            current_file = "architect_notes.md"
-            notes_file = notes_dir / current_file
-            notes_file.write_text(output.notes_markdown)
-            log_debug(
-                session_id, "Created architect notes file", {"path": str(notes_file)}
-            )
-
-        # Create structured output JSON
-        current_file = "architect_output.json"
-        output_file = notes_dir / current_file
-        output_file.write_text(output.model_dump_json(indent=2))
-        log_debug(
-            session_id, "Created architect output JSON", {"path": str(output_file)}
-        )
-
-    except Exception as e:
-        log_debug(session_id, "File creation failed", {
-            "error": str(e),
-            "filename": current_file,
-            "session_id": session_id
-        }, "ERROR")
+    def create_worker_specific_files(
+        self, session_id: str, output: ArchitectOutput, session_path: Path
+    ) -> None:
+        """Create additional architect-specific output files.
+        
+        Args:
+            session_id: Session identifier
+            output: Architecture analysis output data
+            session_path: Path to session directory
+        """
+        # Architect worker uses standard file creation - no additional files needed
+        pass
 
 
 def main():
-    """CLI entry point for architect worker"""
-    parser = argparse.ArgumentParser(
-        description="Architect Worker - System Design and Architecture Analysis"
-    )
-    parser.add_argument("--session", required=True, help="Session ID")
-    parser.add_argument("--task", required=True, help="Architecture task description")
-    parser.add_argument("--model", default="openai:gpt-5", help="AI model to use")
-
-    args = parser.parse_args()
-
-    try:
-        output = run_architect_analysis(args.session, args.task, args.model)
-        print(
-            f"Architecture analysis completed. Quality score: {output.architecture_quality_score}, Maintainability: {output.maintainability_score}, Extensibility: {output.extensibility_score}"
-        )
-        return 0
-    except Exception as e:
-        print(f"Architect failed: {e}")
-        return 1
+    """CLI entry point for architect worker execution.
+    
+    Returns:
+        Exit code from worker execution
+    """
+    worker = ArchitectWorker()
+    return worker.run_cli_main()
 
 
 if __name__ == "__main__":
