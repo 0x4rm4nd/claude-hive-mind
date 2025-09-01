@@ -34,7 +34,7 @@ from scribe.agent import (
 class ScribeWorker(BaseWorker[ScribeOutput]):
     """
     Scribe session lifecycle manager and synthesis coordinator.
-    
+
     Provides comprehensive session management including creation, tracking,
     and synthesis of multi-worker coordination results.
     """
@@ -48,21 +48,23 @@ class ScribeWorker(BaseWorker[ScribeOutput]):
 
     def run(self, session_id: str, task_description: str, model: str) -> ScribeOutput:
         """Execute scribe analysis with session lifecycle management.
-        
+
         Args:
             session_id: Session identifier for tracking (empty for session creation)
             task_description: Task description (determines mode - create vs synthesis)
             model: AI model to use for analysis execution
-            
+
         Returns:
             ScribeOutput: Unified scribe output for both modes
         """
         # Check if this is session creation mode
         is_create_mode = not session_id or "synthesis" not in task_description.lower()
-        
+
         if is_create_mode:
             # For create mode, generate session_id first, then create config
-            actual_session_id, complexity_level = self._generate_ai_session_id(task_description, model)
+            actual_session_id, complexity_level = self._generate_ai_session_id(
+                task_description, model
+            )
             self.worker_config = ScribeAgentConfig.create_worker_config(
                 actual_session_id, task_description
             )
@@ -73,40 +75,44 @@ class ScribeWorker(BaseWorker[ScribeOutput]):
                 session_id, task_description
             )
             return self.run_analysis(session_id, task_description, model)
-    
-    def run_analysis(self, session_id: str, task_description: str, model: str) -> ScribeOutput:
+
+    def run_analysis(
+        self, session_id: str, task_description: str, model: str
+    ) -> ScribeOutput:
         """
         Override to handle session creation special case.
-        
+
         For session creation, we need to create the session directory first
         before the BaseWorker framework tries to log events.
         """
         # Check if this is session creation mode
         is_create_mode = "synthesis" not in task_description.lower()
-        
+
         if is_create_mode:
             # For create mode, we need to generate the actual session_id first
             # and create the directory structure before calling parent
-            actual_session_id, complexity_level = self._generate_ai_session_id(task_description, model)
+            actual_session_id, complexity_level = self._generate_ai_session_id(
+                task_description, model
+            )
             self._create_session_directory(actual_session_id)
             self._create_session_markdown(actual_session_id, task_description, model)
-            
+
             # Now call parent with the actual session_id
             return super().run_analysis(actual_session_id, task_description, model)
         else:
             # For synthesis mode, use normal flow
             return super().run_analysis(session_id, task_description, model)
-    
+
     def execute_ai_analysis(
         self, session_id: str, task_description: str, model: str
     ) -> Any:
         """Execute AI-powered session management and synthesis analysis.
-        
+
         Args:
             session_id: Session identifier for analysis tracking
             task_description: Task description or synthesis request
             model: AI model for analysis execution
-            
+
         Returns:
             Scribe analysis results from AI agent processing
         """
@@ -118,7 +124,9 @@ class ScribeWorker(BaseWorker[ScribeOutput]):
             # Just return the completion result
             return self._create_session_completion_result(session_id, task_description)
 
-    def _create_session_completion_result(self, session_id: str, task_description: str) -> Any:
+    def _create_session_completion_result(
+        self, session_id: str, task_description: str
+    ) -> Any:
         """Create completion result for session creation"""
         # Log session creation event
         self.log_event(
@@ -132,7 +140,7 @@ class ScribeWorker(BaseWorker[ScribeOutput]):
             },
         )
 
-        # Log scribe spawn event  
+        # Log scribe spawn event
         self.log_event(
             session_id,
             "worker_spawned",
@@ -142,12 +150,12 @@ class ScribeWorker(BaseWorker[ScribeOutput]):
                 "purpose": "session_creation",
             },
         )
-        
+
         # Create mock result to match expected structure
         class MockResult:
             def __init__(self, output):
                 self.output = output
-        
+
         output = ScribeOutput(
             mode="create",
             session_id=session_id,
@@ -157,7 +165,7 @@ class ScribeWorker(BaseWorker[ScribeOutput]):
             complexity_level=2,  # Default complexity
             session_path=f"Docs/hive-mind/sessions/{session_id}",
         )
-        
+
         return MockResult(output)
 
     def _run_synthesis(self, session_id: str, task_description: str, model: str) -> Any:
@@ -196,14 +204,14 @@ This is a basic synthesis report for the session. The session has been analyzed 
         synthesis_overview = SynthesisOverview(
             consensus=["Session completed successfully"],
             conflicts=["No conflicts identified"],
-            themes=["Basic session management", "Task coordination"]
+            themes=["Basic session management", "Task coordination"],
         )
-        
+
         # Create mock result to match expected structure
         class MockResult:
             def __init__(self, output):
                 self.output = output
-        
+
         unified_output = ScribeOutput(
             mode="synthesis",
             session_id=session_id,
@@ -213,25 +221,29 @@ This is a basic synthesis report for the session. The session has been analyzed 
             synthesis_overview=synthesis_overview,
             sources={"session_files": "Basic session analysis"},
         )
-        
+
         return MockResult(unified_output)
 
-    def _generate_ai_session_id(self, task_description: str, model: str) -> tuple[str, int]:
+    def _generate_ai_session_id(
+        self, task_description: str, model: str
+    ) -> tuple[str, int]:
         """Generate session ID using simple word extraction for testing"""
         timestamp = datetime.utcnow().strftime("%Y-%m-%d-%H-%M")
 
         # For testing, use simple approach without AI
         # Extract meaningful words from task description
-        words = re.findall(r'\b\w{3,}\b', task_description.lower())
-        
+        words = re.findall(r"\b\w{3,}\b", task_description.lower())
+
         # Take first 3-4 meaningful words and join with hyphens
-        meaningful_words = [w for w in words if w not in ['the', 'and', 'for', 'with', 'this', 'that']][:4]
-        
+        meaningful_words = [
+            w for w in words if w not in ["the", "and", "for", "with", "this", "that"]
+        ][:4]
+
         if meaningful_words:
-            short_desc = '-'.join(meaningful_words)
+            short_desc = "-".join(meaningful_words)
         else:
-            short_desc = 'general-task'
-            
+            short_desc = "general-task"
+
         # Clean and validate the description
         short_desc = re.sub(r"[^a-z0-9\-]", "", short_desc.lower())
         short_desc = re.sub(r"-+", "-", short_desc).strip("-")
@@ -241,7 +253,7 @@ This is a basic synthesis report for the session. The session has been analyzed 
 
         session_id = f"{timestamp}-{short_desc}"
         complexity_level = 2  # Default complexity
-        
+
         return session_id, complexity_level
 
     def _create_session_directory(self, session_id: str):
@@ -264,12 +276,14 @@ This is a basic synthesis report for the session. The session has been analyzed 
         backlog_file = session_path / "BACKLOG.jsonl"
         backlog_file.touch()
 
-    def _create_session_markdown(self, session_id: str, task_description: str, model: str):
+    def _create_session_markdown(
+        self, session_id: str, task_description: str, model: str
+    ):
         """Create SESSION.md file"""
         project_root_path = Path(__file__).parent.parent.parent.parent.parent
         sessions_dir = project_root_path / "Docs" / "hive-mind" / "sessions"
         session_path = sessions_dir / session_id
-        
+
         session_md_content = f"""# Session: {session_id}
 
 **Created:** {iso_now()}  
@@ -295,7 +309,7 @@ Session ready for Queen orchestration.
 
     def get_file_prefix(self) -> str:
         """Return file prefix for scribe output files.
-        
+
         Returns:
             File prefix for scribe output files
         """
@@ -303,7 +317,7 @@ Session ready for Queen orchestration.
 
     def get_worker_display_name(self) -> str:
         """Return human-readable name for CLI display.
-        
+
         Returns:
             Display name for the scribe worker
         """
@@ -311,7 +325,7 @@ Session ready for Queen orchestration.
 
     def get_worker_description(self) -> str:
         """Return description for CLI help and documentation.
-        
+
         Returns:
             Brief description of scribe capabilities
         """
@@ -319,10 +333,10 @@ Session ready for Queen orchestration.
 
     def get_analysis_event_details(self, task_description: str) -> Dict[str, Any]:
         """Return event details when scribe analysis starts.
-        
+
         Args:
             task_description: Scribe analysis task description
-            
+
         Returns:
             Event details for analysis started logging
         """
@@ -336,10 +350,10 @@ Session ready for Queen orchestration.
 
     def get_completion_event_details(self, output: ScribeOutput) -> Dict[str, Any]:
         """Return event details when scribe analysis completes.
-        
+
         Args:
             output: Scribe analysis output with session or synthesis info
-            
+
         Returns:
             Event details for analysis completion logging
         """
@@ -349,26 +363,30 @@ Session ready for Queen orchestration.
             "session_id": output.session_id,
             "status": output.status,
         }
-        
+
         if output.mode == "create":
-            details.update({
-                "complexity_level": output.complexity_level,
-                "session_path": output.session_path,
-            })
+            details.update(
+                {
+                    "complexity_level": output.complexity_level,
+                    "session_path": output.session_path,
+                }
+            )
         elif output.mode == "synthesis":
-            details.update({
-                "sources_count": len(output.sources),
-                "synthesis_length": len(output.synthesis_markdown or ""),
-            })
-            
+            details.update(
+                {
+                    "sources_count": len(output.sources),
+                    "synthesis_length": len(output.synthesis_markdown or ""),
+                }
+            )
+
         return details
 
     def get_success_message(self, output: ScribeOutput) -> str:
         """Return success message with scribe analysis summary.
-        
+
         Args:
             output: Scribe analysis output with session or synthesis metrics
-            
+
         Returns:
             Success message with key scribe analysis results
         """
@@ -397,7 +415,7 @@ Session ready for Queen orchestration.
             notes_dir.mkdir(parents=True, exist_ok=True)
             json_dir.mkdir(parents=True, exist_ok=True)
 
-            # Get project root for relative paths  
+            # Get project root for relative paths
             project_root = Path(SessionManagement.detect_project_root())
 
             # Create notes file if content provided
@@ -434,7 +452,7 @@ Session ready for Queen orchestration.
         self, session_id: str, output: ScribeOutput, session_path: Path
     ) -> None:
         """Create additional scribe-specific output files.
-        
+
         Args:
             session_id: Session identifier
             output: Scribe analysis output data
@@ -445,7 +463,7 @@ Session ready for Queen orchestration.
             synthesis_file = session_path / "SYNTHESIS.md"
             with open(synthesis_file, "w") as f:
                 f.write(output.synthesis_markdown)
-            
+
             self.log_debug(
                 session_id,
                 "Created synthesis markdown file",
@@ -455,7 +473,7 @@ Session ready for Queen orchestration.
 
 def main():
     """CLI entry point for scribe worker execution.
-    
+
     Returns:
         Exit code from worker execution
     """
