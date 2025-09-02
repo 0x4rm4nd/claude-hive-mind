@@ -7,6 +7,8 @@ services:
     volumes:
       # Mount project workspace for analysis
       - ../../:/workspace:ro
+      # Persist Claude CLI authentication across container restarts
+      - claude_auth:/root/.claude
     environment:
       - WORKSPACE_ROOT=/workspace
       - PYTHONUNBUFFERED=1
@@ -20,6 +22,10 @@ services:
       start_period: 40s
     networks:
       - claude-network
+
+volumes:
+  claude_auth:
+    driver: local
 
 networks:
   claude-network:

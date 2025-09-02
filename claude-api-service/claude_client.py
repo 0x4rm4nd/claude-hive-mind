@@ -30,7 +30,7 @@ class ClaudeClient:
         """
         cmd = [self.claude_executable, "--print", "--model", model, prompt]
 
-        logger.info(f"Executing Claude CLI: {' '.join(cmd[:4])} [prompt...]")
+        logger.info(f"Executing Claude CLI: {' '.join(cmd[:4])} [{prompt}]")
 
         try:
             # Run in async subprocess
@@ -52,10 +52,8 @@ class ClaudeClient:
                 "return_code": process.returncode,
             }
 
-            if result["success"]:
-                logger.info(f"Claude CLI success: {len(result['response'])} chars")
-            else:
-                logger.error(f"Claude CLI failed: {result['error']}")
+            if not result["success"]:
+                logger.error(f"Claude CLI failed:\n{result}")
 
             return result
 

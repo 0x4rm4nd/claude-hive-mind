@@ -61,9 +61,10 @@ This will:
 - Enable Max subscription access within the Docker environment
 
 **Important Notes:**
-- This is a **one-time setup** per container 
-- Authentication is stored **inside the container only** (not on host)
-- The token persists across container restarts but **not across container rebuilds**
+- This is a **one-time setup** per Docker volume
+- Authentication is stored in a **persistent Docker volume** (`claude_auth`)
+- The token persists across `docker compose down/up` and container rebuilds
+- Only removed when you run `docker volume rm claude-api-service_claude_auth`  
 - You **do not need** Claude CLI installed or authenticated on the host system
 
 ### 3. Verify Health
@@ -134,8 +135,9 @@ curl http://localhost:47291/health
 ### Docker Volumes
 
 - `../../:/workspace:ro` - Mount project workspace (read-only) for Claude CLI analysis
+- `claude_auth:/root/.claude` - Persistent storage for Claude CLI authentication
 
-**Authentication**: Claude CLI authentication is handled entirely within the container using `docker exec -it claude-max-api claude setup-token`. No host configuration or volume mounting required.
+**Authentication**: Claude CLI authentication is stored in the `claude_auth` Docker volume and persists across container restarts. Setup once with `docker exec -it claude-max-api claude setup-token`.
 
 ## Integration with Pydantic AI
 
@@ -217,7 +219,8 @@ docker exec -it claude-max-api claude setup-token
 Common authentication issues:
 - **"Invalid API key"**: Run `docker exec -it claude-max-api claude setup-token`
 - **Service timeout**: Claude CLI might be hanging on authentication prompt
-- **Container restarts**: Authentication persists in Docker volumes, not affected by restarts
+- **Lost authentication after down/up**: Should not happen with persistent volume
+- **Reset authentication**: Remove volume with `docker volume rm claude-api-service_claude_auth`
 
 ```bash
 # Check health endpoint
