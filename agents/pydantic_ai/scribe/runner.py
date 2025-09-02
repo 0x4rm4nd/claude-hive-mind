@@ -19,7 +19,7 @@ import json
 from datetime import datetime
 from typing import Dict, Any
 from pydantic_ai import Agent
-
+import asyncio
 from scribe.models import TaskSummaryOutput
 from shared.base_worker import BaseWorker
 from shared.tools import iso_now
@@ -238,27 +238,33 @@ This is a basic synthesis report for the session. The session has been analyzed 
         timestamp = datetime.utcnow().strftime("%Y-%m-%d-%H-%M")
 
         try:
-            # Create a temporary agent with the same system prompt
+            # Create Agent with the specified model
             temp_agent = Agent(
                 model=model,
                 output_type=TaskSummaryOutput,
                 system_prompt=ScribeAgentConfig.get_system_prompt(),
             )
 
-            # Get AI assessment
-            prompt = f"Analyze this task for session creation: {task_description}"
-            result = temp_agent.run_sync(prompt)
+            # Run complexity assessment with specified model
+            complexity_data = asyncio.run(temp_agent.run_async(task_description))
 
-            # Build session ID from AI-generated description
-            # Pydantic AI v0.8+ uses .output attribute to access the parsed output
-            output_data = result.output
-            session_id = f"{timestamp}-{output_data.short_description}"
-            complexity_level = output_data.complexity_level
+            session_id = f"{timestamp}-{complexity_data.data.short_description}"
+            complexity_level = complexity_data.data.complexity_level
 
             return session_id, complexity_level
 
         except Exception as e:
-            raise RuntimeError(f"AI session generation failed: {e}") from e
+            # No fallback - system must work with specified model or fail
+            raise RuntimeError(
+                "CRITICAL: AI model '{model}' failed for session generation.\n"
+                "\n"
+                "For custom:* models, ensure Claude API service is running:\n"
+                "cd .claude/claude-api-service && docker-compose up -d\n"
+                "\n"
+                "For other models (openai:gpt-5, etc.), ensure API keys are configured.\n"
+                "\n"
+                "Original error: {e}"
+            )
 
     def _create_session_directory(self, session_id: str):
         """Create session directory structure"""
