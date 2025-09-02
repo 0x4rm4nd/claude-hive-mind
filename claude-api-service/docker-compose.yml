@@ -1,0 +1,31 @@
+version: '3.8'
+
+services:
+  claude-api:
+    build: .
+    container_name: smartwallet-claude-api
+    ports:
+      - "47291:8080"
+    volumes:
+      # Mount entire SmartWalletFX repo for analysis
+      - ../../:/workspace:ro
+      # Mount Claude config for authentication (if needed)
+      - ~/.claude:/claude-config:ro
+    environment:
+      - WORKSPACE_ROOT=/workspace
+      - CLAUDE_CONFIG_PATH=/claude-config
+      - PYTHONUNBUFFERED=1
+    working_dir: /workspace
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    networks:
+      - claude-network
+
+networks:
+  claude-network:
+    driver: bridge
