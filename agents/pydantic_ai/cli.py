@@ -39,7 +39,7 @@ def run_queen(args):
     worker = QueenWorker()
     try:
         output = worker.run(
-            args.session, task_description, args.model or "google-gla:gemini-2.5-pro"
+            args.session, task_description, args.model or "custom:claude-opus-4"
         )
         print(f"✅ Queen orchestration completed: {worker.get_success_message(output)}")
         return 0
@@ -72,7 +72,7 @@ def run_scribe(args):
     # Use BaseWorker pattern consistently
     worker = ScribeWorker()
     try:
-        output = worker.run(session_id, task_desc, args.model or "openai:gpt-5-mini")
+        output = worker.run(session_id, task_desc, args.model or "custom:max-subscription")
         print(f"✅ Scribe operation completed: {worker.get_success_message(output)}")
         return 0
     except Exception as e:
@@ -91,7 +91,7 @@ def run_worker(worker_name: str, args):
         "--task",
         args.task,
         "--model",
-        args.model or "google-gla:gemini-2.5-flash",
+        args.model or "custom:max-subscription",
     ]
 
     return subprocess.run(cmd)

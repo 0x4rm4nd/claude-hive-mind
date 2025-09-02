@@ -10,7 +10,7 @@ from pathlib import Path
 from datetime import datetime
 from typing import Dict, Any
 from pydantic_ai import Agent
-import asyncio
+
 from scribe.models import TaskSummaryOutput
 from shared.base_worker import BaseWorker
 from shared.tools import iso_now
@@ -239,7 +239,7 @@ This is a basic synthesis report for the session. The session has been analyzed 
             )
 
             # Run complexity assessment with specified model
-            complexity_data = asyncio.run(temp_agent.run_async(task_description))
+            complexity_data = temp_agent.run_sync(task_description)
 
             session_id = f"{timestamp}-{complexity_data.data.short_description}"
             complexity_level = complexity_data.data.complexity_level
@@ -249,14 +249,14 @@ This is a basic synthesis report for the session. The session has been analyzed 
         except Exception as e:
             # No fallback - system must work with specified model or fail
             raise RuntimeError(
-                "CRITICAL: AI model '{model}' failed for session generation.\n"
-                "\n"
-                "For custom:* models, ensure Claude API service is running:\n"
-                "cd .claude/claude-api-service && docker-compose up -d\n"
-                "\n"
-                "For other models (openai:gpt-5, etc.), ensure API keys are configured.\n"
-                "\n"
-                "Original error: {e}"
+                f"CRITICAL: AI model '{model}' failed for session generation.\n"
+                f"\n"
+                f"For custom:* models, ensure Claude API service is running:\n"
+                f"cd .claude/claude-api-service && docker-compose up -d\n"
+                f"\n"
+                f"For custom models (custom:max-subscription, custom:claude-opus-4), ensure Docker service is running.\n"
+                f"\n"
+                f"Original error: {e}"
             )
 
     def _create_session_directory(self, session_id: str):
