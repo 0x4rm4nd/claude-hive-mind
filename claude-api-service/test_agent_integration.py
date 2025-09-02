@@ -15,10 +15,10 @@ sys.path.append(str(Path(__file__).parent.parent / "agents" / "pydantic_ai"))
 
 # Import Pydantic AI with Max subscription integration
 from pydantic_ai import Agent
-from shared.claude_integration import enable_max_subscription_integration
+from shared.custom_provider.claude_max import enable_max_subscription_integration
 
 
-async def test_agent_syntax():
+def test_agent_syntax():
     """Test the exact Agent syntax requested by the user"""
     print("🚀 Testing Agent('custom:max-subscription') syntax")
     print("=" * 50)
@@ -39,12 +39,12 @@ async def test_agent_syntax():
             system_prompt="You are a test assistant. Respond with 'SUCCESS: Claude API service integration working' followed by a brief confirmation."
         )
         
-        print("💬 Testing agent.run_async()...")
-        result = await agent.run_async("Test message: Verify that Agent('custom:max-subscription') routes through Claude API service")
+        print("💬 Testing agent.run_sync()...")
+        result = agent.run_sync("Test message: Verify that Agent('custom:max-subscription') routes through Claude API service")
         
-        print(f"✅ Response received: {result.data}")
+        print(f"✅ Response received: {result}")
         
-        if "SUCCESS" in str(result.data):
+        if "SUCCESS" in str(result):
             print("\n🎯 INTEGRATION COMPLETE!")
             print("✅ Agent('custom:max-subscription') works as requested")
             print("✅ No nested subprocess issues")
@@ -61,7 +61,7 @@ async def test_agent_syntax():
         return False
 
 
-async def test_other_custom_models():
+def test_other_custom_models():
     """Test other custom models work too"""
     print("\n🧪 Testing other custom models...")
     print("=" * 30)
@@ -76,22 +76,22 @@ async def test_other_custom_models():
         try:
             print(f"Testing {model}...")
             agent = Agent(model)
-            result = await agent.run_async(f"Say 'OK' to confirm {model} works")
-            print(f"✅ {model}: {result.data}")
+            result = agent.run_sync(f"Say 'OK' to confirm {model} works")
+            print(f"✅ {model}: {result}")
         except Exception as e:
             print(f"❌ {model}: {e}")
 
 
-async def main():
+def main():
     """Run the integration tests"""
-    success = await test_agent_syntax()
+    success = test_agent_syntax()
     
     if success:
-        await test_other_custom_models()
+        test_other_custom_models()
         print("\n🎉 ALL TESTS PASSED!")
         print("\nUsage Examples:")
         print("agent = Agent('custom:max-subscription')")
-        print("result = await agent.run_async('Any prompt - analysis, coding, planning, etc.')")
+        print("result = agent.run_sync('Any prompt - analysis, coding, planning, etc.')")
         print("\nNote: Generic /claude endpoint handles ALL Pydantic AI requests")
         print("cd .claude/claude-api-service && docker-compose up -d")
     else:
@@ -103,4 +103,4 @@ async def main():
 
 
 if __name__ == "__main__":
-    asyncio.run(main())
+    main()
