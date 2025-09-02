@@ -15,6 +15,7 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
 try:
     import aiohttp
+
     print("✅ aiohttp available")
 except ImportError:
     print("❌ aiohttp not available - installing...")
@@ -25,7 +26,7 @@ except ImportError:
 class StandaloneClaudeAPIClient:
     """
     Standalone version of ClaudeAPIServiceClient without Pydantic AI dependencies.
-    
+
     This replicates the core functionality for testing purposes.
     """
 
@@ -49,7 +50,7 @@ class StandaloneClaudeAPIClient:
 
     async def send_prompt(self, prompt: str, model_name: str) -> str:
         """Send a prompt to Claude API service"""
-        
+
         # Check service health first
         if not self.service_started:
             if not await self._check_service_health():
@@ -61,7 +62,7 @@ class StandaloneClaudeAPIClient:
 
         # Map custom model name to Claude model
         claude_model = self.model_mapping.get(model_name, self.default_model)
-        
+
         # Call API service
         try:
             return await self._call_claude_api_service(prompt, claude_model)
@@ -74,7 +75,7 @@ class StandaloneClaudeAPIClient:
             async with aiohttp.ClientSession() as session:
                 async with session.get(
                     f"{self.api_base_url}/health",
-                    timeout=aiohttp.ClientTimeout(total=5),
+                    timeout=aiohttp.ClientTimeout(total=20),
                 ) as response:
                     if response.status == 200:
                         health_data = await response.json()
@@ -95,7 +96,9 @@ class StandaloneClaudeAPIClient:
             ) as response:
                 if response.status != 200:
                     error_text = await response.text()
-                    raise Exception(f"API service returned {response.status}: {error_text}")
+                    raise Exception(
+                        f"API service returned {response.status}: {error_text}"
+                    )
 
                 result = await response.json()
                 return result["response"]
@@ -114,62 +117,61 @@ async def test_standalone_client():
     """Test the standalone client implementation"""
     print("🚀 Testing Standalone ClaudeAPIServiceClient")
     print("=" * 50)
-    
+
     client = StandaloneClaudeAPIClient()
-    
+
     # Test 1: Service status
     print("📊 Client configuration:")
     status = client.get_service_status()
     for key, value in status.items():
         print(f"  {key}: {value}")
-    
+
     # Test 2: Health check
     print(f"\n🔍 Checking service health at {client.api_base_url}")
     is_healthy = await client._check_service_health()
     print(f"Health status: {'✅ Healthy' if is_healthy else '❌ Unhealthy'}")
-    
+
     if not is_healthy:
         print("❌ Cannot proceed with tests - service is not healthy")
         return False
-    
+
     # Test 3: Direct model calls
     print("\n📋 Testing direct model calls:")
-    
+
     models_to_test = ["sonnet", "opus", "haiku"]
-    
+
     for model in models_to_test:
         try:
             print(f"  Testing {model}...")
             response = await client.send_prompt(
-                f"Respond with exactly: '{model} via Max subscription OK'",
-                model
+                f"Respond with exactly: '{model} via Max subscription OK'", model
             )
             print(f"  ✅ {model}: {response.strip()}")
         except Exception as e:
             print(f"  ❌ {model}: {e}")
             return False
-    
+
     # Test 4: Custom model mapping
     print("\n📋 Testing custom:* model mapping:")
-    
+
     custom_models_to_test = [
         "custom:max-subscription",
-        "custom:claude-opus-4", 
-        "custom:claude-sonnet-4"
+        "custom:claude-opus-4",
+        "custom:claude-sonnet-4",
     ]
-    
+
     for custom_model in custom_models_to_test:
         try:
             print(f"  Testing {custom_model}...")
             response = await client.send_prompt(
                 f"Respond with exactly: 'Agent(\\'{custom_model}\\') working'",
-                custom_model
+                custom_model,
             )
             print(f"  ✅ {custom_model}: {response.strip()}")
         except Exception as e:
             print(f"  ❌ {custom_model}: {e}")
             return False
-    
+
     print("\n🎉 All standalone client tests passed!")
     return True
 
@@ -178,18 +180,18 @@ async def test_agent_simulation():
     """Simulate how Agent('custom:max-subscription') would work"""
     print("\n🤖 Simulating Agent('custom:max-subscription') workflow")
     print("=" * 50)
-    
+
     client = StandaloneClaudeAPIClient()
-    
+
     # Simulate agent conversation
     conversation_steps = [
         "Hello, can you help me with a coding task?",
         "I need to create a simple Python function that adds two numbers.",
-        "Can you show me how to write unit tests for that function?"
+        "Can you show me how to write unit tests for that function?",
     ]
-    
+
     print("🔄 Simulating multi-turn conversation with custom:max-subscription:")
-    
+
     for i, prompt in enumerate(conversation_steps, 1):
         try:
             print(f"\n  Step {i}: {prompt}")
@@ -199,7 +201,7 @@ async def test_agent_simulation():
         except Exception as e:
             print(f"  ❌ Step {i} failed: {e}")
             return False
-    
+
     print(f"\n✅ Agent('custom:max-subscription') simulation successful!")
     return True
 
@@ -209,30 +211,30 @@ async def main():
     print("🎯 Testing Agent('custom:max-subscription') Integration")
     print("Focus: Isolated client testing without Pydantic AI framework")
     print("=" * 70)
-    
+
     results = {}
-    
+
     # Test standalone client
-    results['standalone_client'] = await test_standalone_client()
-    
+    results["standalone_client"] = await test_standalone_client()
+
     # Test agent simulation
-    if results['standalone_client']:
-        results['agent_simulation'] = await test_agent_simulation()
+    if results["standalone_client"]:
+        results["agent_simulation"] = await test_agent_simulation()
     else:
-        results['agent_simulation'] = False
+        results["agent_simulation"] = False
         print("❌ Skipping agent simulation - client tests failed")
-    
+
     # Summary
     print("\n" + "=" * 70)
     print("🏁 Final Results:")
     print("=" * 70)
-    
+
     all_passed = all(results.values())
-    
+
     for test_name, passed in results.items():
         status = "✅ PASS" if passed else "❌ FAIL"
         print(f"{test_name:20} {status}")
-    
+
     print("=" * 70)
     if all_passed:
         print("🎉 SUCCESS: Agent('custom:max-subscription') integration confirmed!")
@@ -242,7 +244,7 @@ async def main():
         print("✅ Ready for Pydantic AI framework integration")
     else:
         print("❌ FAILED: Issues found with the integration")
-        
+
     return all_passed
 
 

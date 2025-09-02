@@ -53,7 +53,7 @@ class ClaudeMaxSubscriptionModel(Model):
 
         # Convert back to Pydantic AI format
         return ModelResponse(
-            parts=[TextPart(text=response_text)],
+            parts=[TextPart(content=response_text)],
             model_name=self._model_name,
             timestamp=datetime.now(),
             usage=RequestUsage(

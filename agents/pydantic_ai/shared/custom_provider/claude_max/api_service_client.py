@@ -41,7 +41,7 @@ class ClaudeAPIServiceClient:
     async def send_prompt(self, prompt: str, model_name: str) -> str:
         """
         Send a prompt directly to Claude API service.
-        
+
         Simplified method that takes a prompt string and returns response.
         """
         # Check if API service is running
@@ -74,7 +74,7 @@ class ClaudeAPIServiceClient:
             async with aiohttp.ClientSession() as session:
                 async with session.get(
                     f"{self.api_base_url}/health",
-                    timeout=aiohttp.ClientTimeout(total=5),
+                    timeout=aiohttp.ClientTimeout(total=20),
                 ) as response:
                     if response.status == 200:
                         health_data = await response.json()
@@ -85,7 +85,7 @@ class ClaudeAPIServiceClient:
 
     async def _call_claude_api_service(self, prompt: str, model: str) -> str:
         """Call the Claude API service"""
-        request_data = {"prompt": prompt, "model": model, "timeout": 120}
+        request_data = {"prompt": prompt, "model": model, "timeout": 150}
 
         async with aiohttp.ClientSession() as session:
             async with session.post(
@@ -103,7 +103,6 @@ class ClaudeAPIServiceClient:
 
                 result = await response.json()
                 return result["response"]
-
 
     def get_service_status(self) -> Dict[str, Any]:
         """Get status information about the Claude API service"""
