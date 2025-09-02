@@ -28,12 +28,12 @@ def main():
     """Run all test files"""
     test_dir = Path(__file__).parent
     test_files = [
-        test_dir / "test_max_subscription.py",
-        test_dir / "test_enhanced_monkey_patch.py"
+        test_dir / "test_final_integration.py",
+        test_dir / "test_max_subscription_2.py"
     ]
     
-    print("🧪 Max Subscription Provider - Test Suite")
-    print("=" * 45)
+    print("🧪 Claude Max Subscription - Integration Test Suite")
+    print("=" * 55)
     
     results = {}
     for test_file in test_files:
