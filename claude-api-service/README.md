@@ -1,6 +1,6 @@
 # Claude API Service
 
-Docker-based Claude CLI service that provides HTTP API access to Claude with full SmartWalletFX workspace access. This service solves the nested subprocess authentication issues by running Claude CLI in a clean Docker environment.
+Docker-based Claude CLI service that provides HTTP API access to Claude with full workspace access. This service solves the nested subprocess authentication issues by running Claude CLI in a clean Docker environment.
 
 ## Purpose
 
@@ -110,13 +110,13 @@ curl http://localhost:47291/health
 
 ### Environment Variables
 
-- `WORKSPACE_ROOT` - Path to SmartWalletFX repo (default: `/workspace`)
+- `WORKSPACE_ROOT` - Path to project workspace (default: `/workspace`)
 - `CLAUDE_CONFIG_PATH` - Path to Claude config (default: `/claude-config`) 
 - `PORT` - API service port (default: `8080`, exposed on: `47291`)
 
 ### Docker Volumes
 
-- `../../:/workspace:ro` - Mount SmartWalletFX repo (read-only) for Claude CLI analysis
+- `../../:/workspace:ro` - Mount project workspace (read-only) for Claude CLI analysis
 - `~/.claude:/claude-config:ro` - Mount Claude config (read-only) for reference
 
 **Note**: Claude authentication is done directly in the container via `claude setup-token`, not through mounted volumes.
@@ -237,7 +237,7 @@ asyncio.run(test())
 - Reliable Max subscription access
 
 ### ✅ **Full Workspace Access**
-- Complete SmartWalletFX repository mounted
+- Complete project repository mounted
 - Cross-service analysis capabilities
 - File modification potential (future feature)
 
