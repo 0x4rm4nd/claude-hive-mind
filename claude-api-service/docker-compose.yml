@@ -1,9 +1,7 @@
-version: '3.8'
-
 services:
   claude-api:
     build: .
-    container_name: smartwallet-claude-api
+    container_name: claude-max-api
     ports:
       - "47291:8080"
     volumes:
@@ -14,8 +12,9 @@ services:
     environment:
       - WORKSPACE_ROOT=/workspace
       - CLAUDE_CONFIG_PATH=/claude-config
+      - CLAUDE_HOME=/claude-config
       - PYTHONUNBUFFERED=1
-    working_dir: /workspace
+    working_dir: /app
     restart: unless-stopped
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8080/health"]

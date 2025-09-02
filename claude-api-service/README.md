@@ -34,13 +34,28 @@ cd .claude/claude-api-service
 docker-compose up -d
 ```
 
-### 2. Verify Health
+### 2. **REQUIRED: Authenticate Claude CLI in Container**
+
+⚠️ **Manual Step Required**: You must authenticate Claude CLI inside the Docker container:
+
+```bash
+docker exec -it claude-max-api claude setup-token
+```
+
+This will:
+- Open a browser window for Claude authentication
+- Generate a long-lived OAuth token (valid for 1 year)
+- Enable Max subscription access within the Docker environment
+
+**Note**: This is a one-time setup. The authentication persists until the Docker volume is removed.
+
+### 3. Verify Health
 
 ```bash
 curl http://localhost:47291/health
 ```
 
-### 3. Test Claude Integration
+### 4. Test Claude Integration
 
 ```bash
 curl -X POST http://localhost:47291/claude \
@@ -101,8 +116,10 @@ curl http://localhost:47291/health
 
 ### Docker Volumes
 
-- `../../:/workspace` - Mount SmartWalletFX repo for Claude CLI access
-- `~/.claude:/claude-config` - Mount Claude authentication for Max subscription
+- `../../:/workspace:ro` - Mount SmartWalletFX repo (read-only) for Claude CLI analysis
+- `~/.claude:/claude-config:ro` - Mount Claude config (read-only) for reference
+
+**Note**: Claude authentication is done directly in the container via `claude setup-token`, not through mounted volumes.
 
 ## Integration with Pydantic AI
 
@@ -171,11 +188,26 @@ docker-compose up --build -d
 
 ### Claude CLI Authentication Issues
 
+If you see authentication errors:
+
+```bash
+# Check if Claude CLI is authenticated
+docker exec claude-max-api claude --print --model sonnet "test"
+
+# If you see "Invalid API key · Please run /login", re-authenticate:
+docker exec -it claude-max-api claude setup-token
+```
+
+Common authentication issues:
+- **"Invalid API key"**: Run `docker exec -it claude-max-api claude setup-token`
+- **Service timeout**: Claude CLI might be hanging on authentication prompt
+- **Container restarts**: Authentication persists in Docker volumes, not affected by restarts
+
 ```bash
 # Check health endpoint
 curl http://localhost:47291/health
 
-# Verify Claude CLI access in container
+# Verify Claude CLI access in container  
 docker-compose exec claude-api claude --help
 ```
 

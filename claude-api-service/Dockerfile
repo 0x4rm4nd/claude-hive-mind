@@ -8,8 +8,9 @@ RUN apt-get update && apt-get install -y \
     git \
     && rm -rf /var/lib/apt/lists/*
 
-# Install Claude CLI
-RUN npm install -g @anthropic-ai/claude-code
+# Install Claude CLI via npm (most reliable method for Docker)
+RUN npm install -g @anthropic-ai/claude-code && \
+    rm -rf /var/lib/apt/lists/*
 
 WORKDIR /app
 
