@@ -12,13 +12,13 @@ Docker-based Claude CLI service that provides HTTP API access to Claude with ful
 
 ```mermaid
 graph TB
-    A[Pydantic AI<br/>Agent('custom:max-subscription')] -->|HTTP POST| B[Claude API Service<br/>Docker Container<br/>Port 47291]
-    B -->|Direct subprocess| C[Claude CLI<br/>Max Subscription]
+    A["Pydantic AI<br/>Agent('custom:max-subscription')"] -->|HTTP POST| B["Claude API Service<br/>Docker Container<br/>Port 47291"]
+    B -->|Direct subprocess| C["Claude CLI<br/>Max Subscription"]
     C -->|Response| B
     B -->|JSON Response| A
     
-    D[Project Workspace] -.->|Read-only mount| B
-    E[Container Authentication<br/>claude setup-token] -.->|OAuth Token| C
+    D["Project Workspace"] -.->|Read-only mount| B
+    E["Container Authentication<br/>claude setup-token"] -.->|OAuth Token| C
     
     style A fill:#e1f5fe
     style B fill:#f3e5f5
@@ -26,9 +26,8 @@ graph TB
     style D fill:#fff3e0
     style E fill:#ffebee
     
-    classDef problem fill:#ffcdd2
-    F[❌ Nested Subprocess<br/>Authentication Issues] -.->|Eliminated by| B
-    class F problem
+    F["❌ Nested Subprocess<br/>Authentication Issues"] -.->|Eliminated by| B
+    style F fill:#ffcdd2
 ```
 
 ## Features
