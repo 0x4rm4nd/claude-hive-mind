@@ -18,7 +18,9 @@ import re
 import json
 from datetime import datetime
 from typing import Dict, Any
+from pydantic_ai import Agent
 
+from scribe.models import TaskSummaryOutput
 from shared.base_worker import BaseWorker
 from shared.tools import iso_now
 from shared.protocols import SessionManagement
@@ -45,6 +47,7 @@ class ScribeWorker(BaseWorker[ScribeOutput]):
             worker_config=None,
             output_model=ScribeOutput,
         )
+        self._session_complexity = None  # Store complexity level for session creation
 
     def run(self, session_id: str, task_description: str, model: str) -> ScribeOutput:
         """Execute scribe analysis with session lifecycle management.
@@ -94,6 +97,7 @@ class ScribeWorker(BaseWorker[ScribeOutput]):
             actual_session_id, complexity_level = self._generate_ai_session_id(
                 task_description, model
             )
+            self._session_complexity = complexity_level
             self._create_session_directory(actual_session_id)
             self._create_session_markdown(actual_session_id, task_description, model)
 
@@ -151,6 +155,9 @@ class ScribeWorker(BaseWorker[ScribeOutput]):
             },
         )
 
+        # Use the complexity level calculated during session ID generation
+        complexity_level = self._session_complexity or 1
+
         # Create mock result to match expected structure
         class MockResult:
             def __init__(self, output):
@@ -162,7 +169,7 @@ class ScribeWorker(BaseWorker[ScribeOutput]):
             timestamp=iso_now(),
             status="completed",
             task_description=task_description,
-            complexity_level=2,  # Default complexity
+            complexity_level=complexity_level,
             session_path=f"Docs/hive-mind/sessions/{session_id}",
         )
 
@@ -227,34 +234,31 @@ This is a basic synthesis report for the session. The session has been analyzed 
     def _generate_ai_session_id(
         self, task_description: str, model: str
     ) -> tuple[str, int]:
-        """Generate session ID using simple word extraction for testing"""
+        """Generate session ID and complexity using AI assessment"""
         timestamp = datetime.utcnow().strftime("%Y-%m-%d-%H-%M")
 
-        # For testing, use simple approach without AI
-        # Extract meaningful words from task description
-        words = re.findall(r"\b\w{3,}\b", task_description.lower())
+        try:
+            # Create a temporary agent with the same system prompt
+            temp_agent = Agent(
+                model=model,
+                output_type=TaskSummaryOutput,
+                system_prompt=ScribeAgentConfig.get_system_prompt(),
+            )
 
-        # Take first 3-4 meaningful words and join with hyphens
-        meaningful_words = [
-            w for w in words if w not in ["the", "and", "for", "with", "this", "that"]
-        ][:4]
+            # Get AI assessment
+            prompt = f"Analyze this task for session creation: {task_description}"
+            result = temp_agent.run_sync(prompt)
 
-        if meaningful_words:
-            short_desc = "-".join(meaningful_words)
-        else:
-            short_desc = "general-task"
+            # Build session ID from AI-generated description
+            # Pydantic AI v0.8+ uses .output attribute to access the parsed output
+            output_data = result.output
+            session_id = f"{timestamp}-{output_data.short_description}"
+            complexity_level = output_data.complexity_level
 
-        # Clean and validate the description
-        short_desc = re.sub(r"[^a-z0-9\-]", "", short_desc.lower())
-        short_desc = re.sub(r"-+", "-", short_desc).strip("-")
+            return session_id, complexity_level
 
-        if len(short_desc) > 25:
-            short_desc = short_desc[:25]
-
-        session_id = f"{timestamp}-{short_desc}"
-        complexity_level = 2  # Default complexity
-
-        return session_id, complexity_level
+        except Exception as e:
+            raise RuntimeError(f"AI session generation failed: {e}") from e
 
     def _create_session_directory(self, session_id: str):
         """Create session directory structure"""
@@ -414,7 +418,7 @@ Session ready for Queen orchestration.
             session_path = Path(SessionManagement.get_session_path(session_id))
             self.create_worker_specific_files(session_id, output, session_path)
             return
-        
+
         # For synthesis mode, create full output files
         try:
             session_path = Path(SessionManagement.get_session_path(session_id))

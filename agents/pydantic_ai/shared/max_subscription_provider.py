@@ -6,7 +6,7 @@ instead of requiring separate API credits.
 """
 
 import asyncio
-import json
+import os
 import uuid
 from datetime import datetime
 from typing import Any, Dict, List
@@ -46,12 +46,19 @@ class MaxSubscriptionModel(Model):
         simple_messages = []
         for msg in messages:
             if hasattr(msg, "parts"):
-                # Extract text from message parts
-                text_parts = [part.text for part in msg.parts if hasattr(part, "text")]
-                content = " ".join(text_parts)
-                simple_messages.append(
-                    {"role": getattr(msg, "role", "user"), "content": content}
-                )
+                for part in msg.parts:
+                    if hasattr(part, "content"):
+                        # Simplified role detection using ternary operators
+                        part_type = type(part).__name__
+                        role = (
+                            "system"
+                            if "System" in part_type
+                            else "assistant" if "Assistant" in part_type else "user"
+                        )
+
+                        simple_messages.append(
+                            {"role": role, "content": str(part.content)}
+                        )
             elif hasattr(msg, "content"):
                 simple_messages.append(
                     {"role": getattr(msg, "role", "user"), "content": str(msg.content)}
@@ -93,7 +100,7 @@ class MaxSubscriptionModel(Model):
 class MaxSubscriptionProvider(AnthropicProvider):
     """Provider that routes Anthropic requests through Claude Code's Max subscription"""
 
-    def __init__(self, claude_code_executable: str = "claude-code"):
+    def __init__(self, claude_code_executable: str = "claude"):
         # Override parent __init__ to avoid HTTP client setup
         self.claude_code_executable = claude_code_executable
 
@@ -104,7 +111,6 @@ class MaxSubscriptionProvider(AnthropicProvider):
             "custom:claude-3-7-sonnet": "claude-3-7-sonnet-20250219",
             "custom:claude-3-5-haiku": "haiku",
         }
-        self.fallback_model = "claude-3-7-sonnet-20250219"
 
     async def request_structured_response(self, messages, model_name, **kwargs):
         """Route request through Claude Code instead of Anthropic API"""
@@ -150,43 +156,63 @@ class MaxSubscriptionProvider(AnthropicProvider):
     async def _execute_claude_code_task(
         self, prompt: str, claude_code_model: str
     ) -> str:
-        """Execute request via Claude Code Task tool with no timeout"""
-
-        task_config = {
-            "subagent_type": "general-purpose",
-            "description": "Max subscription proxy request",
-            "prompt": f"""You are proxying a request from Pydantic AI.
-
-{prompt}
-
-Respond with ONLY the AI model's response content. No additional formatting or explanations.""",
-        }
-
+        """Execute request via Claude CLI subprocess with OAuth token authentication"""
         cmd_args = [
             self.claude_code_executable,
-            "task",
+            "--print",
             "--model",
             claude_code_model,
-            "--fallback-model",
-            self.fallback_model,
-            "--config",
-            json.dumps(task_config),
+            prompt,
         ]
 
-        process = await asyncio.create_subprocess_exec(
-            *cmd_args, stdout=asyncio.subprocess.PIPE, stderr=asyncio.subprocess.PIPE
+        # Add enhanced environment variables for authentication
+        env = os.environ.copy()
+        env.update(
+            {
+                "ANTHROPIC_CLIENT_TYPE": "claude-code",
+                "CLAUDE_SESSION_PARENT": str(os.getppid()),
+                "CLAUDE_SUBPROCESS": "1",
+            }
         )
 
-        stdout, stderr = await process.communicate()
+        # Use async subprocess execution with longer timeout for simple prompts
+        process = await asyncio.create_subprocess_exec(
+            *cmd_args,
+            stdout=asyncio.subprocess.PIPE,
+            stderr=asyncio.subprocess.PIPE,
+            env=env,
+        )
 
-        if process.returncode != 0:
-            raise Exception(
-                f"Claude Code task failed (exit code {process.returncode}):\n"
-                f"STDOUT: {stdout.decode()}\n"
-                f"STDERR: {stderr.decode()}"
+        try:
+            # Longer timeout for simple prompts to see if it's just slow
+            stdout, stderr = await asyncio.wait_for(
+                process.communicate(), timeout=60.0  # Extended timeout
             )
 
-        return stdout.decode().strip()
+            if process.returncode != 0:
+                stdout_str = stdout.decode() if stdout else ""
+                stderr_str = stderr.decode() if stderr else ""
+                raise Exception(
+                    f"Claude CLI subprocess failed (exit code {process.returncode}):\n"
+                    f"STDOUT: {stdout_str}\n"
+                    f"STDERR: {stderr_str}"
+                )
+
+            result = stdout.decode().strip()
+            return result
+
+        except asyncio.TimeoutError:
+            # Try to terminate the process
+            try:
+                process.terminate()
+                await process.wait()
+            except:
+                pass
+
+            raise Exception(
+                "Claude CLI subprocess timed out after 60 seconds.\n"
+                "This suggests the Raw mode issue persists even with OAuth token setup."
+            )
 
     def _format_as_anthropic_response(
         self, claude_response: str, original_model: str
@@ -246,37 +272,7 @@ def enable_max_subscription_globally():
 
     except (ImportError, AttributeError) as e:
         print(f"⚠️  Could not enable global monkey patch: {e}")
-
-        # Fallback to the old approach (patch AnthropicModel directly)
-        try:
-            import pydantic_ai.models.anthropic as anthropic_module
-
-            OriginalAnthropicModel = anthropic_module.AnthropicModel
-
-            class MaxSubscriptionAnthropicModel(OriginalAnthropicModel):
-                def __init__(self, model_name, *, provider=None, **kwargs):
-                    if isinstance(model_name, str) and model_name.startswith("custom:"):
-                        if provider is None:
-                            provider = MaxSubscriptionProvider()
-
-                        self.name = model_name
-                        self.provider = provider
-                        self.profile = kwargs.get("profile", None)
-                        self.settings = kwargs.get("settings", None)
-
-                    else:
-                        super().__init__(model_name, provider=provider, **kwargs)
-
-            anthropic_module.AnthropicModel = MaxSubscriptionAnthropicModel
-            print(
-                "✅ Max subscription enabled via fallback method - limited compatibility"
-            )
-            return True
-
-        except Exception as fallback_error:
-            print(f"⚠️  Fallback monkey patch also failed: {fallback_error}")
-            print("💡 Use helper functions instead: create_max_subscription_agent()")
-            return False
+        return False
 
     except Exception as e:
         print(f"⚠️  Unexpected error in monkey patch: {e}")
