@@ -24,6 +24,7 @@ Claude CLI (with Max subscription)
 - 🚀 **Eliminates nested subprocess issues** - Clean Docker environment for Claude CLI
 - 🔍 **Complexity assessment** - AI-powered task complexity analysis for scribe runner
 - 🐳 **Simple Docker service** - Minimal overhead, focused on core integration
+- 🔐 **Container-only authentication** - No host Claude CLI setup required
 
 ## Quick Start
 
@@ -47,7 +48,11 @@ This will:
 - Generate a long-lived OAuth token (valid for 1 year)
 - Enable Max subscription access within the Docker environment
 
-**Note**: This is a one-time setup. The authentication persists until the Docker volume is removed.
+**Important Notes:**
+- This is a **one-time setup** per container 
+- Authentication is stored **inside the container only** (not on host)
+- The token persists across container restarts but **not across container rebuilds**
+- You **do not need** Claude CLI installed or authenticated on the host system
 
 ### 3. Verify Health
 
@@ -111,15 +116,14 @@ curl http://localhost:47291/health
 ### Environment Variables
 
 - `WORKSPACE_ROOT` - Path to project workspace (default: `/workspace`)
-- `CLAUDE_CONFIG_PATH` - Path to Claude config (default: `/claude-config`) 
+- `PYTHONUNBUFFERED` - Python logging configuration for Docker
 - `PORT` - API service port (default: `8080`, exposed on: `47291`)
 
 ### Docker Volumes
 
 - `../../:/workspace:ro` - Mount project workspace (read-only) for Claude CLI analysis
-- `~/.claude:/claude-config:ro` - Mount Claude config (read-only) for reference
 
-**Note**: Claude authentication is done directly in the container via `claude setup-token`, not through mounted volumes.
+**Authentication**: Claude CLI authentication is handled entirely within the container using `docker exec -it claude-max-api claude setup-token`. No host configuration or volume mounting required.
 
 ## Integration with Pydantic AI
 

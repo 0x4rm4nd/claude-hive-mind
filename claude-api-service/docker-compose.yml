@@ -5,14 +5,10 @@ services:
     ports:
       - "47291:8080"
     volumes:
-      # Mount entire SmartWalletFX repo for analysis
+      # Mount project workspace for analysis
       - ../../:/workspace:ro
-      # Mount Claude config for authentication (if needed)
-      - ~/.claude:/claude-config:ro
     environment:
       - WORKSPACE_ROOT=/workspace
-      - CLAUDE_CONFIG_PATH=/claude-config
-      - CLAUDE_HOME=/claude-config
       - PYTHONUNBUFFERED=1
     working_dir: /app
     restart: unless-stopped
