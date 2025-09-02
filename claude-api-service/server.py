@@ -11,7 +11,7 @@ import os
 import json
 from typing import Dict, Optional
 
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, Response
 from fastapi.responses import JSONResponse
 from pydantic import BaseModel
 import uvicorn
@@ -45,16 +45,20 @@ class ClaudeRequest(BaseModel):
 # Core API Endpoints
 
 
-@app.get("/health")
-async def health_check():
+@app.get("/health", status_code=200)
+async def health_check(response: Response):
     """Health check endpoint"""
     claude_healthy = await claude_client.health_check()
-
+    
+    if not claude_healthy:
+        response.status_code = 503  # Service Unavailable
+        
     return {
         "status": "healthy" if claude_healthy else "degraded",
         "claude_cli": "available" if claude_healthy else "unavailable",
         "workspace_root": str(claude_client.workspace_root),
         "purpose": "Max subscription integration via Docker",
+        "message": "Service ready" if claude_healthy else "Claude CLI authentication required: docker exec -it claude-max-api claude setup-token"
     }
 
 
