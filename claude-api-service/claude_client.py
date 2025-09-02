@@ -92,7 +92,7 @@ class ClaudeClient:
         """Check if Claude CLI is accessible"""
         try:
             result = await self._call_claude(
-                "Health check - respond with 'OK'", timeout=10
+                "Health check - respond with 'OK'", timeout=20
             )
             return result["success"] and "OK" in result.get("response", "")
         except Exception:
