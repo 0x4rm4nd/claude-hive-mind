@@ -53,7 +53,7 @@ class BaseAgentConfig(ABC):
     @classmethod
     def get_default_model(cls) -> str:
         """Return default AI model (can be overridden by workers)"""
-        return "google-gla:gemini-2.5-flash"
+        return "custom:max-subscription"
 
     @classmethod
     def get_worker_config(cls) -> WorkerConfig:
