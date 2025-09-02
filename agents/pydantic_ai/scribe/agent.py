@@ -85,7 +85,7 @@ You are the orchestration backbone that ensures smooth session flow and comprehe
 
     @classmethod
     def get_default_model(cls) -> str:
-        return "openai:gpt-5-mini"  # Override for Scribe session management
+        return "custom:max-subscription"
 
     @classmethod
     def create_task_summary_agent(cls):
