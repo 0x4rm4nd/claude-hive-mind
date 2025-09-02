@@ -12,33 +12,30 @@ from .tools import iso_now
 from .base_worker import BaseWorker
 from .base_agent import BaseAgentConfig
 
-# Import and enable Max subscription provider automatically
-from .max_subscription_provider import (
-    MaxSubscriptionProvider, 
-    enable_max_subscription_globally
+# Import and enable Max subscription integration automatically
+from .custom_provider.claude_max import (
+    ClaudeMaxSubscriptionModel,
+    ClaudeAPIServiceClient,
+    enable_max_subscription_integration,
 )
 
-# Enable Max subscription support on import
-enable_max_subscription_globally()
+# Integration is auto-enabled in claude_integration module
 
 __all__ = [
     # Models
-    'WorkerOutput',
-    'WorkerSummary', 
-    'WorkerMetrics',
-    'WorkerDependencies',
-    
+    "WorkerOutput",
+    "WorkerSummary",
+    "WorkerMetrics",
+    "WorkerDependencies",
     # Configuration
-    'WorkerConfig',
-    'WorkerTagMapping',
-    
+    "WorkerConfig",
+    "WorkerTagMapping",
     # Base Classes
-    'BaseWorker',
-    'BaseAgentConfig',
-    
+    "BaseWorker",
+    "BaseAgentConfig",
     # Max Subscription Support
-    'MaxSubscriptionProvider',
-    
+    "MaxSubscriptionModel",
+    "ClaudeAPISubscriptionProvider",
     # Utilities
-    'iso_now'
+    "iso_now",
 ]
