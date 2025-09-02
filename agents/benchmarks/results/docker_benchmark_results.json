@@ -1,0 +1,152 @@
+{
+  "test_timestamp": 1756811879.7100549,
+  "test_type": "docker_integration_benchmark",
+  "service_info": {
+    "api_base_url": "http://localhost:47291",
+    "service_started": false,
+    "auto_start_service": false,
+    "default_model": "sonnet",
+    "available_models": [
+      "custom:max-subscription",
+      "custom:claude-opus-4",
+      "custom:claude-sonnet-4",
+      "custom:claude-3-7-sonnet",
+      "custom:claude-3-5-haiku"
+    ]
+  },
+  "health_check": {
+    "status": "healthy",
+    "claude_cli": "available",
+    "workspace_root": "/workspace",
+    "purpose": "Max subscription integration via Docker",
+    "message": "Service ready",
+    "response_time": 6.011961221694946
+  },
+  "single_request": {
+    "iterations": 5,
+    "avg_time": 8.269699764251708,
+    "min_time": 6.441195011138916,
+    "max_time": 10.362652778625488,
+    "median_time": 7.383893013000488,
+    "std_dev": 1.9202312997005186,
+    "avg_response_length": 455.2,
+    "raw_times": [
+      10.31928300857544,
+      7.383893013000488,
+      6.441195011138916,
+      6.841475009918213,
+      10.362652778625488
+    ],
+    "raw_response_lengths": [
+      518,
+      460,
+      483,
+      426,
+      389
+    ]
+  },
+  "concurrent_requests": {
+    "2": {
+      "total_time": 10.676838874816895,
+      "successful_requests": 2,
+      "failed_requests": 0,
+      "requests_per_second": 0.18732136201074773,
+      "avg_time_per_request": 5.338419437408447,
+      "avg_response_length": 69.5
+    },
+    "3": {
+      "total_time": 7.942774772644043,
+      "successful_requests": 3,
+      "failed_requests": 0,
+      "requests_per_second": 0.3777017586262666,
+      "avg_time_per_request": 2.6475915908813477,
+      "avg_response_length": 50.666666666666664
+    },
+    "5": {
+      "total_time": 12.918086767196655,
+      "successful_requests": 5,
+      "failed_requests": 0,
+      "requests_per_second": 0.3870542201881375,
+      "avg_time_per_request": 2.583617353439331,
+      "avg_response_length": 56.6
+    }
+  },
+  "model_comparison": {
+    "custom:max-subscription": {
+      "actual_model": "sonnet",
+      "response_time": 7.755280017852783,
+      "response_length": 549,
+      "success": true
+    },
+    "custom:claude-opus-4": {
+      "actual_model": "opus",
+      "response_time": 8.194600105285645,
+      "response_length": 503,
+      "success": true
+    },
+    "custom:claude-sonnet-4": {
+      "actual_model": "sonnet",
+      "response_time": 7.1858069896698,
+      "response_length": 553,
+      "success": true
+    },
+    "custom:claude-3-5-haiku": {
+      "actual_model": "haiku",
+      "response_time": 7.965017795562744,
+      "response_length": 469,
+      "success": true
+    }
+  },
+  "parallel_scaling": {
+    "1": {
+      "total_time": 6.556920766830444,
+      "successful_requests": 1,
+      "failed_requests": 0,
+      "speedup": 1.0,
+      "efficiency_percent": 100.0,
+      "requests_per_second": 0.15251061215482567
+    },
+    "2": {
+      "total_time": 7.1540207862854,
+      "successful_requests": 2,
+      "failed_requests": 0,
+      "speedup": 1.8330728866207306,
+      "efficiency_percent": 91.65364433103653,
+      "requests_per_second": 0.279563068062941
+    },
+    "3": {
+      "total_time": 6.092252731323242,
+      "successful_requests": 3,
+      "failed_requests": 0,
+      "speedup": 3.2288158695968656,
+      "efficiency_percent": 107.62719565322885,
+      "requests_per_second": 0.49242868480743374
+    },
+    "4": {
+      "total_time": 7.51683497428894,
+      "successful_requests": 4,
+      "failed_requests": 0,
+      "speedup": 3.4891923471823727,
+      "efficiency_percent": 87.22980867955931,
+      "requests_per_second": 0.5321388607947166
+    },
+    "5": {
+      "total_time": 10.02978515625,
+      "successful_requests": 5,
+      "failed_requests": 0,
+      "speedup": 3.268724436606969,
+      "efficiency_percent": 65.37448873213938,
+      "requests_per_second": 0.49851516479236646
+    }
+  },
+  "analysis": {
+    "performance_grade": "A",
+    "bottlenecks": [],
+    "recommendations": [],
+    "observations": [
+      "Excellent response time: 8.3s",
+      "All concurrent requests succeeded",
+      "Excellent parallel efficiency: 107.6%"
+    ]
+  }
+}
