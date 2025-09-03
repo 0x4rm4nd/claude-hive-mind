@@ -7,6 +7,8 @@ services:
     volumes:
       # Mount project workspace for analysis
       - ../../:/workspace:ro
+      # Mount Docker-specific agents directory as .claude/agents in container
+      - ./docker-agents:/workspace/.claude/agents:ro
       # Persist Claude CLI authentication across container restarts
       - claude_auth:/root/.claude
     environment:
@@ -17,7 +19,7 @@ services:
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8080/health"]
       interval: 300s
-      timeout: 10s
+      timeout: 60s
       retries: 3
       start_period: 60s
     networks:

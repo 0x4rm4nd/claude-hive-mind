@@ -1,6 +1,6 @@
-# SmartWalletFX Agent Coordination Instructions
+# Agent Coordination Instructions
 
-> **MANDATORY**: All Claude Code agents must follow these coordination protocols when working on SmartWalletFX tasks.
+> **MANDATORY**: All Claude Code agents must follow these coordination protocols when working on tasks.
 
 ## 🎯 Agent Spawning Architecture
 
@@ -242,7 +242,7 @@ Results stored in: `Docs/hive-mind/sessions/[SESSION_ID]/`
 
 ## 🔧 Example Task Tool Usage
 
-### **How YOU (Claude Code) Spawn Agents for SmartWalletFX Services:**
+### **How YOU (Claude Code) Spawn Agents:**
 
 **API Service Tasks:**
 
@@ -283,12 +283,19 @@ prompt: "Navigate to .claude/agents/pydantic_ai/ and run:
 ```
 Use Task tool:
 subagent_type: analyzer-worker
-prompt: "Navigate to .claude/agents/pydantic_ai/ and run:
+prompt: "Navigate to /workspace/.claude/agents/pydantic_ai/ and execute:
 1. python cli.py scribe create --task 'Security analysis of crypto data pipeline'
 2. python cli.py analyzer --session SESSION_ID --task 'TASK'
-3. Use --model openai:gpt-5-mini if Gemini unavailable"
+3. Use --model custom:max-subscription if default fails
+4. CRITICAL: Use --dangerously-skip-permissions for Python execution in Docker"
 ```
 
 ---
 
-**These instructions ensure Claude Code agents use the framework-enforced Pydantic AI system for reliable, structured coordination on SmartWalletFX tasks.** ⚡
+**These instructions ensure Claude Code agents use the framework-enforced Pydantic AI system for reliable, structured coordination on differents tasks.** ⚡
+
+## 📖 Additional Context
+
+For comprehensive Pydantic AI agent context including preloaded commands, model configurations, and common patterns, see: `PYDANTIC_AI_CONTEXT.md`
+
+This eliminates the need for spawned agents to analyze structure and enables direct execution.
