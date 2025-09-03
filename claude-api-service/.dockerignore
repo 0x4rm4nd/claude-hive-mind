@@ -1,0 +1,7 @@
+docker-agents/
+docker-compose.yml
+README.md
+.git
+.gitignore
+*.md
+test_*.py

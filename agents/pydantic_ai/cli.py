@@ -72,7 +72,9 @@ def run_scribe(args):
     # Use BaseWorker pattern consistently
     worker = ScribeWorker()
     try:
-        output = worker.run(session_id, task_desc, args.model or "custom:max-subscription")
+        output = worker.run(
+            session_id, task_desc, args.model or "custom:max-subscription"
+        )
         print(f"✅ Scribe operation completed: {worker.get_success_message(output)}")
         return 0
     except Exception as e:

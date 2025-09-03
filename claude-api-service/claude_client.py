@@ -17,7 +17,7 @@ class ClaudeClient:
 
     def __init__(self):
         self.claude_executable = "claude"
-        self.workspace_root = Path(os.environ.get("WORKSPACE_ROOT", "/workspace"))
+        self.workspace_root = Path(os.environ.get("WORKSPACE_ROOT", "/app"))
 
     async def _call_claude(
         self, prompt: str, model: str = "sonnet", timeout: int = 180
