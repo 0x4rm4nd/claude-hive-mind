@@ -12,14 +12,23 @@ RUN apt-get update && apt-get install -y \
 RUN npm install -g @anthropic-ai/claude-code && \
     rm -rf /var/lib/apt/lists/*
 
+# Create non-root user
+RUN useradd -m -u 1000 claudeuser && \
+    mkdir -p /app && \
+    chown claudeuser:claudeuser /app
+
 WORKDIR /app
 
 # Copy requirements and install Python dependencies
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
-# Copy service code
+# Copy service code and set ownership
 COPY . .
+RUN chown -R claudeuser:claudeuser /app
+
+# Switch to non-root user
+USER claudeuser
 
 # Expose port
 EXPOSE 8080
