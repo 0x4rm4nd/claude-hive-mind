@@ -16,7 +16,7 @@ class WorkerAssignment(BaseModel):
     worker_type: str = Field(
         description="Worker type (e.g., 'analyzer-worker', 'architect-worker')"
     )
-    priority: Literal["high", "medium", "low"] = Field(
+    priority: Literal["critical", "high", "medium", "low"] = Field(
         default="medium", description="Strategic priority for this worker"
     )
     task_focus: str = Field(
@@ -52,7 +52,7 @@ class QueenOrchestrationPlan(BaseModel):
 
     session_id: str = Field(default="", description="Session identifier")
     timestamp: str = Field(default="", description="ISO timestamp of plan creation")
-    status: Literal["completed", "failed"] = Field(
+    status: Literal["completed", "failed", "planning"] = Field(
         default="completed", description="Orchestration status"
     )
 
@@ -61,7 +61,7 @@ class QueenOrchestrationPlan(BaseModel):
         default_factory=dict, description="Multi-dimensional strategic task assessment"
     )
     complexity_assessment: int = Field(
-        ge=1, le=4, description="Overall complexity rating (1-4, guidance only)"
+        ge=1, le=10, description="Overall complexity rating (1-10, guidance only)"
     )
     strategic_rationale: str = Field(
         default="", description="Queen's reasoning for worker selection and approach"
