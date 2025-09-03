@@ -12,10 +12,12 @@ RUN apt-get update && apt-get install -y \
 RUN npm install -g @anthropic-ai/claude-code && \
     rm -rf /var/lib/apt/lists/*
 
-# Create non-root user
+# Create non-root user and initialize .claude directory
 RUN useradd -m -u 1000 claudeuser && \
     mkdir -p /app && \
-    chown claudeuser:claudeuser /app
+    chown claudeuser:claudeuser /app && \
+    mkdir -p /home/claudeuser/.claude && \
+    chown -R claudeuser:claudeuser /home/claudeuser/.claude
 
 WORKDIR /app
 

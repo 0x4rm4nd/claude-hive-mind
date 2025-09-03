@@ -5,14 +5,11 @@ services:
     ports:
       - "47291:8080"
     volumes:
-      # Mount project workspace for analysis
-      - ../../:/workspace:ro
       # Mount Docker-specific agents directory as .claude/agents in container
-      - ./docker-agents:/workspace/.claude/agents:ro
+      - ./docker-agents:/app/.claude/agents:ro
       # Persist Claude CLI authentication across container restarts
-      - claude_auth:/root/.claude
+      - claude_auth:/home/claudeuser/.claude
     environment:
-      - WORKSPACE_ROOT=/workspace
       - PYTHONUNBUFFERED=1
     working_dir: /app
     restart: unless-stopped
