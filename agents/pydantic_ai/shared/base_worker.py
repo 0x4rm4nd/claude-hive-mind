@@ -36,7 +36,10 @@ class BaseWorker(ABC, Generic[T]):
     """
 
     def __init__(
-        self, worker_type: str, worker_config: Optional[WorkerConfig], output_model: Type[T]
+        self,
+        worker_type: str,
+        worker_config: Optional[WorkerConfig],
+        output_model: Type[T],
     ):
         """
         Initialize base worker.
@@ -120,7 +123,7 @@ class BaseWorker(ABC, Generic[T]):
     ) -> None:
         """Framework-enforced base file creation with worker-specific prefix"""
         try:
-            session_path = SessionManagement.get_session_path(session_id)
+            session_path = Path(SessionManagement.get_session_path(session_id))
             notes_dir = session_path / "workers" / "notes"
             json_dir = session_path / "workers" / "json"
             notes_dir.mkdir(parents=True, exist_ok=True)
@@ -133,21 +136,31 @@ class BaseWorker(ABC, Generic[T]):
             if hasattr(output, "notes_markdown") and output.notes_markdown:
                 notes_file = notes_dir / f"{file_prefix}_notes.md"
                 notes_file.write_text(output.notes_markdown)
-                relative_path = notes_file.relative_to(project_root)
+                try:
+                    relative_path = notes_file.relative_to(project_root)
+                    path_str = str(relative_path)
+                except ValueError:
+                    # File is outside project root, use absolute path
+                    path_str = str(notes_file)
                 self.log_debug(
                     session_id,
                     f"Created {file_prefix} notes file",
-                    {"path": str(relative_path)},
+                    {"path": path_str},
                 )
 
             # Create structured output JSON
             output_file = json_dir / f"{file_prefix}_output.json"
             output_file.write_text(output.model_dump_json(indent=2))
-            relative_path = output_file.relative_to(project_root)
+            try:
+                relative_path = output_file.relative_to(project_root)
+                path_str = str(relative_path)
+            except ValueError:
+                # File is outside project root, use absolute path
+                path_str = str(output_file)
             self.log_debug(
                 session_id,
                 f"Created {file_prefix} output JSON",
-                {"path": str(relative_path)},
+                {"path": path_str},
             )
 
             # Allow worker-specific file creation
@@ -172,13 +185,6 @@ class BaseWorker(ABC, Generic[T]):
         self.validate_session(session_id)
 
         try:
-            # Log analysis started event
-            self.log_event(
-                session_id,
-                "analysis_started",
-                self.get_analysis_event_details(task_description),
-            )
-
             # Execute worker-specific AI logic
             result = self.execute_ai_analysis(session_id, task_description, model)
             output: T = result.output
@@ -214,7 +220,9 @@ class BaseWorker(ABC, Generic[T]):
         )
         parser.add_argument("--session", required=True, help="Session ID")
         parser.add_argument("--task", required=True, help="Analysis task description")
-        parser.add_argument("--model", default="custom:max-subscription", help="AI model to use")
+        parser.add_argument(
+            "--model", default="custom:max-subscription", help="AI model to use"
+        )
         return parser
 
     def run_cli_main(self) -> int:
