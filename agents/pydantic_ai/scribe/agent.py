@@ -6,6 +6,7 @@ Pydantic AI agent for session lifecycle management and synthesis.
 
 from typing import Type
 from pydantic import BaseModel
+from pydantic_ai import Agent
 
 from shared.base_agent import BaseAgentConfig
 from scribe.models import (
@@ -95,8 +96,6 @@ You are the orchestration backbone that ensures smooth session flow and comprehe
     @classmethod
     def create_session_creation_agent(cls):
         """Create agent for session creation with appropriate output model"""
-        from pydantic_ai import Agent
-
         return Agent(
             model=cls.get_default_model(),
             output_type=ScribeSessionCreationOutput,
@@ -106,8 +105,6 @@ You are the orchestration backbone that ensures smooth session flow and comprehe
     @classmethod
     def create_synthesis_agent(cls):
         """Create agent for synthesis with appropriate output model"""
-        from pydantic_ai import Agent
-
         return Agent(
             model=cls.get_default_model(),
             output_type=ScribeSynthesisOutput,

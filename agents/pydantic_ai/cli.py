@@ -134,7 +134,7 @@ Examples:
     queen_parser.add_argument(
         "--monitor-interval",
         type=int,
-        default=30,
+        default=0,
         help="Monitoring interval in seconds",
     )
 

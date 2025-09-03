@@ -94,7 +94,7 @@ class ClaudeAPIServiceClient:
         self, prompt: str, model: str, extra_headers: Dict[str, str] = None
     ) -> str:
         """Call the Claude API service"""
-        request_data = {"prompt": prompt, "model": model, "timeout": 150}
+        request_data = {"prompt": prompt, "model": model, "timeout": 300}
 
         # Prepare headers
         headers = {"Content-Type": "application/json"}
@@ -107,7 +107,7 @@ class ClaudeAPIServiceClient:
                 json=request_data,
                 headers=headers,
                 timeout=aiohttp.ClientTimeout(
-                    total=150
+                    total=300
                 ),  # Longer timeout for Claude calls
             ) as response:
                 if response.status != 200:
