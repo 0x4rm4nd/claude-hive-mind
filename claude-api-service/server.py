@@ -5,22 +5,21 @@ Simple HTTP API service that routes Pydantic AI requests through Claude CLI.
 Eliminates nested subprocess authentication issues for Max subscription integration.
 """
 
-import asyncio
 import logging
 import os
 import json
-from typing import Dict, Optional
+import time
 
-from fastapi import FastAPI, HTTPException, Response
+from fastapi import FastAPI, HTTPException, Response, Request
 from fastapi.responses import JSONResponse
 from pydantic import BaseModel
 import uvicorn
-
 from claude_client import ClaudeClient
 
 # Configure logging
 logging.basicConfig(
-    level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+    level=logging.INFO,
+    format="%(asctime)s - %(filename)s - %(levelname)s - %(message)s",
 )
 logger = logging.getLogger(__name__)
 
@@ -30,6 +29,47 @@ app = FastAPI(
     description="Simple Claude CLI service for Pydantic AI Max subscription integration",
     version="1.0.0",
 )
+
+
+# Custom middleware for clean logging (timestamp only, no IP)
+@app.middleware("http")
+async def log_requests(request: Request, call_next):
+    start_time = time.time()
+    response = await call_next(request)
+    process_time = time.time() - start_time
+
+    # For /claude endpoint, include response text in logs
+    if request.url.path == "/claude" and request.method == "POST":
+        # Get response body for logging (only for /claude endpoint)
+        response_body = b""
+        async for chunk in response.body_iterator:
+            response_body += chunk
+
+        try:
+            response_json = json.loads(response_body.decode())
+            claude_response = response_json.get("response", "")
+            logger.info(
+                f'"{request.method} {request.url.path}" {response.status_code} ({process_time:.3f}s) [{claude_response}]'
+            )
+        except Exception:
+            logger.info(
+                f'"{request.method} {request.url.path}" {response.status_code} ({process_time:.3f}s)'
+            )
+
+        return Response(
+            content=response_body,
+            status_code=response.status_code,
+            headers=dict(response.headers),
+            media_type=response.headers.get("content-type"),
+        )
+    else:
+        # Clean log format for other endpoints
+        logger.info(
+            f'"{request.method} {request.url.path}" {response.status_code} ({process_time:.3f}s)'
+        )
+
+    return response
+
 
 # Initialize Claude client
 claude_client = ClaudeClient()
@@ -49,16 +89,20 @@ class ClaudeRequest(BaseModel):
 async def health_check(response: Response):
     """Health check endpoint"""
     claude_healthy = await claude_client.health_check()
-    
+
     if not claude_healthy:
         response.status_code = 503  # Service Unavailable
-        
+
     return {
         "status": "healthy" if claude_healthy else "degraded",
         "claude_cli": "available" if claude_healthy else "unavailable",
         "workspace_root": str(claude_client.workspace_root),
         "purpose": "Max subscription integration via Docker",
-        "message": "Service ready" if claude_healthy else "Claude CLI authentication required: docker exec -it claude-max-api claude setup-token"
+        "message": (
+            "Service ready"
+            if claude_healthy
+            else "Claude CLI authentication required: docker exec -it claude-max-api claude setup-token"
+        ),
     }
 
 
@@ -108,4 +152,11 @@ if __name__ == "__main__":
     port = int(os.environ.get("PORT", 8080))
     logger.info(f"Starting Claude API Service on port {port}")
 
-    uvicorn.run(app, host="0.0.0.0", port=port, log_level="info", access_log=True)
+    # Disable uvicorn's access log since we have custom middleware logging
+    uvicorn.run(
+        app,
+        host="0.0.0.0",
+        port=port,
+        log_level="info",
+        access_log=False,  # Disable built-in access logging
+    )

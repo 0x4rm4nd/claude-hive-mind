@@ -20,7 +20,7 @@ class ClaudeClient:
         self.workspace_root = Path(os.environ.get("WORKSPACE_ROOT", "/workspace"))
 
     async def _call_claude(
-        self, prompt: str, model: str = "sonnet", timeout: int = 120
+        self, prompt: str, model: str = "sonnet", timeout: int = 180
     ) -> Dict[str, any]:
         """
         Call Claude CLI with the given prompt.
@@ -28,7 +28,14 @@ class ClaudeClient:
         Returns:
             Dict with 'success', 'response', 'error' keys
         """
-        cmd = [self.claude_executable, "--print", "--model", model, prompt]
+        cmd = [
+            self.claude_executable,
+            "--print",
+            "--model",
+            model,
+            prompt,
+            "--dangerously-skip-permissions",
+        ]
 
         logger.info(f"Executing Claude CLI: {' '.join(cmd[:4])} [{prompt}]")
 
@@ -75,7 +82,7 @@ class ClaudeClient:
             }
 
     async def run_claude_command(
-        self, prompt: str, model: str = "sonnet", timeout: int = 120
+        self, prompt: str, model: str = "sonnet", timeout: int = 180
     ) -> str:
         """
         Simple Claude CLI execution for generic proxy use.
