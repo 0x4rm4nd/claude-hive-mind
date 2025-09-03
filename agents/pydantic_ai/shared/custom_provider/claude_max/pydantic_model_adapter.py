@@ -8,10 +8,11 @@ Maintains standard Pydantic AI interface while using Claude Max subscription.
 from datetime import datetime
 from typing import Any, List
 
-from pydantic_ai.messages import ModelMessage, ModelResponse, TextPart
+from pydantic_ai.messages import ModelMessage, ModelResponse, TextPart, ToolCallPart
 from pydantic_ai.models import Model, ModelRequestParameters
 from pydantic_ai.settings import ModelSettings
 from pydantic_ai.usage import RequestUsage
+import json
 
 from .api_service_client import ClaudeAPIServiceClient
 
@@ -48,19 +49,40 @@ class ClaudeMaxSubscriptionModel(Model):
         # Convert Pydantic AI messages to prompt string
         prompt = self._convert_pydantic_messages(messages)
 
-        # Get response from client
-        response_text = await self._client.send_prompt(prompt, self._model_name)
-
-        # Convert back to Pydantic AI format
-        return ModelResponse(
-            parts=[TextPart(content=response_text)],
-            model_name=self._model_name,
-            timestamp=datetime.now(),
-            usage=RequestUsage(
-                input_tokens=self._estimate_tokens(messages),
-                output_tokens=len(response_text.split()),
-            ),
+        # Extract extra headers from model settings (ModelSettings is a dict, not object)
+        extra_headers = model_settings.get("extra_headers") if model_settings else None
+        response_text = await self._client.send_prompt(
+            prompt, self._model_name, extra_headers
         )
+
+        # Try to parse as JSON first - if it works, return as ToolCallPart
+        try:
+            json_data = json.loads(response_text.strip())
+            return ModelResponse(
+                parts=[
+                    ToolCallPart(
+                        tool_name="final_result",  # Use the correct tool name from Pydantic AI
+                        args=json_data,  # Pass JSON fields directly, not wrapped
+                        tool_call_id="custom_model_response",
+                    )
+                ],
+                model_name=self._model_name,
+                timestamp=datetime.now(),
+                usage=RequestUsage(
+                    input_tokens=self._estimate_tokens(messages),
+                    output_tokens=len(response_text.split()),
+                ),
+            )
+        except (json.JSONDecodeError, AttributeError) as e:
+            return ModelResponse(
+                parts=[TextPart(content=response_text)],
+                model_name=self._model_name,
+                timestamp=datetime.now(),
+                usage=RequestUsage(
+                    input_tokens=self._estimate_tokens(messages),
+                    output_tokens=len(response_text.split()),
+                ),
+            )
 
     async def count_tokens(
         self,
