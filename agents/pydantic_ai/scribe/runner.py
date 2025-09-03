@@ -42,7 +42,7 @@ class ScribeWorker(BaseWorker[ScribeOutput]):
             worker_config=None,
             output_model=ScribeOutput,
         )
-        self._session_complexity = None  # Store complexity level for session creation
+        self._session_complexity = None
 
     def run(self, session_id: str, task_description: str, model: str) -> ScribeOutput:
         """Execute scribe analysis with session lifecycle management.
@@ -63,6 +63,7 @@ class ScribeWorker(BaseWorker[ScribeOutput]):
             actual_session_id, complexity_level = self._generate_ai_session_id(
                 task_description, model
             )
+            self._session_complexity = complexity_level
             self.worker_config = ScribeAgentConfig.create_worker_config(
                 actual_session_id, task_description
             )
@@ -87,17 +88,13 @@ class ScribeWorker(BaseWorker[ScribeOutput]):
         is_create_mode = "synthesis" not in task_description.lower()
 
         if is_create_mode:
-            # For create mode, we need to generate the actual session_id first
+            # For create mode, use the session_id already provided by run()
             # and create the directory structure before calling parent
-            actual_session_id, complexity_level = self._generate_ai_session_id(
-                task_description, model
-            )
-            self._session_complexity = complexity_level
-            self._create_session_directory(actual_session_id)
-            self._create_session_markdown(actual_session_id, task_description, model)
+            self._create_session_directory(session_id)
+            self._create_session_markdown(session_id, task_description, model)
 
-            # Now call parent with the actual session_id
-            return super().run_analysis(actual_session_id, task_description, model)
+            # Now call parent with the session_id
+            return super().run_analysis(session_id, task_description, model)
         else:
             # For synthesis mode, use normal flow
             return super().run_analysis(session_id, task_description, model)
