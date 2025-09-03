@@ -76,7 +76,7 @@ claude_client = ClaudeClient()
 
 
 # Request/Response models
-class ClaudeRequest(BaseModel):
+class ClaudeData(BaseModel):
     prompt: str
     model: str = "sonnet"
     timeout: int = 120
@@ -107,18 +107,24 @@ async def health_check(response: Response):
 
 
 @app.post("/claude")
-async def claude_request(request: ClaudeRequest):
+async def claude_request(request: Request, claude_data: ClaudeData):
     """Generic Claude CLI proxy for any Pydantic AI request"""
     logger.info(
-        f"Claude request: {request.model}, prompt length: {len(request.prompt)}"
+        f"Claude request: {claude_data.model}, prompt length: {len(claude_data.prompt)}"
     )
+
+    # Check for system prompt override in headers
+    system_prompt_override = request.headers.get("X-System-Prompt-Override", None)
 
     try:
         response = await claude_client.run_claude_command(
-            prompt=request.prompt, model=request.model, timeout=request.timeout
+            prompt=claude_data.prompt,
+            model=claude_data.model,
+            timeout=claude_data.timeout,
+            system_prompt_override=system_prompt_override,
         )
 
-        return {"response": response, "model": request.model, "success": True}
+        return {"response": response, "model": claude_data.model, "success": True}
 
     except Exception as e:
         logger.error(f"Claude request failed: {e}")

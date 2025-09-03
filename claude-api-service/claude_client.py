@@ -20,7 +20,11 @@ class ClaudeClient:
         self.workspace_root = Path(os.environ.get("WORKSPACE_ROOT", "/app"))
 
     async def _call_claude(
-        self, prompt: str, model: str = "sonnet", timeout: int = 180
+        self,
+        prompt: str,
+        model: str = "sonnet",
+        timeout: int = 180,
+        system_prompt_override: str = None,
     ) -> Dict[str, any]:
         """
         Call Claude CLI with the given prompt.
@@ -33,11 +37,21 @@ class ClaudeClient:
             "--print",
             "--model",
             model,
-            prompt,
-            "--dangerously-skip-permissions",
         ]
 
-        logger.info(f"Executing Claude CLI: {' '.join(cmd[:4])} [{prompt}]")
+        # Add system prompt override if provided
+        if system_prompt_override:
+            cmd.extend(["--append-system-prompt", system_prompt_override])
+            logger.info("System prompt override applied")
+
+        cmd.extend(
+            [
+                prompt,
+                "--dangerously-skip-permissions",
+            ]
+        )
+
+        logger.info(f"Executing Claude CLI: {' '.join(cmd[:-2])} [{prompt}]")
 
         try:
             # Run in async subprocess
@@ -82,13 +96,17 @@ class ClaudeClient:
             }
 
     async def run_claude_command(
-        self, prompt: str, model: str = "sonnet", timeout: int = 180
+        self,
+        prompt: str,
+        model: str = "sonnet",
+        timeout: int = 180,
+        system_prompt_override: str = None,
     ) -> str:
         """
         Simple Claude CLI execution for generic proxy use.
         Just passes the prompt through to Claude and returns the response.
         """
-        result = await self._call_claude(prompt, model, timeout)
+        result = await self._call_claude(prompt, model, timeout, system_prompt_override)
 
         if result["success"]:
             return result["response"]
