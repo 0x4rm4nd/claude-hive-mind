@@ -10,6 +10,8 @@ from pathlib import Path
 from datetime import datetime
 from typing import Dict, Any
 from pydantic_ai import Agent
+from pydantic_ai.models import ModelSettings
+from pydantic_ai.output import PromptedOutput
 
 from scribe.models import TaskSummaryOutput
 from shared.base_worker import BaseWorker
@@ -231,18 +233,35 @@ This is a basic synthesis report for the session. The session has been analyzed 
         timestamp = datetime.utcnow().strftime("%Y-%m-%d-%H-%M")
 
         try:
-            # Create Agent with the specified model
-            temp_agent = Agent(
-                model=model,
-                output_type=TaskSummaryOutput,
-                system_prompt=ScribeAgentConfig.get_system_prompt(),
-            )
+            if model.startswith("custom:"):
+                scribe_prompt = f"""Using the Scribe Agent, generate a session ID and complexity assessment for this task: "{task_description}" """
 
-            # Run complexity assessment with specified model
-            complexity_data = temp_agent.run_sync(task_description)
+                # Use ModelSettings to pass system prompt override via headers
+                model_settings = ModelSettings(
+                    extra_headers={
+                        "X-System-Prompt-Override": 'CRITICAL: When asked for session ID generation, respond with ONLY raw JSON - no markdown code blocks, no explanations, no formatting. Just the pure JSON object: {"short_description": "task-name", "complexity_level": 1, "focus_areas": ["task-area"]}'
+                    }
+                )
 
-            session_id = f"{timestamp}-{complexity_data.data.short_description}"
-            complexity_level = complexity_data.data.complexity_level
+                temp_agent = Agent(
+                    model=model,
+                    output_type=TaskSummaryOutput,
+                    model_settings=model_settings,
+                    # NO system prompt for custom models - let Docker agent handle it
+                )
+
+                complexity_data = temp_agent.run_sync(scribe_prompt)
+            else:
+                temp_agent = Agent(
+                    model=model,
+                    output_type=TaskSummaryOutput,
+                    system_prompt=ScribeAgentConfig.get_system_prompt(),
+                )
+
+                complexity_data = temp_agent.run_sync(task_description)
+
+            session_id = f"{timestamp}-{complexity_data.output.short_description}"
+            complexity_level = complexity_data.output.complexity_level
 
             return session_id, complexity_level
 
