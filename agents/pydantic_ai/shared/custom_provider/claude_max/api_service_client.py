@@ -38,11 +38,16 @@ class ClaudeAPIServiceClient:
             "custom:claude-3-5-haiku": "haiku",
         }
 
-    async def send_prompt(self, prompt: str, model_name: str) -> str:
+    async def send_prompt(
+        self, prompt: str, model_name: str, extra_headers: Dict[str, str] = None
+    ) -> str:
         """
         Send a prompt directly to Claude API service.
 
-        Simplified method that takes a prompt string and returns response.
+        Args:
+            prompt: The prompt string to send
+            model_name: The model name to use
+            extra_headers: Optional headers to include (e.g., system prompt overrides)
         """
         # Check if API service is running
         if not self.service_started:
@@ -58,7 +63,9 @@ class ClaudeAPIServiceClient:
 
         # Call Claude API service
         try:
-            return await self._call_claude_api_service(prompt, claude_model)
+            return await self._call_claude_api_service(
+                prompt, claude_model, extra_headers
+            )
         except Exception as e:
             # If API service fails, provide clear error
             raise Exception(
@@ -83,14 +90,22 @@ class ClaudeAPIServiceClient:
             pass
         return False
 
-    async def _call_claude_api_service(self, prompt: str, model: str) -> str:
+    async def _call_claude_api_service(
+        self, prompt: str, model: str, extra_headers: Dict[str, str] = None
+    ) -> str:
         """Call the Claude API service"""
         request_data = {"prompt": prompt, "model": model, "timeout": 150}
+
+        # Prepare headers
+        headers = {"Content-Type": "application/json"}
+        if extra_headers:
+            headers.update(extra_headers)
 
         async with aiohttp.ClientSession() as session:
             async with session.post(
                 f"{self.api_base_url}/claude",
                 json=request_data,
+                headers=headers,
                 timeout=aiohttp.ClientTimeout(
                     total=150
                 ),  # Longer timeout for Claude calls
