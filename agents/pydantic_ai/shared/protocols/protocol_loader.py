@@ -7,6 +7,9 @@ from typing import Dict, Any, List, Optional
 from datetime import datetime
 from pathlib import Path
 import json
+from .config_validator import config_validator
+from .session_management import SessionManagement
+from .error_recovery import error_recovery_manager, ErrorContext, ErrorSeverity
 from .protocol_interface import (
     ProtocolInterface, 
     LoggingCapable, 
@@ -40,7 +43,6 @@ class ProtocolConfig:
 
     def _validate_config(self) -> None:
         """Validate configuration using comprehensive validation system"""
-        from .config_validator import config_validator
         
         # Create validation dict with actual field values after defaults applied
         validation_config = {
@@ -80,7 +82,6 @@ class ProtocolConfig:
     def _resolve_session_path(self) -> None:
         """Resolve session path from session_id if not provided"""
         if not self.session_path and self.session_id:
-            from .session_management import SessionManagement
             self.session_path = SessionManagement.get_session_path(self.session_id)
     
     def to_dict(self) -> Dict[str, Any]:
@@ -164,7 +165,6 @@ class BaseProtocol(ProtocolInterface, LoggingCapable, SessionAware, FileOperatio
 
     def handle_error(self, error: Exception, context: Dict[str, Any]) -> bool:
         """Handle protocol errors with advanced recovery system"""
-        from .error_recovery import error_recovery_manager, ErrorContext, ErrorSeverity
         
         try:
             # Create error context for recovery system
@@ -224,7 +224,6 @@ class BaseProtocol(ProtocolInterface, LoggingCapable, SessionAware, FileOperatio
         
         # Log to session if available
         if self.config.session_id:
-            from .session_management import SessionManagement
             SessionManagement.append_to_events(self.config.session_id, event)
         
         return event
@@ -243,7 +242,6 @@ class BaseProtocol(ProtocolInterface, LoggingCapable, SessionAware, FileOperatio
         
         # Log to session if available
         if self.config.session_id:
-            from .session_management import SessionManagement
             SessionManagement.append_to_debug(self.config.session_id, debug_entry)
         
         return debug_entry
@@ -370,7 +368,6 @@ class BaseProtocol(ProtocolInterface, LoggingCapable, SessionAware, FileOperatio
 
     def _determine_error_severity(self, error: Exception) -> 'ErrorSeverity':
         """Determine severity level of an error"""
-        from .error_recovery import ErrorSeverity
         
         critical_errors = [MemoryError, SystemError, KeyboardInterrupt, SystemExit]
         high_errors = [PermissionError, FileNotFoundError, OSError]

@@ -8,6 +8,8 @@ Ensures all agents use consistent paths and never overwrite session data.
 
 import os
 import json
+import tempfile
+import re
 from pathlib import Path
 from typing import Dict, Any, Optional
 from datetime import datetime
@@ -19,56 +21,29 @@ class SessionManagement:
     @staticmethod
     def detect_project_root() -> str:
         """
-        Detect SmartWalletFX project root with guaranteed consistency.
+        Detect project root with guaranteed consistency.
         All agents MUST use this function for path detection.
 
-        Returns absolute path to SmartWalletFX project root.
+        Returns absolute path to project root.
         """
         # Start from current working directory
         current_path = Path.cwd()
 
-        # Search upward for SmartWalletFX project markers
+        # Search upward for project markers
         while current_path != current_path.parent:
-            # Check if this is the SmartWalletFX root
-            if current_path.name == "SmartWalletFX":
-                # Verify it has the expected structure
-                if (current_path / "Docs" / "hive-mind").exists():
-                    return str(current_path)
-
-            # Check for definitive project markers even if not named SmartWalletFX
+            # Check for definitive project markers
             if all(
                 [
                     (current_path / "Docs" / "hive-mind").exists(),
                     (current_path / ".claude").exists(),
-                    any(
-                        [
-                            (current_path / svc).exists()
-                            for svc in ["api", "frontend", "crypto-data"]
-                        ]
-                    ),
                 ]
             ):
                 return str(current_path)
 
             current_path = current_path.parent
 
-        # Final fallback: look for SmartWalletFX in path
-        cwd_str = str(Path.cwd())
-        if "SmartWalletFX" in cwd_str:
-            # Extract path up to and including SmartWalletFX
-            parts = cwd_str.split("SmartWalletFX")
-            if len(parts) >= 2:
-                base_path = parts[0] + "SmartWalletFX"
-                # Verify it's valid
-                if (
-                    Path(base_path).exists()
-                    and (Path(base_path) / "Docs" / "hive-mind").exists()
-                ):
-                    return base_path
-
         # Log debug info before raising exception - attempt to write to temp location
         try:
-            import tempfile
 
             temp_debug = {
                 "timestamp": datetime.utcnow().strftime("%Y-%m-%dT%H:%M:%SZ"),
@@ -78,7 +53,7 @@ class SessionManagement:
                 "details": {
                     "current_working_dir": str(Path.cwd()),
                     "search_paths_checked": str(current_path),
-                    "error": "Could not detect SmartWalletFX project root",
+                    "error": "Could not detect project root with hive-mind structure",
                 },
             }
             # Try to write to a temp file for debugging
@@ -89,8 +64,8 @@ class SessionManagement:
             pass  # Fail silently if debug logging fails
 
         raise ValueError(
-            f"Could not detect SmartWalletFX project root from {Path.cwd()}. "
-            "Ensure you're running from within the SmartWalletFX project."
+            f"Could not detect project root from {Path.cwd()}. "
+            "Ensure you're running from within a project with hive-mind structure."
         )
 
     @staticmethod
@@ -450,7 +425,6 @@ class SessionManagement:
                     content = f.read()
 
                 # Find the Coordination Progress section
-                import re
 
                 progress_pattern = r"(## Coordination Progress\n)(.*?)(\n## |\n---|\Z)"
 

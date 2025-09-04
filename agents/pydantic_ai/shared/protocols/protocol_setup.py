@@ -6,10 +6,12 @@ Sets up dependency injection container and registers all protocols.
 """
 
 from typing import Dict, Any
+from datetime import datetime
 from .protocol_interface import ProtocolRegistry, dependency_container
 from .session_management import SessionManagement
 from .protocol_loader import BaseProtocol
 from .prompt_generator import PromptGenerator
+from .worker_prompt_protocol import WorkerPromptProtocol
 
 
 def setup_dependencies():
@@ -38,9 +40,7 @@ def register_protocols():
     # Register core protocols
     ProtocolRegistry.register("base_protocol", BaseProtocol)
     ProtocolRegistry.register("prompt_generator", PromptGenerator)
-    
-    # Could register more specialized protocols here
-    # ProtocolRegistry.register("worker_prompt_protocol", WorkerPromptProtocol)
+    ProtocolRegistry.register("worker_prompt_protocol", WorkerPromptProtocol)
 
 
 def initialize_protocol_system():
@@ -100,6 +100,9 @@ def create_protocol_with_dependencies(protocol_name: str, config: Dict[str, Any]
             },
             "base_protocol": {
                 "session_manager": "session_management"
+            },
+            "worker_prompt_protocol": {
+                "session_manager": "session_management"
             }
         }
         
@@ -140,7 +143,7 @@ def get_protocol_health_status() -> Dict[str, Any]:
         for protocol_name in available_protocols:
             try:
                 # Skip protocols that require special setup
-                if protocol_name in ["prompt_generator"]:
+                if protocol_name in ["prompt_generator", "worker_prompt_protocol"]:
                     health_status["protocols"][protocol_name] = {"status": "skipped", "reason": "requires_special_config"}
                     continue
                     
@@ -169,6 +172,3 @@ def get_protocol_health_status() -> Dict[str, Any]:
     return health_status
 
 
-# Import required for health status function
-from datetime import datetime
-from .protocol_loader import BaseProtocol

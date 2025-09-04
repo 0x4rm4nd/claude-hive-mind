@@ -7,8 +7,10 @@ Handles reading and parsing worker prompt files for task-specific instructions.
 
 import re
 import yaml
+import json
 from pathlib import Path
 from typing import Dict, Any, List, Optional
+from datetime import datetime
 from .protocol_loader import BaseProtocol, ProtocolConfig
 from .session_management import SessionManagement
 
@@ -207,7 +209,6 @@ class WorkerPromptProtocol(BaseProtocol):
             json_match = re.search(r'```json\n(.*?)\n```', content, re.DOTALL)
             if json_match:
                 try:
-                    import json
                     json_format = json.loads(json_match.group(1))
                 except:
                     json_format = {"format": "json", "raw": json_match.group(1)}
@@ -434,6 +435,5 @@ class WorkerPromptProtocol(BaseProtocol):
 
     def _get_timestamp(self) -> str:
         """Get current ISO-8601 timestamp"""
-        from datetime import datetime
 
         return datetime.utcnow().strftime("%Y-%m-%dT%H:%M:%SZ")
