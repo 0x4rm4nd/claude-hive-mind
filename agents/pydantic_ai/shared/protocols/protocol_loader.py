@@ -9,7 +9,6 @@ from pathlib import Path
 import json
 from .config_validator import config_validator
 from .session_management import SessionManagement
-from .error_recovery import error_recovery_manager, ErrorContext, ErrorSeverity
 from .protocol_interface import (
     ProtocolInterface, 
     LoggingCapable, 
@@ -107,7 +106,7 @@ class BaseProtocol(ProtocolInterface, LoggingCapable, SessionAware, FileOperatio
         name="BaseProtocol",
         version="2.0.0", 
         description="Base protocol implementation with interface compliance",
-        capabilities=["logging", "session_aware", "file_operations", "error_recovery"]
+        capabilities=["logging", "session_aware", "file_operations"]
     )
 
     def __init__(self, config: Dict[str, Any] = None):
@@ -164,47 +163,20 @@ class BaseProtocol(ProtocolInterface, LoggingCapable, SessionAware, FileOperatio
         return self._status
 
     def handle_error(self, error: Exception, context: Dict[str, Any]) -> bool:
-        """Handle protocol errors with advanced recovery system"""
+        """Handle protocol errors - fail hard, no recovery"""
         
-        try:
-            # Create error context for recovery system
-            error_context = ErrorContext(
-                error=error,
-                operation=context.get("operation", "unknown"),
-                protocol_name=self.__class__.__name__,
-                session_id=self.config.session_id,
-                context_data=context,
-                severity=self._determine_error_severity(error)
-            )
-            
-            # Log error with comprehensive context
-            self.log_event("protocol_error", error_context.to_dict(), "ERROR")
-            
-            # Use advanced recovery system if operation function available
-            if "operation_function" in context:
-                operation_function = context["operation_function"]
-                operation_args = context.get("operation_args", ())
-                operation_kwargs = context.get("operation_kwargs", {})
-                
-                recovery_result = error_recovery_manager.attempt_recovery(
-                    error_context, operation_function, *operation_args, **operation_kwargs
-                )
-                
-                # Log recovery result
-                self.log_event("recovery_result", recovery_result.to_dict(), 
-                             "INFO" if recovery_result.success else "ERROR")
-                
-                return recovery_result.success
-            else:
-                # Fallback to basic recovery for operations without function context
-                return self._basic_error_recovery(error, context)
-                
-        except Exception as recovery_error:
-            self.log_event("protocol_recovery_failed", {
-                "original_error": str(error),
-                "recovery_error": str(recovery_error)
-            }, "ERROR")
-            return False
+        # Log error before failing hard
+        self.log_event("protocol_error", {
+            "error": str(error),
+            "error_type": type(error).__name__,
+            "operation": context.get("operation", "unknown"),
+            "protocol_name": self.__class__.__name__,
+            "session_id": self.config.session_id,
+            "context": context
+        }, "ERROR")
+        
+        # CRITICAL: Fail hard - no recovery attempts
+        raise error
 
     # LoggingCapable implementation
     def log_event(self, event_type: str, details: Any, level: str = "INFO") -> Dict[str, Any]:
@@ -337,79 +309,6 @@ class BaseProtocol(ProtocolInterface, LoggingCapable, SessionAware, FileOperatio
             # Log but don't fail initialization for dependency injection issues
             self.log_debug("Dependency injection failed", {"error": str(e)}, "WARNING")
 
-    def _recover_file_operations(self, error: Exception, context: Dict[str, Any]) -> bool:
-        """Recover from file operation errors"""
-        try:
-            file_path = context.get("path")
-            if file_path:
-                # Try to create parent directory
-                parent_dir = str(Path(file_path).parent)
-                if self.ensure_directory_exists(parent_dir):
-                    self.log_event("file_recovery_successful", {"path": file_path}, "INFO")
-                    return True
-            return False
-        except Exception:
-            return False
-
-    def _recover_configuration_error(self, error: Exception, context: Dict[str, Any]) -> bool:
-        """Recover from configuration errors"""
-        # For configuration errors, try to use defaults
-        try:
-            if "config" in context:
-                config = context["config"]
-                for field, default_value in ProtocolConfig.DEFAULT_VALUES.items():
-                    if field not in config:
-                        config[field] = default_value
-                self.log_event("config_recovery_attempted", {"recovered_fields": list(config.keys())})
-                return True
-            return False
-        except Exception:
-            return False
-
-    def _determine_error_severity(self, error: Exception) -> 'ErrorSeverity':
-        """Determine severity level of an error"""
-        
-        critical_errors = [MemoryError, SystemError, KeyboardInterrupt, SystemExit]
-        high_errors = [PermissionError, FileNotFoundError, OSError]
-        medium_errors = [ValueError, TypeError, AttributeError]
-        
-        for error_type in critical_errors:
-            if isinstance(error, error_type):
-                return ErrorSeverity.CRITICAL
-        
-        for error_type in high_errors:
-            if isinstance(error, error_type):
-                return ErrorSeverity.HIGH
-                
-        for error_type in medium_errors:
-            if isinstance(error, error_type):
-                return ErrorSeverity.MEDIUM
-        
-        return ErrorSeverity.LOW
-    
-    def _basic_error_recovery(self, error: Exception, context: Dict[str, Any]) -> bool:
-        """Basic error recovery fallback when advanced system unavailable"""
-        try:
-            # Attempt recovery based on error type
-            if isinstance(error, (FileNotFoundError, OSError)):
-                return self._recover_file_operations(error, context)
-            elif isinstance(error, ValueError):
-                return self._recover_configuration_error(error, context)
-            else:
-                # Generic recovery attempt
-                return self._generic_recovery(error, context)
-        except Exception:
-            return False
-    
-    def _generic_recovery(self, error: Exception, context: Dict[str, Any]) -> bool:
-        """Generic recovery attempt"""
-        try:
-            # Reset status and try to reinitialize
-            self._status["healthy"] = True
-            self.log_event("generic_recovery_attempted", context)
-            return True
-        except Exception:
-            return False
 
     def log_execution(self, action: str, status_or_data: Any = None, data: Any = None):
         """Legacy method for backward compatibility"""

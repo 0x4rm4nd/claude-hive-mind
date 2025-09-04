@@ -57,11 +57,12 @@ class SessionManagement:
                 },
             }
             # Try to write to a temp file for debugging
-            temp_file = Path(tempfile.gettempdir()) / "smartwalletfx_debug.jsonl"
+            temp_file = Path(tempfile.gettempdir()) / "protocol_debug.jsonl"
             with open(temp_file, "a") as f:
                 f.write(json.dumps(temp_debug, separators=(",", ":")) + "\n")
         except Exception:
-            pass  # Fail silently if debug logging fails
+            # Debug logging failure should not prevent the main error from being raised
+            pass
 
         raise ValueError(
             f"Could not detect project root from {Path.cwd()}. "
@@ -98,7 +99,7 @@ class SessionManagement:
 
         required_files = [
             "EVENTS.jsonl",
-            "BACKLOG.jsonl", 
+            "BACKLOG.jsonl",
             "DEBUG.jsonl",
             "SESSION.md",
         ]
@@ -146,14 +147,10 @@ class SessionManagement:
         if "timestamp" not in event_data:
             event_data["timestamp"] = datetime.utcnow().strftime("%Y-%m-%dT%H:%M:%SZ")
 
-        try:
-            # CRITICAL: Use append mode, never write mode
-            with open(events_file, "a") as f:
-                f.write(json.dumps(event_data, separators=(",", ":")) + "\n")
-            return True
-        except Exception as e:
-            print(f"Failed to append to EVENTS.jsonl: {e}")
-            return False
+        # CRITICAL: Use append mode, never write mode - fail hard if this fails
+        with open(events_file, "a") as f:
+            f.write(json.dumps(event_data, separators=(",", ":")) + "\n")
+        return True
 
     @staticmethod
     def append_to_debug(session_id: str, debug_data: Dict[str, Any]) -> bool:
@@ -174,14 +171,10 @@ class SessionManagement:
         if "timestamp" not in debug_data:
             debug_data["timestamp"] = datetime.utcnow().strftime("%Y-%m-%dT%H:%M:%SZ")
 
-        try:
-            # CRITICAL: Use append mode, never write mode
-            with open(debug_file, "a") as f:
-                f.write(json.dumps(debug_data, separators=(",", ":")) + "\n")
-            return True
-        except Exception as e:
-            print(f"Failed to append to DEBUG.jsonl: {e}")
-            return False
+        # CRITICAL: Use append mode, never write mode - fail hard if this fails
+        with open(debug_file, "a") as f:
+            f.write(json.dumps(debug_data, separators=(",", ":")) + "\n")
+        return True
 
     @staticmethod
     def derive_session_state_from_events(session_id: str) -> Dict[str, Any]:
@@ -205,65 +198,65 @@ class SessionManagement:
                 "status": "unknown",
                 "workers_spawned": [],
                 "workers_completed": [],
-                "workers_failed": []
+                "workers_failed": [],
             },
             "last_event_time": None,
-            "event_count": 0
+            "event_count": 0,
         }
 
-        try:
-            with open(events_file, "r") as f:
-                for line in f:
-                    if line.strip():
-                        event = json.loads(line.strip())
-                        state["event_count"] += 1
-                        state["last_event_time"] = event.get("timestamp")
-                        
-                        # Process different event types
-                        event_type = event.get("type", "")
-                        agent = event.get("agent", "")
-                        details = event.get("details", {})
-                        
-                        if event_type == "worker_spawned":
-                            if agent not in state["coordination"]["workers_spawned"]:
-                                state["coordination"]["workers_spawned"].append(agent)
-                                state["workers"][agent] = {
-                                    "status": "spawned",
-                                    "spawn_time": event.get("timestamp"),
-                                    "task": details.get("task", ""),
-                                    "capabilities": details.get("capabilities", [])
-                                }
-                        
-                        elif event_type == "worker_completed":
-                            if agent not in state["coordination"]["workers_completed"]:
-                                state["coordination"]["workers_completed"].append(agent)
-                                if agent in state["workers"]:
-                                    state["workers"][agent]["status"] = "completed"
-                                    state["workers"][agent]["completion_time"] = event.get("timestamp")
-                        
-                        elif event_type == "analysis_started":
+        # CRITICAL: Fail hard if events file cannot be read
+        with open(events_file, "r") as f:
+            for line in f:
+                if line.strip():
+                    event = json.loads(line.strip())
+                    state["event_count"] += 1
+                    state["last_event_time"] = event.get("timestamp")
+
+                    # Process different event types
+                    event_type = event.get("type", "")
+                    agent = event.get("agent", "")
+                    details = event.get("details", {})
+
+                    if event_type == "worker_spawned":
+                        if agent not in state["coordination"]["workers_spawned"]:
+                            state["coordination"]["workers_spawned"].append(agent)
+                            state["workers"][agent] = {
+                                "status": "spawned",
+                                "spawn_time": event.get("timestamp"),
+                                "task": details.get("task", ""),
+                                "capabilities": details.get("capabilities", []),
+                            }
+
+                    elif event_type == "worker_completed":
+                        if agent not in state["coordination"]["workers_completed"]:
+                            state["coordination"]["workers_completed"].append(agent)
                             if agent in state["workers"]:
-                                state["workers"][agent]["status"] = "in_progress"
-                                state["workers"][agent]["analysis_start"] = event.get("timestamp")
+                                state["workers"][agent]["status"] = "completed"
+                                state["workers"][agent]["completion_time"] = (
+                                    event.get("timestamp")
+                                )
 
-            # Determine overall coordination status
-            total_workers = len(state["coordination"]["workers_spawned"])
-            completed_workers = len(state["coordination"]["workers_completed"])
-            
-            if total_workers == 0:
-                state["coordination"]["status"] = "no_workers"
-            elif completed_workers == total_workers:
-                state["coordination"]["status"] = "completed"
-            elif completed_workers > 0:
-                state["coordination"]["status"] = "in_progress"
-            else:
-                state["coordination"]["status"] = "starting"
+                    elif event_type == "analysis_started":
+                        if agent in state["workers"]:
+                            state["workers"][agent]["status"] = "in_progress"
+                            state["workers"][agent]["analysis_start"] = event.get(
+                                "timestamp"
+                            )
 
-            return state
+        # Determine overall coordination status
+        total_workers = len(state["coordination"]["workers_spawned"])
+        completed_workers = len(state["coordination"]["workers_completed"])
 
-        except Exception as e:
-            print(f"Failed to derive state from events: {e}")
-            return state
+        if total_workers == 0:
+            state["coordination"]["status"] = "no_workers"
+        elif completed_workers == total_workers:
+            state["coordination"]["status"] = "completed"
+        elif completed_workers > 0:
+            state["coordination"]["status"] = "in_progress"
+        else:
+            state["coordination"]["status"] = "starting"
+
+        return state
 
     @staticmethod
     def _deep_merge(base: Dict[str, Any], updates: Dict[str, Any]) -> Dict[str, Any]:
@@ -292,7 +285,6 @@ class SessionManagement:
                 result[key] = value
 
         return result
-
 
     @staticmethod
     def validate_session_path(
@@ -391,16 +383,12 @@ class SessionManagement:
             file_path = os.path.join(session_path, "notes", f"{worker_clean}_notes.md")
             content_str = content if isinstance(content, str) else str(content)
         else:
-            print(f"Unknown file type: {file_type}")
-            return False
+            raise ValueError(f"Unknown file type: {file_type}")
 
-        try:
-            with open(file_path, "w") as f:
-                f.write(content_str)
-            return True
-        except Exception as e:
-            print(f"Failed to create worker file: {e}")
-            return False
+        # CRITICAL: Fail hard if file creation fails
+        with open(file_path, "w") as f:
+            f.write(content_str)
+        return True
 
     @staticmethod
     def update_session_progress(
@@ -416,63 +404,37 @@ class SessionManagement:
         Returns:
             True if update successful
         """
-        try:
-            session_path = SessionManagement.get_session_path(session_id)
-            session_md_path = os.path.join(session_path, "SESSION.md")
-            # Read current SESSION.md
-            if os.path.exists(session_md_path):
-                with open(session_md_path, "r") as f:
-                    content = f.read()
+        session_path = SessionManagement.get_session_path(session_id)
+        session_md_path = os.path.join(session_path, "SESSION.md")
+        
+        # CRITICAL: SESSION.md must exist - fail hard if it doesn't
+        with open(session_md_path, "r") as f:
+            content = f.read()
 
-                # Find the Coordination Progress section
+        # Find the Coordination Progress section
+        progress_pattern = r"(## Coordination Progress\n)(.*?)(\n## |\n---|\Z)"
 
-                progress_pattern = r"(## Coordination Progress\n)(.*?)(\n## |\n---|\Z)"
+        def update_progress(match):
+            header = match.group(1)
+            current_progress = match.group(2)
+            footer = match.group(3)
 
-                def update_progress(match):
-                    header = match.group(1)
-                    current_progress = match.group(2)
-                    footer = match.group(3)
+            # Add timestamp to progress update
+            timestamp = datetime.utcnow().strftime("%H:%M")
+            new_entry = f"- ✅ [{timestamp}] {progress_update}\n"
 
-                    # Add timestamp to progress update
-                    timestamp = datetime.utcnow().strftime("%H:%M")
-                    new_entry = f"- ✅ [{timestamp}] {progress_update}\n"
+            return header + current_progress + new_entry + footer
 
-                    return header + current_progress + new_entry + footer
+        # Update the content
+        updated_content = re.sub(
+            progress_pattern, update_progress, content, flags=re.DOTALL
+        )
 
-                # Update the content
-                updated_content = re.sub(
-                    progress_pattern, update_progress, content, flags=re.DOTALL
-                )
+        # CRITICAL: Fail hard if file write fails
+        with open(session_md_path, "w") as f:
+            f.write(updated_content)
 
-                # Write back
-                with open(session_md_path, "w") as f:
-                    f.write(updated_content)
-
-                return True
-            else:
-                # SESSION.md doesn't exist, log debug
-                SessionManagement.append_to_debug(
-                    session_id,
-                    {
-                        "level": "DEBUG",
-                        "agent": worker_type,
-                        "message": "SESSION.md not found for progress update",
-                        "details": {"progress_update": progress_update},
-                    },
-                )
-                return False
-
-        except Exception as e:
-            SessionManagement.append_to_debug(
-                session_id,
-                {
-                    "level": "ERROR",
-                    "agent": worker_type,
-                    "message": "Failed to update SESSION.md progress",
-                    "details": {"error": str(e), "progress_update": progress_update},
-                },
-            )
-            return False
+        return True
 
     @staticmethod
     def append_to_backlog(session_id: str, backlog_item: Dict[str, Any]) -> bool:
@@ -493,11 +455,7 @@ class SessionManagement:
         if "timestamp" not in backlog_item:
             backlog_item["timestamp"] = datetime.utcnow().strftime("%Y-%m-%dT%H:%M:%SZ")
 
-        try:
-            # CRITICAL: Use append mode
-            with open(backlog_file, "a") as f:
-                f.write(json.dumps(backlog_item, separators=(",", ":")) + "\n")
-            return True
-        except Exception as e:
-            print(f"Failed to append to BACKLOG.jsonl: {e}")
-            return False
+        # CRITICAL: Use append mode, fail hard if this fails
+        with open(backlog_file, "a") as f:
+            f.write(json.dumps(backlog_item, separators=(",", ":")) + "\n")
+        return True

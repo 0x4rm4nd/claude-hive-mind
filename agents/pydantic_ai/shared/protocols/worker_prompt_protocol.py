@@ -73,9 +73,9 @@ class WorkerPromptProtocol(BaseProtocol):
 
             return prompt_data
 
-        except FileNotFoundError:
-            # Fallback to extracting from main prompt
-            return self._extract_from_main_prompt()
+        except FileNotFoundError as e:
+            # CRITICAL: Prompt file must exist - protocol violation
+            raise FileNotFoundError(f"Protocol violation: Worker prompt file must exist at {prompt_file_path}") from e
 
         except Exception as e:
             raise
@@ -254,38 +254,6 @@ class WorkerPromptProtocol(BaseProtocol):
                 )
                 raise ValueError(f"Missing required field in prompt: {field}")
 
-    def _extract_from_main_prompt(self) -> Dict[str, Any]:
-        """
-        Fallback method to extract task info from main prompt
-        when prompt file is not available.
-        """
-        # Parse the original prompt passed to the worker
-        prompt = self.config.prompt_text or ""
-
-        # Extract task description
-        task_match = re.search(r"Task:\s*(.+?)(?:\n|$)", prompt, re.MULTILINE)
-        task_description = task_match.group(1) if task_match else "Analysis task"
-
-        # Extract focus areas
-        focus_match = re.search(r"Focus:\s*(.+?)(?:\n|$)", prompt, re.MULTILINE)
-        focus_areas = [focus_match.group(1)] if focus_match else ["General analysis"]
-
-        # Extract dependencies
-        dep_match = re.search(r"Dependencies:\s*(.+?)(?:\n|$)", prompt, re.MULTILINE)
-        dependencies = dep_match.group(1).split(",") if dep_match else []
-
-        return {
-            "task_description": task_description,
-            "focus_areas": focus_areas,
-            "dependencies": [d.strip() for d in dependencies],
-            "timeout": self.config.timeout or 3600,
-            "success_criteria": ["Complete assigned analysis"],
-            "output_requirements": {
-                "notes_file": f"notes/{self.config.agent_name.replace('-worker','')}_notes.md",
-                "json_response": f"workers/json/{self.config.agent_name}-response.json",
-                "additional_outputs": [],
-            },
-        }
 
     def get_task_instructions(self) -> Dict[str, Any]:
         """

@@ -21,7 +21,6 @@ from .worker_prompt_protocol import WorkerPromptProtocol
 from .env_loader import load_project_env
 from .prompt_generator import PromptGenerator, create_worker_prompts_from_plan
 from .config_validator import ConfigurationValidator, ValidationResult, config_validator
-from .error_recovery import ErrorRecoveryManager, ErrorContext, RecoveryResult, ErrorSeverity, RecoveryStrategy, error_recovery_manager
 from .protocol_setup import initialize_protocol_system, create_protocol_with_dependencies, get_protocol_health_status
 
 __all__ = [
@@ -46,13 +45,14 @@ __all__ = [
     'ConfigurationValidator',
     'ValidationResult',
     'config_validator',
-    'ErrorRecoveryManager', 
-    'ErrorContext',
-    'RecoveryResult',
-    'ErrorSeverity',
-    'RecoveryStrategy',
-    'error_recovery_manager',
     'initialize_protocol_system',
     'create_protocol_with_dependencies',
-    'get_protocol_health_status'
+    'get_protocol_health_status',
+    'PROTOCOL_SYSTEM_STATUS'
 ]
+
+# Initialize the protocol system when package is imported
+_initialization_result = initialize_protocol_system()
+
+# Store initialization status for debugging if needed
+PROTOCOL_SYSTEM_STATUS = _initialization_result

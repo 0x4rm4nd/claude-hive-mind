@@ -58,32 +58,35 @@ class PromptGenerator(BaseProtocol):
             self.session_id = self.config.session_id
         else:
             self.session_id = session_id or "default-session"
-            config_dict = {"session_id": self.session_id, "agent_name": "queen-orchestrator"}
+            config_dict = {
+                "session_id": self.session_id,
+                "agent_name": "queen-orchestrator",
+            }
             super().__init__(config_dict)
-        
+
     # Make compatible with ProtocolInterface expectations (though not fully implementing it)
     def initialize(self, config: Dict[str, Any]) -> bool:
         """Initialize compatibility method"""
         return True
-    
+
     def validate_config(self, config: Dict[str, Any]) -> bool:
         """Config validation compatibility method"""
         return "session_id" in config
-    
+
     def cleanup(self) -> None:
         """Cleanup compatibility method"""
         pass
-    
+
     def get_status(self) -> Dict[str, Any]:
         """Status compatibility method"""
         return {"initialized": True, "session_id": self.session_id}
-    
+
     def handle_error(self, error: Exception, context: Dict[str, Any]) -> bool:
         """Error handling compatibility method"""
         return False
 
     def create_worker_prompts(
-        self, worker_specs: List[WorkerPromptSpec], batch_logging: bool = True
+        self, worker_specs: List[WorkerPromptSpec]
     ) -> Dict[str, str]:
         """
         Create prompt files for all assigned workers.
@@ -109,40 +112,28 @@ class PromptGenerator(BaseProtocol):
 
                 created_files[spec.worker_type] = prompt_file
 
-                # Individual logging (only if batch_logging is disabled)
-                if not batch_logging:
-                    self.log_event(
-                        "worker_prompt_created",
-                        {
-                            "worker_type": spec.worker_type,
-                            "prompt_file": prompt_file,
-                            "task_focus": spec.task_focus,
-                            "complexity": spec.complexity_level,
-                        },
-                    )
-
             except Exception as e:
                 failed_prompts.append(
                     {
-                        "worker_type": spec.worker_type,
-                        "error": str(e),
                         "exception_type": str(type(e)),
+                        "error": str(e),
+                        "worker_type": spec.worker_type,
                     }
                 )
 
-                self.log_event(
+                self.log_debug(
                     "worker_prompt_creation_failed",
                     {
                         "exception_type": str(type(e)),
                         "error": str(e),
                         "worker_type": spec.worker_type,
                     },
-                    "ERROR"
+                    "ERROR",
                 )
                 raise
 
-        # Consolidated batch logging (default behavior)
-        if batch_logging and created_files:
+        # Consolidated batch logging (always enabled)
+        if created_files:
             # Convert absolute path to relative path from project root
             project_root = SessionManagement.detect_project_root()
             relative_prompts_dir = (
@@ -471,7 +462,7 @@ created_by: queen-orchestrator
 
 
 def create_worker_prompts_from_plan(
-    session_id: str, orchestration_plan, batch_logging: bool = True
+    session_id: str, orchestration_plan
 ) -> Dict[str, str]:
     """
     Convenience function to create worker prompts from Queen orchestration plan.
@@ -509,4 +500,4 @@ def create_worker_prompts_from_plan(
         )
         worker_specs.append(spec)
 
-    return generator.create_worker_prompts(worker_specs, batch_logging=batch_logging)
+    return generator.create_worker_prompts(worker_specs)
