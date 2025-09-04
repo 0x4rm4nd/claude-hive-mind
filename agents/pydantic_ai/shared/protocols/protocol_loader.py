@@ -26,6 +26,7 @@ from .protocol_interface import (
 # ===============================
 # Integrated from config_validator.py for consolidated configuration management
 
+
 class ValidationType(Enum):
     """Types of validation checks"""
 
@@ -478,11 +479,9 @@ class BaseProtocol(ProtocolInterface, LoggingCapable, SessionAware):
             # Inject dependencies if available
             self._inject_dependencies()
             self._initialized = True
-            self.log_event("protocol_initialized", {"config_keys": list(config.keys())})
             return True
         except Exception as e:
-            # handle_error now raises exceptions (fail hard) - no return needed
-            self.handle_error(e, {"operation": "initialization", "config": config})
+            raise e
 
     def validate_config(self, config: Dict[str, Any]) -> bool:
         """Validate protocol configuration"""
@@ -516,22 +515,7 @@ class BaseProtocol(ProtocolInterface, LoggingCapable, SessionAware):
 
     def handle_error(self, error: Exception, context: Dict[str, Any]) -> bool:
         """Handle protocol errors - fail hard, no recovery"""
-
-        # Log error before failing hard
-        self.log_event(
-            "protocol_error",
-            {
-                "error": str(error),
-                "error_type": type(error).__name__,
-                "operation": context.get("operation", "unknown"),
-                "protocol_name": self.__class__.__name__,
-                "session_id": self.config.session_id,
-                "context": context,
-            },
-            "ERROR",
-        )
-
-        # CRITICAL: Fail hard - no recovery attempts
+        # CRITICAL: Fail hard immediately
         raise error
 
     # LoggingCapable implementation

@@ -17,7 +17,7 @@ from shared.base_worker import BaseWorker
 from queen.models import QueenOutput
 from queen.agent import queen_agent, QueenAgentConfig
 from shared.protocols import SessionManagement
-from shared.protocols.prompt_generator import create_worker_prompts_from_plan
+from shared.protocols import create_worker_prompts_from_plan
 from shared.tools import iso_now
 
 # Ensure imports work when run directly or from CLI
