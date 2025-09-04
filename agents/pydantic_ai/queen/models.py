@@ -106,13 +106,24 @@ class QueenOrchestrationPlan(BaseModel):
         description="Claude Code Task parameters for spawning workers",
     )
 
+    # Execution metadata (previously in worker_spawns.json)
+    workers_spawned: List[str] = Field(
+        default_factory=list, description="List of worker types spawned from this plan"
+    )
+    coordination_status: str = Field(
+        default="planned", description="Current coordination status"
+    )
+    monitoring_active: bool = Field(
+        default=False, description="Whether monitoring is currently active"
+    )
+    session_path: str = Field(
+        default="", description="Full path to the session directory"
+    )
+
 
 class QueenOutput(WorkerOutput):
     """Queen orchestrator unified output extending WorkerOutput"""
 
-    orchestration_plan: QueenOrchestrationPlan = Field(
-        description="Generated orchestration plan with strategic analysis"
-    )
     workers_spawned: List[str] = Field(
         default_factory=list, description="Workers successfully spawned"
     )

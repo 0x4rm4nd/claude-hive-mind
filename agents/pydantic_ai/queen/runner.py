@@ -17,6 +17,7 @@ from shared.base_worker import BaseWorker
 from queen.models import QueenOutput
 from queen.agent import queen_agent, QueenAgentConfig
 from shared.protocols import SessionManagement
+from shared.protocols.prompt_generator import create_worker_prompts_from_plan
 from shared.tools import iso_now
 
 # Ensure imports work when run directly or from CLI
@@ -112,6 +113,35 @@ class QueenWorker(BaseWorker[QueenOutput]):
         orchestration_plan = orchestration_result.output
         session_path = SessionManagement.get_session_path(session_id)
 
+        # Generate worker-specific prompts from orchestration plan
+        try:
+            created_prompt_files = create_worker_prompts_from_plan(
+                session_id, orchestration_plan, batch_logging=True
+            )
+
+            # Log prompt generation success
+            self.log_event(
+                session_id,
+                "worker_prompts_generated",
+                {
+                    "total_workers": len(orchestration_plan.worker_assignments),
+                    "prompt_files": list(created_prompt_files.values()),
+                    "worker_types": list(created_prompt_files.keys()),
+                    "orchestration_complexity": orchestration_plan.complexity_assessment,
+                },
+            )
+
+        except Exception as e:
+            self.log_debug(
+                session_id,
+                "worker_prompts_generation_failed",
+                {
+                    "exception_type": str(type(e)),
+                    "error": str(e),
+                    "worker_count": len(orchestration_plan.worker_assignments),
+                },
+            )
+
         queen_output = QueenOutput(
             worker="queen-orchestrator",
             session_id=session_id,
@@ -119,7 +149,9 @@ class QueenWorker(BaseWorker[QueenOutput]):
             status="completed",
             summary={
                 "key_findings": [
-                    f"Orchestration plan generated with {len(orchestration_plan.worker_assignments)} workers"
+                    f"Orchestration plan generated with {len(orchestration_plan.worker_assignments)} workers",
+                    f"Worker-specific prompts created for {len(orchestration_plan.worker_assignments)} specialists",
+                    f"Coordination strategy: {orchestration_plan.execution_strategy}",
                 ],
                 "critical_issues": [],
                 "recommendations": [
@@ -127,7 +159,6 @@ class QueenWorker(BaseWorker[QueenOutput]):
                     for assignment in orchestration_plan.worker_assignments
                 ],
             },
-            orchestration_plan=orchestration_plan,
             workers_spawned=[
                 assignment.worker_type
                 for assignment in orchestration_plan.worker_assignments
@@ -136,6 +167,9 @@ class QueenWorker(BaseWorker[QueenOutput]):
             monitoring_active=monitoring_mode,
             session_path=str(session_path),
         )
+
+        # Store orchestration_plan temporarily for file creation
+        queen_output._orchestration_plan = orchestration_plan
 
         # Return mock result object with output attribute for BaseWorker compatibility
         class MockResult:
@@ -182,20 +216,20 @@ class QueenWorker(BaseWorker[QueenOutput]):
         orchestration_dir = session_path / "workers" / "orchestration"
         orchestration_dir.mkdir(parents=True, exist_ok=True)
 
-        orchestration_file = orchestration_dir / "orchestration_plan.json"
-        orchestration_file.write_text(
-            output.orchestration_plan.model_dump_json(indent=2)
-        )
-
-        spawn_log_file = orchestration_dir / "worker_spawns.json"
-        spawn_log = {
+        # Create enhanced orchestration plan with execution metadata
+        orchestration_data = output._orchestration_plan.model_dump()
+        
+        # Add execution metadata that was previously in worker_spawns.json
+        orchestration_data["execution_metadata"] = {
             "workers_spawned": output.workers_spawned,
             "coordination_status": output.coordination_status,
             "monitoring_active": output.monitoring_active,
             "session_path": output.session_path,
-            "timestamp": output.timestamp,
+            "execution_timestamp": output.timestamp,
         }
-        spawn_log_file.write_text(json.dumps(spawn_log, indent=2))
+        
+        orchestration_file = orchestration_dir / "orchestration_plan.json"
+        orchestration_file.write_text(json.dumps(orchestration_data, indent=2))
 
 
 def main():
