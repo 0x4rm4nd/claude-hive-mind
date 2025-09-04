@@ -179,7 +179,6 @@ class BaseWorker(ABC, Generic[T]):
         This method orchestrates the entire worker execution with protocol compliance
         while delegating worker-specific logic to abstract methods.
         """
-        timestamp = iso_now()
 
         # Framework-enforced session validation
         self.validate_session(session_id)
@@ -200,7 +199,7 @@ class BaseWorker(ABC, Generic[T]):
 
             # Log completion with worker-specific details
             completion_details = self.get_completion_event_details(output)
-            self.log_event(session_id, "worker_completed", completion_details)
+            self.log_event(session_id, "analysis_completed", completion_details)
 
             return output
 
