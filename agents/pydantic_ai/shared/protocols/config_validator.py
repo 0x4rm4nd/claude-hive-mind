@@ -249,28 +249,6 @@ class ValidationResult:
     schema_name: str
     validated_at: str = field(default_factory=lambda: datetime.now().isoformat())
 
-    def get_summary(self) -> Dict[str, Any]:
-        """Get validation summary"""
-        return {
-            "is_valid": self.is_valid,
-            "error_count": len(self.errors),
-            "warning_count": len(self.warnings),
-            "schema": self.schema_name,
-            "validated_at": self.validated_at,
-        }
-
-    def get_detailed_report(self) -> Dict[str, Any]:
-        """Get detailed validation report"""
-        return {
-            "summary": self.get_summary(),
-            "errors": self.errors,
-            "warnings": self.warnings,
-            "field_results": self.field_results,
-            "validation_metadata": {
-                "schema_name": self.schema_name,
-                "validated_at": self.validated_at,
-            },
-        }
 
 
 class ConfigurationValidator:
@@ -340,9 +318,6 @@ class ConfigurationValidator:
 
         self.schemas["worker_prompt_protocol"] = worker_prompt_schema
 
-    def register_schema(self, schema: ConfigurationSchema) -> None:
-        """Register a custom validation schema"""
-        self.schemas[schema.schema_name] = schema
 
     def validate_config(
         self, config: Dict[str, Any], schema_name: str = "base_protocol"
@@ -369,32 +344,6 @@ class ConfigurationValidator:
         schema = self.schemas[schema_name]
         return schema.validate(config)
 
-    def get_available_schemas(self) -> List[str]:
-        """Get list of available validation schemas"""
-        return list(self.schemas.keys())
-
-    def get_schema_info(self, schema_name: str) -> Optional[Dict[str, Any]]:
-        """Get information about a specific schema"""
-        if schema_name not in self.schemas:
-            return None
-
-        schema = self.schemas[schema_name]
-        return {
-            "name": schema.schema_name,
-            "created_at": schema.created_at,
-            "rule_count": len(schema.rules),
-            "rules": [
-                {
-                    "field": rule.field_name,
-                    "type": rule.validation_type.value,
-                    "required": rule.required,
-                    "expected_type": (
-                        rule.expected_type.__name__ if rule.expected_type else None
-                    ),
-                }
-                for rule in schema.rules
-            ],
-        }
 
 
 # Global validator instance

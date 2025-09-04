@@ -17,6 +17,11 @@ from datetime import datetime
 from dotenv import load_dotenv
 
 
+def iso_now() -> str:
+    """Generate ISO timestamp string"""
+    return datetime.utcnow().strftime("%Y-%m-%dT%H:%M:%SZ")
+
+
 class SessionManagement:
     """Core session management with guaranteed path consistency and atomic operations"""
 
@@ -48,7 +53,7 @@ class SessionManagement:
         try:
 
             temp_debug = {
-                "timestamp": datetime.utcnow().strftime("%Y-%m-%dT%H:%M:%SZ"),
+                "timestamp": iso_now(),
                 "level": "ERROR",
                 "agent": "session_management",
                 "message": "Failed to detect SmartWalletFX project root",
@@ -151,7 +156,7 @@ class SessionManagement:
 
         # Ensure event has required fields
         if "timestamp" not in event_data:
-            event_data["timestamp"] = datetime.utcnow().strftime("%Y-%m-%dT%H:%M:%SZ")
+            event_data["timestamp"] = iso_now()
 
         # CRITICAL: Use append mode, never write mode - fail hard if this fails
         with open(events_file, "a") as f:
@@ -175,7 +180,7 @@ class SessionManagement:
 
         # Ensure debug has timestamp
         if "timestamp" not in debug_data:
-            debug_data["timestamp"] = datetime.utcnow().strftime("%Y-%m-%dT%H:%M:%SZ")
+            debug_data["timestamp"] = iso_now()
 
         # CRITICAL: Use append mode, never write mode - fail hard if this fails
         with open(debug_file, "a") as f:

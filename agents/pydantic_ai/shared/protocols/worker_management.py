@@ -14,7 +14,7 @@ from pathlib import Path
 from typing import Dict, List, Any, Optional
 from dataclasses import dataclass, field
 from datetime import datetime
-from .session_management import SessionManagement
+from .session_management import SessionManagement, iso_now
 from .protocol_loader import BaseProtocol, ProtocolConfig
 
 
@@ -302,7 +302,7 @@ class WorkerManager(BaseProtocol):
                         "file": prompt_file_path,
                         "worker": worker_type,
                     },
-                    "timestamp": self._get_timestamp(),
+                    "timestamp": iso_now(),
                 },
             )
 
@@ -324,42 +324,6 @@ class WorkerManager(BaseProtocol):
             self.prompt_data = self.read_prompt_file(worker_type)
         return self.prompt_data
 
-    def get_success_criteria(self) -> List[str]:
-        """Get success criteria for task completion"""
-        if not self.prompt_data:
-            raise ValueError("Must read prompt file first using read_prompt_file()")
-        return self.prompt_data.get("success_criteria", [])
-
-    def get_output_paths(self) -> Dict[str, Any]:
-        """Get required output file paths and JSON format"""
-        if not self.prompt_data:
-            raise ValueError("Must read prompt file first using read_prompt_file()")
-        return self.prompt_data.get("output_requirements", {})
-
-    def validate_task_completion(self, outputs: Dict[str, Any]) -> bool:
-        """
-        Validate that task completion meets success criteria - fail hard if not.
-        
-        Args:
-            outputs: Dictionary of produced outputs
-            
-        Returns:
-            True if success criteria are met
-            
-        Raises:
-            ValueError: If required outputs are missing or invalid
-        """
-        criteria = self.get_success_criteria()
-        output_paths = self.get_output_paths()
-
-        # Check required outputs exist - fail hard if missing
-        if output_paths.get("notes_file") and "notes" not in outputs:
-            raise ValueError(f"Required notes output missing from task completion")
-
-        if output_paths.get("json_response") and "json_response" not in outputs:
-            raise ValueError(f"Required JSON response missing from task completion")
-
-        return True
 
     def _generate_prompt_content(self, spec: WorkerSpec) -> str:
         """Generate structured prompt content for a specific worker"""
@@ -702,9 +666,6 @@ created_by: queen-orchestrator
                 )
                 raise ValueError(f"Missing required field in prompt: {field}")
 
-    def _get_timestamp(self) -> str:
-        """Get current ISO-8601 timestamp"""
-        return datetime.utcnow().strftime("%Y-%m-%dT%H:%M:%SZ")
 
 
 def create_worker_prompts_from_plan(session_id: str, orchestration_plan) -> Dict[str, str]:
