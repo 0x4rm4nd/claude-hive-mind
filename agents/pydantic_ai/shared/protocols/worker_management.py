@@ -10,12 +10,11 @@ import os
 import re
 import yaml
 import json
-from pathlib import Path
-from typing import Dict, List, Any, Optional
+from typing import Dict, List, Any
 from dataclasses import dataclass, field
-from datetime import datetime
 from .session_management import SessionManagement, iso_now
-from .protocol_loader import BaseProtocol, ProtocolConfig
+from .protocol_loader import BaseProtocol
+from .protocol_interface import ProtocolMetadata
 
 
 # Single source of truth for all worker configurations
@@ -24,7 +23,7 @@ WORKER_CONFIGS = {
         "expertise": "Security analysis, performance optimization, code quality assessment",
         "tools": [
             "security scanners",
-            "performance profilers", 
+            "performance profilers",
             "code analyzers",
         ],
         "outputs": [
@@ -48,7 +47,7 @@ WORKER_CONFIGS = {
         ],
         "outputs": [
             "architecture_analysis.md",
-            "scalability_recommendations.md", 
+            "scalability_recommendations.md",
             "design_patterns.md",
         ],
         "focus_areas": [
@@ -134,7 +133,7 @@ WORKER_CONFIGS = {
         "expertise": "Technical research, best practices, industry standards",
         "tools": [
             "research databases",
-            "pattern libraries", 
+            "pattern libraries",
             "standards analyzers",
         ],
         "outputs": [
@@ -170,7 +169,7 @@ WORKER_CONFIGS = {
 @dataclass
 class WorkerSpec:
     """Unified specification for worker prompt generation and parsing"""
-    
+
     worker_type: str
     task_focus: str
     priority: str
@@ -190,7 +189,74 @@ class WorkerSpec:
 
 
 class WorkerManager(BaseProtocol):
-    """Unified worker prompt creation and parsing with proper protocol compliance"""
+    """
+    Unified worker prompt creation and parsing with proper protocol compliance.
+    
+    The WorkerManager handles the complete lifecycle of worker prompts:
+    - Generation from WorkerSpec configurations
+    - Template creation with strategic context
+    - File parsing and validation
+    - Task instruction extraction
+    
+    Example Usage:
+    
+    Basic Worker Prompt Creation:
+    ```python
+    from shared.protocols import WorkerManager, WorkerSpec
+    
+    # Initialize manager
+    manager = WorkerManager({"session_id": "my-session", "agent_name": "orchestrator"})
+    
+    # Create worker specification
+    spec = WorkerSpec(
+        worker_type="backend-worker",
+        task_focus="API endpoint implementation", 
+        priority="high",
+        estimated_duration="2-4 hours",
+        rationale="Critical user authentication endpoints needed",
+        complexity_level=3,
+        session_id="my-session",
+        target_service="api-service"
+    )
+    
+    # Generate prompts
+    created_files = manager.create_worker_prompts([spec])
+    print(f"Created: {list(created_files.keys())}")  # ['backend-worker']
+    ```
+    
+    Reading and Parsing Worker Prompts:
+    ```python
+    # Parse existing prompt file
+    prompt_data = manager.read_prompt_file("backend-worker")
+    
+    # Extract task instructions
+    instructions = manager.get_task_instructions("backend-worker")
+    
+    # Access parsed components
+    print(f"Worker expertise: {instructions['worker_expertise']}")
+    print(f"Success criteria: {instructions['success_criteria']}")
+    print(f"Available tools: {instructions['available_tools']}")
+    ```
+    
+    Queen Orchestration Integration:
+    ```python
+    from shared.protocols import create_worker_prompts_from_plan
+    
+    # Create prompts from orchestration plan (advanced usage)
+    created_files = create_worker_prompts_from_plan(
+        session_id="orchestration-session",
+        orchestration_plan=queen_plan  # From Queen agent
+    )
+    ```
+    """
+
+    # Protocol metadata - unique to WorkerManager
+    _metadata = ProtocolMetadata(
+        name="WorkerManager", 
+        version="2.0.0",
+        description="Framework-enforced worker prompt lifecycle management with strategic orchestration",
+        capabilities=["logging", "session_aware", "worker_prompts", "template_generation", "prompt_parsing"]
+    )
 
     def __init__(self, config: Dict[str, Any] = None):
         """Initialize WorkerManager with proper BaseProtocol inheritance"""
@@ -228,11 +294,13 @@ class WorkerManager(BaseProtocol):
                 created_files[spec.worker_type] = prompt_file
 
             except Exception as e:
-                failed_prompts.append({
-                    "exception_type": str(type(e)),
-                    "error": str(e),
-                    "worker_type": spec.worker_type,
-                })
+                failed_prompts.append(
+                    {
+                        "exception_type": str(type(e)),
+                        "error": str(e),
+                        "worker_type": spec.worker_type,
+                    }
+                )
 
                 self.log_debug(
                     "worker_prompt_creation_failed",
@@ -272,7 +340,7 @@ class WorkerManager(BaseProtocol):
     def read_prompt_file(self, worker_type: str) -> Dict[str, Any]:
         """
         Read and parse worker-specific prompt file.
-        
+
         Returns:
             Dict containing parsed prompt data including task instructions,
             focus areas, dependencies, success criteria, and output requirements.
@@ -324,10 +392,9 @@ class WorkerManager(BaseProtocol):
             self.prompt_data = self.read_prompt_file(worker_type)
         return self.prompt_data
 
-
     def _generate_prompt_content(self, spec: WorkerSpec) -> str:
         """Generate structured prompt content for a specific worker"""
-        
+
         config = WORKER_CONFIGS.get(
             spec.worker_type,
             {
@@ -484,7 +551,7 @@ created_by: queen-orchestrator
     def _parse_prompt_content(self, file_path: str) -> Dict[str, Any]:
         """
         Parse prompt file content into structured data.
-        
+
         Expected format:
         - YAML frontmatter with metadata
         - Markdown sections for different instruction types
@@ -533,7 +600,9 @@ created_by: queen-orchestrator
                 "available_tools": markdown_sections.get("available_tools", []),
                 "codebase_context": markdown_sections.get("codebase_context", {}),
                 "risk_context": markdown_sections.get("critical_risk_context", []),
-                "coordination_strategy": markdown_sections.get("strategic_coordination", []),
+                "coordination_strategy": markdown_sections.get(
+                    "strategic_coordination", []
+                ),
                 # Combined metadata
                 "timeout": 3600,  # Default timeout
                 "full_content": content,
@@ -667,13 +736,16 @@ created_by: queen-orchestrator
                 raise ValueError(f"Missing required field in prompt: {field}")
 
 
-
-def create_worker_prompts_from_plan(session_id: str, orchestration_plan) -> Dict[str, str]:
+def create_worker_prompts_from_plan(
+    session_id: str, orchestration_plan
+) -> Dict[str, str]:
     """
     Convenience function to create worker prompts from Queen orchestration plan.
     Framework-enforced integration point with enhanced strategic context.
     """
-    manager = WorkerManager({"session_id": session_id, "agent_name": "queen-orchestrator"})
+    manager = WorkerManager(
+        {"session_id": session_id, "agent_name": "queen-orchestrator"}
+    )
 
     # Extract orchestration context
     target_service = getattr(orchestration_plan, "target_service", "unknown")
