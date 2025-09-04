@@ -302,17 +302,15 @@ class SessionManagement:
         """
         actual_path = SessionManagement.get_session_path(session_id)
 
-        # Check path exists
+        # Check path exists - fail hard if it doesn't
         if not os.path.exists(actual_path):
-            print(f"Session path does not exist: {actual_path}")
-            return False
+            raise FileNotFoundError(f"Session path does not exist: {actual_path}")
 
         # If expected path provided, verify match
         if expected_path:
             expected_abs = os.path.abspath(expected_path)
             if actual_path != expected_abs:
-                print(f"Path mismatch! Expected: {expected_abs}, Got: {actual_path}")
-                return False
+                raise ValueError(f"Session path mismatch! Expected: {expected_abs}, Got: {actual_path}")
 
         return True
 

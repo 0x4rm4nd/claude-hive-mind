@@ -63,14 +63,14 @@ class ProtocolInterface(ABC):
     @abstractmethod
     def handle_error(self, error: Exception, context: Dict[str, Any]) -> bool:
         """
-        Handle protocol-specific errors with recovery attempts.
+        Handle protocol-specific errors - fail hard implementation.
 
         Args:
             error: Exception that occurred
             context: Context information about the error
 
         Returns:
-            True if error was handled and recovery successful
+            Should not return - raises the original exception
         """
         pass
 

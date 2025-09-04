@@ -331,13 +331,13 @@ class ConfigurationValidator:
         )
 
         self.schemas["prompt_generator"] = prompt_schema
-        
+
         # Worker Prompt Protocol Schema
         worker_prompt_schema = ConfigurationSchema("worker_prompt_protocol")
         worker_prompt_schema.add_required_field("session_id", str)
         worker_prompt_schema.add_optional_field("agent_name", str)
         worker_prompt_schema.add_optional_field("worker_type", str)
-        
+
         self.schemas["worker_prompt_protocol"] = worker_prompt_schema
 
     def register_schema(self, schema: ConfigurationSchema) -> None:

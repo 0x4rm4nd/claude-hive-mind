@@ -60,9 +60,10 @@ class ProtocolConfig:
             error_details = "; ".join(validation_result.errors)
             raise ValueError(f"Configuration validation failed: {error_details}")
         
-        # Log warnings if any
+        # CRITICAL: Fail hard on configuration warnings (unexpected fields)
         if validation_result.warnings:
-            print(f"Configuration warnings: {'; '.join(validation_result.warnings)}")
+            warnings_detail = "; ".join(validation_result.warnings)
+            raise ValueError(f"Configuration validation warnings (strict mode): {warnings_detail}")
 
     def _set_canonical_fields(self) -> None:
         """Set canonical field values with defaults"""
@@ -98,7 +99,7 @@ class ProtocolConfig:
 class BaseProtocol(ProtocolInterface, LoggingCapable, SessionAware, FileOperationCapable):
     """
     Base class for all protocol implementations implementing standard interfaces.
-    Provides dependency injection, error recovery, and unified logging capabilities.
+    Provides dependency injection, fail-hard error handling, and unified logging capabilities.
     """
     
     # Protocol metadata
