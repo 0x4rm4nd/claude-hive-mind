@@ -52,6 +52,8 @@ class BaseWorker(ABC, Generic[T]):
         self.worker_type = worker_type
         self.worker_config = worker_config
         self.output_model = output_model
+        self._prompt_protocol: Optional[WorkerPromptProtocol] = None
+        self._prompt_data: Optional[Dict[str, Any]] = None
 
     def log_event(self, session_id: str, event_type: str, details: Any) -> None:
         """Framework-enforced event logging"""
@@ -82,6 +84,82 @@ class BaseWorker(ABC, Generic[T]):
                 logger.log_debug(message, details)
         except Exception as e:
             print(f"Debug logging failed: {e}")
+
+    def read_worker_prompt(self, session_id: str) -> Dict[str, Any]:
+        """
+        Read and parse worker-specific prompt file with rich contextual information.
+        
+        Returns structured data including:
+        - YAML frontmatter (task_focus, dependencies, priority, complexity_level, etc.)
+        - Parsed markdown sections (success_criteria, available_tools, etc.)
+        - Codebase context and strategic insights from Queen orchestration
+        
+        Args:
+            session_id: Session identifier
+            
+        Returns:
+            Dictionary containing structured prompt data
+        """
+        if not self._prompt_data:
+            try:
+                cfg = ProtocolConfig({
+                    "session_id": session_id, 
+                    "agent_name": self.worker_type
+                })
+                
+                self._prompt_protocol = WorkerPromptProtocol(cfg)
+                self._prompt_data = self._prompt_protocol.read_prompt_file(self.worker_type)
+                
+                self.log_debug(
+                    session_id, 
+                    f"Successfully loaded prompt data for {self.worker_type}",
+                    {
+                        "focus_areas": self._prompt_data.get("focus_areas", []),
+                        "complexity_level": self._prompt_data.get("complexity_level", 1),
+                        "priority": self._prompt_data.get("priority", "medium"),
+                        "dependencies": self._prompt_data.get("dependencies", [])
+                    }
+                )
+                
+            except Exception as e:
+                self.log_debug(
+                    session_id,
+                    f"Failed to read prompt file for {self.worker_type}",
+                    {"error": str(e)},
+                    "WARNING"
+                )
+                # Fallback to basic task description
+                self._prompt_data = {
+                    "task_description": f"Analyze and provide insights for {self.worker_type}",
+                    "focus_areas": [],
+                    "dependencies": [],
+                    "priority": "medium",
+                    "complexity_level": 1,
+                    "success_criteria": [],
+                    "available_tools": [],
+                    "output_requirements": {}
+                }
+        
+        return self._prompt_data
+    
+    def get_task_context(self, session_id: str) -> Dict[str, Any]:
+        """
+        Get rich task context from parsed prompt data.
+        Convenience method that returns key contextual information.
+        """
+        prompt_data = self.read_worker_prompt(session_id)
+        
+        return {
+            "task_description": prompt_data.get("task_description", ""),
+            "focus_areas": prompt_data.get("focus_areas", []),
+            "priority": prompt_data.get("priority", "medium"),
+            "complexity_level": prompt_data.get("complexity_level", 1),
+            "dependencies": prompt_data.get("dependencies", []),
+            "success_criteria": prompt_data.get("success_criteria", []),
+            "target_services": prompt_data.get("target_services", []),
+            "primary_target": prompt_data.get("primary_target", "unknown"),
+            "estimated_duration": prompt_data.get("estimated_duration", "1-2h"),
+        }
 
     def validate_session(self, session_id: str) -> None:
         """Framework-enforced session validation"""
