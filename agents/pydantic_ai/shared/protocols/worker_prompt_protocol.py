@@ -279,19 +279,6 @@ class WorkerPromptProtocol(BaseProtocol):
 
         return self.prompt_data
 
-    def get_focus_areas(self) -> List[str]:
-        """Get specific focus areas for this worker's task"""
-        if not self.prompt_data:
-            self.get_task_instructions()
-
-        return self.prompt_data.get("focus_areas", [])
-
-    def get_dependencies(self) -> List[str]:
-        """Get list of other workers this task depends on"""
-        if not self.prompt_data:
-            self.get_task_instructions()
-
-        return self.prompt_data.get("dependencies", [])
 
     def get_success_criteria(self) -> List[str]:
         """Get success criteria for task completion"""
@@ -307,90 +294,8 @@ class WorkerPromptProtocol(BaseProtocol):
 
         return self.prompt_data.get("output_requirements", {})
 
-    def get_worker_expertise(self) -> str:
-        """Get worker expertise description"""
-        if not self.prompt_data:
-            self.get_task_instructions()
 
-        return self.prompt_data.get("worker_expertise", "")
 
-    def get_codebase_context(self) -> Dict[str, Any]:
-        """Get codebase context and insights"""
-        if not self.prompt_data:
-            self.get_task_instructions()
-
-        return self.prompt_data.get("codebase_context", {})
-
-    def get_risk_context(self) -> List[str]:
-        """Get identified risks and concerns"""
-        if not self.prompt_data:
-            self.get_task_instructions()
-
-        return self.prompt_data.get("risk_context", [])
-
-    def get_coordination_strategy(self) -> List[str]:
-        """Get coordination strategy notes"""
-        if not self.prompt_data:
-            self.get_task_instructions()
-
-        return self.prompt_data.get("coordination_strategy", [])
-
-    def get_target_services(self) -> List[str]:
-        """Get target services for analysis"""
-        if not self.prompt_data:
-            self.get_task_instructions()
-
-        return self.prompt_data.get("target_services", [])
-
-    def get_primary_target(self) -> str:
-        """Get primary target service"""
-        if not self.prompt_data:
-            self.get_task_instructions()
-
-        return self.prompt_data.get("primary_target", "unknown")
-
-    def get_complexity_level(self) -> int:
-        """Get task complexity level (1-10)"""
-        if not self.prompt_data:
-            self.get_task_instructions()
-
-        return self.prompt_data.get("complexity_level", 1)
-
-    def get_priority(self) -> str:
-        """Get task priority level"""
-        if not self.prompt_data:
-            self.get_task_instructions()
-
-        return self.prompt_data.get("priority", "medium")
-
-    def get_estimated_duration(self) -> str:
-        """Get estimated duration for task"""
-        if not self.prompt_data:
-            self.get_task_instructions()
-
-        return self.prompt_data.get("estimated_duration", "1-2h")
-
-    def get_available_tools(self) -> List[str]:
-        """Get list of available tools for this worker"""
-        if not self.prompt_data:
-            self.get_task_instructions()
-
-        return self.prompt_data.get("available_tools", [])
-
-    def get_full_prompt_content(self) -> str:
-        """Get the full original prompt file content"""
-        if not self.prompt_data:
-            self.get_task_instructions()
-
-        return self.prompt_data.get("full_content", "")
-
-    def get_json_response_format(self) -> Dict[str, Any]:
-        """Get the expected JSON response format"""
-        if not self.prompt_data:
-            self.get_task_instructions()
-
-        output_reqs = self.prompt_data.get("output_requirements", {})
-        return output_reqs.get("json_format", {})
 
     def validate_task_completion(self, outputs: Dict[str, Any]) -> bool:
         """

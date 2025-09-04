@@ -311,16 +311,3 @@ class BaseProtocol(ProtocolInterface, LoggingCapable, SessionAware, FileOperatio
             self.log_debug("Dependency injection failed", {"error": str(e)}, "WARNING")
 
 
-    def log_execution(self, action: str, status_or_data: Any = None, data: Any = None):
-        """Legacy method for backward compatibility"""
-        if data is None:
-            status = None
-            payload = status_or_data
-        else:
-            status = status_or_data
-            payload = data
-            
-        self.log_event(f"execution_{action}", {
-            "status": status,
-            "data": payload
-        })
