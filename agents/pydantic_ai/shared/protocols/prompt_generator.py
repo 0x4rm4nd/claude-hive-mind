@@ -10,6 +10,7 @@ from typing import Dict, List, Any
 from dataclasses import dataclass
 from .session_management import SessionManagement
 from .logging_protocol import LoggingProtocol, ProtocolConfig
+from .protocol_interface import ProtocolInterface
 
 
 @dataclass
@@ -48,15 +49,40 @@ class WorkerPromptSpec:
             self.coordination_notes = []
 
 
-class PromptGenerator:
+class PromptGenerator(ProtocolInterface):
     """Framework-enforced worker prompt file creation"""
 
-    def __init__(self, session_id: str):
-        self.session_id = session_id
-        self.config = ProtocolConfig(
-            {"session_id": session_id, "agent_name": "queen-orchestrator"}
-        )
+    def __init__(self, session_id: str = None, config: Dict[str, Any] = None):
+        if config:
+            self.config = ProtocolConfig(config)
+            self.session_id = self.config.session_id
+        else:
+            self.session_id = session_id or "default-session"
+            self.config = ProtocolConfig(
+                {"session_id": self.session_id, "agent_name": "queen-orchestrator"}
+            )
         self.logger = LoggingProtocol(self.config)
+        
+    # Make compatible with ProtocolInterface expectations (though not fully implementing it)
+    def initialize(self, config: Dict[str, Any]) -> bool:
+        """Initialize compatibility method"""
+        return True
+    
+    def validate_config(self, config: Dict[str, Any]) -> bool:
+        """Config validation compatibility method"""
+        return "session_id" in config
+    
+    def cleanup(self) -> None:
+        """Cleanup compatibility method"""
+        pass
+    
+    def get_status(self) -> Dict[str, Any]:
+        """Status compatibility method"""
+        return {"initialized": True, "session_id": self.session_id}
+    
+    def handle_error(self, error: Exception, context: Dict[str, Any]) -> bool:
+        """Error handling compatibility method"""
+        return False
 
     def create_worker_prompts(
         self, worker_specs: List[WorkerPromptSpec], batch_logging: bool = True
@@ -142,13 +168,6 @@ class PromptGenerator:
 
     def _generate_prompt_content(self, spec: WorkerPromptSpec) -> str:
         """Generate structured prompt content for a specific worker"""
-        
-        # Extract orchestration context from spec for enhanced prompts
-        orchestration_plan = getattr(spec, 'orchestration_plan', None)
-        codebase_insights = getattr(spec, 'codebase_insights', [])
-        success_metrics = getattr(spec, 'success_metrics', [])
-        identified_risks = getattr(spec, 'identified_risks', [])
-        coordination_notes = getattr(spec, 'coordination_notes', [])
 
         # Worker-specific configurations
         worker_configs = {
@@ -311,46 +330,55 @@ class PromptGenerator:
         # Extract target services from codebase insights
         target_services = []
         if spec.codebase_insights:
-            target_services = [insight.get('service_name', 'unknown') for insight in spec.codebase_insights]
-        primary_target_service = target_services[0] if target_services else "system-wide"
+            target_services = [
+                insight.get("service_name", "unknown")
+                for insight in spec.codebase_insights
+            ]
+        primary_target_service = (
+            target_services[0] if target_services else "system-wide"
+        )
 
         # Generate codebase context section
         codebase_context = ""
         if spec.codebase_insights:
             codebase_context = "\n## Codebase Context\n"
             for insight in spec.codebase_insights:
-                service_name = insight.get('service_name', 'unknown')
-                key_files = insight.get('key_files', [])
-                architecture_notes = insight.get('architecture_notes', [])
-                potential_issues = insight.get('potential_issues', [])
-                
+                service_name = insight.get("service_name", "unknown")
+                key_files = insight.get("key_files", [])
+                architecture_notes = insight.get("architecture_notes", [])
+                potential_issues = insight.get("potential_issues", [])
+
                 codebase_context += f"### {service_name}\n"
                 if key_files:
                     codebase_context += f"**Key Files**: {', '.join(key_files)}\n"
                 if architecture_notes:
-                    codebase_context += f"**Architecture**: {' | '.join(architecture_notes)}\n"
+                    codebase_context += (
+                        f"**Architecture**: {' | '.join(architecture_notes)}\n"
+                    )
                 if potential_issues:
-                    codebase_context += f"**Known Issues**: {' | '.join(potential_issues)}\n"
+                    codebase_context += (
+                        f"**Known Issues**: {' | '.join(potential_issues)}\n"
+                    )
                 codebase_context += "\n"
 
         # Generate risk context section
         risk_context = ""
         if spec.identified_risks:
-            risk_context = f"\n## Critical Risk Context\n"
+            risk_context = "\n## Critical Risk Context\n"
             for i, risk in enumerate(spec.identified_risks, 1):
                 risk_context += f"{i}. {risk}\n"
 
         # Generate strategic success metrics
         strategic_metrics = ""
         if spec.success_metrics:
-            strategic_metrics = f"\n## Strategic Success Metrics (Queen-Defined)\n"
+            strategic_metrics = "\n## Strategic Success Metrics (Queen-Defined)\n"
             for metric in spec.success_metrics:
                 strategic_metrics += f"- {metric}\n"
 
         # Generate coordination strategy
         coordination_strategy = ""
         if spec.coordination_notes:
-            coordination_strategy = f"\n## Strategic Coordination\n"
+            coordination_strategy = "\n## Strategic Coordination\n"
             for note in spec.coordination_notes:
                 coordination_strategy += f"- {note}\n"
 

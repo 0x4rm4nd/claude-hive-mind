@@ -25,8 +25,8 @@ class ProtocolConfig:
     
     # Optional fields with defaults
     DEFAULT_VALUES = {
-        "timeout": 3600,
-        "retries": 3,
+        "timeout": 3600,  # Within 1-86400 range
+        "retries": 3,     # Within 0-10 range  
         "agent_name": "system",
         "session_path": None,
         "prompt_text": ""
@@ -34,8 +34,8 @@ class ProtocolConfig:
 
     def __init__(self, config: Dict[str, Any] = None):
         self.config = config or {}
-        self._validate_config()
-        self._set_canonical_fields()
+        self._set_canonical_fields()  # Apply defaults first
+        self._validate_config()       # Then validate  
         self._resolve_session_path()
 
     def _validate_config(self) -> None:
@@ -43,8 +43,18 @@ class ProtocolConfig:
         try:
             from .config_validator import config_validator
             
+            # Create validation dict with actual field values after defaults applied
+            validation_config = {
+                "session_id": self.session_id,
+                "agent_name": self.agent_name,
+                "timeout": self.timeout,
+                "retries": self.retries,
+                "prompt_text": self.prompt_text,
+                "session_path": self.session_path
+            }
+            
             # Use comprehensive validation
-            validation_result = config_validator.validate_config(self.config, "base_protocol")
+            validation_result = config_validator.validate_config(validation_config, "base_protocol")
             
             if not validation_result.is_valid:
                 error_details = "; ".join(validation_result.errors)
@@ -58,7 +68,7 @@ class ProtocolConfig:
             # Fallback to basic validation if validator not available
             missing_fields = []
             for field in self.REQUIRED_FIELDS:
-                if not self.config.get(field):
+                if not getattr(self, field, None):
                     missing_fields.append(field)
             
             if missing_fields:

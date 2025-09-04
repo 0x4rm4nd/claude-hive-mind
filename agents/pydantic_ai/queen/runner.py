@@ -218,7 +218,7 @@ class QueenWorker(BaseWorker[QueenOutput]):
 
         # Create enhanced orchestration plan with execution metadata
         orchestration_data = output._orchestration_plan.model_dump()
-        
+
         # Add execution metadata that was previously in worker_spawns.json
         orchestration_data["execution_metadata"] = {
             "workers_spawned": output.workers_spawned,
@@ -227,9 +227,119 @@ class QueenWorker(BaseWorker[QueenOutput]):
             "session_path": output.session_path,
             "execution_timestamp": output.timestamp,
         }
-        
+
         orchestration_file = orchestration_dir / "orchestration_plan.json"
         orchestration_file.write_text(json.dumps(orchestration_data, indent=2))
+
+        # Update SESSION.md with orchestration summary
+        self._update_session_md(session_path, output._orchestration_plan, output)
+
+    def _update_session_md(
+        self, session_path: Path, orchestration_plan, output: QueenOutput
+    ) -> None:
+        """Update SESSION.md with Queen orchestration details"""
+        session_md_path = session_path / "SESSION.md"
+
+        if not session_md_path.exists():
+            return
+
+        try:
+            content = session_md_path.read_text()
+            lines = content.split("\n")
+
+            # Look for Progress section to update
+            progress_idx = -1
+            notes_idx = -1
+
+            for i, line in enumerate(lines):
+                if line.startswith("## Progress"):
+                    progress_idx = i
+                elif line.startswith("## Notes"):
+                    notes_idx = i
+                    break
+
+            if progress_idx == -1:
+                return  # No Progress section found
+
+            # Update progress section
+            progress_section = [
+                "## Progress",
+                "- [x] Session initialization",
+                "- [x] Queen orchestration completed",
+                f"- [x] {len(orchestration_plan.worker_assignments)} workers planned",
+                f"- [x] Execution strategy: {orchestration_plan.execution_strategy}",
+                "- [ ] Worker deployment",
+                "- [ ] Synthesis",
+            ]
+
+            # Create orchestration summary section
+            orchestration_section = [
+                "",
+                "## Queen Orchestration Summary",
+                f"**Complexity Assessment:** {orchestration_plan.complexity_assessment}/10",
+                f"**Execution Strategy:** {orchestration_plan.execution_strategy}",
+                f"**Estimated Duration:** {orchestration_plan.estimated_total_duration}",
+                f"**Workers Deployed:** {len(orchestration_plan.worker_assignments)}",
+                "",
+                "### Strategic Assessment",
+                orchestration_plan.strategic_rationale,
+                "",
+                "### Worker Assignments",
+            ]
+
+            # Add worker assignments with priorities
+            for assignment in orchestration_plan.worker_assignments:
+                orchestration_section.append(
+                    f"- **{assignment.worker_type}** ({assignment.priority}) - {assignment.task_focus}"
+                )
+
+            # Add risks and coordination notes
+            if orchestration_plan.identified_risks:
+                orchestration_section.extend(
+                    [
+                        "",
+                        "### Key Risks Identified",
+                    ]
+                )
+                for risk in orchestration_plan.identified_risks[:3]:  # Top 3 risks
+                    orchestration_section.append(f"- {risk}")
+
+            if orchestration_plan.coordination_notes:
+                orchestration_section.extend(
+                    [
+                        "",
+                        "### Coordination Strategy",
+                    ]
+                )
+                for note in orchestration_plan.coordination_notes:
+                    orchestration_section.append(f"- {note}")
+
+            # Reconstruct content
+            if notes_idx != -1:
+                # Insert orchestration section before Notes
+                new_lines = (
+                    lines[:progress_idx]
+                    + progress_section
+                    + orchestration_section
+                    + [""]
+                    + lines[notes_idx:]
+                )
+            else:
+                # Append orchestration section at the end
+                new_lines = (
+                    lines[:progress_idx] + progress_section + orchestration_section
+                )
+
+            # Write updated content
+            session_md_path.write_text("\n".join(new_lines))
+
+        except Exception as e:
+            # Log error but don't fail the operation
+            self.log_error(
+                output.session_id,
+                "session_md_update_failed",
+                {"error": str(e), "session_path": str(session_md_path)},
+            )
 
 
 def main():

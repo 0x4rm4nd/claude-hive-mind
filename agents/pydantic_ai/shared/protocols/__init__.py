@@ -21,7 +21,7 @@ from .worker_prompt_protocol import WorkerPromptProtocol
 from .env_loader import load_project_env
 from .prompt_generator import PromptGenerator, create_worker_prompts_from_plan
 from .config_validator import ConfigurationValidator, ValidationResult, config_validator
-from .error_recovery import ErrorRecoveryManager, ErrorContext, RecoveryResult, error_recovery_manager
+from .error_recovery import ErrorRecoveryManager, ErrorContext, RecoveryResult, ErrorSeverity, RecoveryStrategy, error_recovery_manager
 from .protocol_setup import initialize_protocol_system, create_protocol_with_dependencies, get_protocol_health_status
 
 __all__ = [
@@ -50,6 +50,8 @@ __all__ = [
     'ErrorRecoveryManager', 
     'ErrorContext',
     'RecoveryResult',
+    'ErrorSeverity',
+    'RecoveryStrategy',
     'error_recovery_manager',
     'initialize_protocol_system',
     'create_protocol_with_dependencies',

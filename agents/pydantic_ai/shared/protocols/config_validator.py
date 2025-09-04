@@ -301,7 +301,7 @@ class ConfigurationValidator:
         prompt_schema.add_optional_field("complexity_level", int)
         
         prompt_schema.add_range_validation("complexity_level", min_value=1, max_value=10,
-                                         "Complexity level must be between 1 and 10")
+                                         error_message="Complexity level must be between 1 and 10")
         
         self.schemas["prompt_generator"] = prompt_schema
     
