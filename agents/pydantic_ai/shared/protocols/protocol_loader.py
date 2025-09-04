@@ -605,10 +605,7 @@ class BaseProtocol(ProtocolInterface, LoggingCapable, SessionAware):
             return True
 
         except Exception as e:
-            # handle_error now raises exceptions (fail hard) - no return needed
-            self.handle_error(
-                e, {"operation": "create_file", "path": file_path, "type": file_type}
-            )
+            raise e
 
     def append_to_file(self, file_path: str, content: Any) -> bool:
         """Append content to file with atomic operations"""
@@ -622,8 +619,7 @@ class BaseProtocol(ProtocolInterface, LoggingCapable, SessionAware):
             return True
 
         except Exception as e:
-            # handle_error now raises exceptions (fail hard) - no return needed
-            self.handle_error(e, {"operation": "append_to_file", "path": file_path})
+            raise e
 
     def ensure_directory_exists(self, directory_path: str) -> bool:
         """Ensure directory exists, creating if necessary"""
@@ -631,10 +627,7 @@ class BaseProtocol(ProtocolInterface, LoggingCapable, SessionAware):
             Path(directory_path).mkdir(parents=True, exist_ok=True)
             return True
         except Exception as e:
-            # handle_error now raises exceptions (fail hard) - no return needed
-            self.handle_error(
-                e, {"operation": "ensure_directory", "path": directory_path}
-            )
+            raise e
 
     # Private helper methods
     def _inject_dependencies(self) -> None:

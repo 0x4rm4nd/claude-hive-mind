@@ -212,7 +212,6 @@ def test_protocol_integration():
         assert hasattr(protocol, 'validate_config') 
         assert hasattr(protocol, 'cleanup')
         assert hasattr(protocol, 'get_status')
-        assert hasattr(protocol, 'handle_error')
         print("✅ BaseProtocol implements ProtocolInterface")
         
         # Test logging capabilities
