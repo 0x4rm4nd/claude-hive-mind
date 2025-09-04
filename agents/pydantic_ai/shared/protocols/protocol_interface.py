@@ -139,52 +139,6 @@ class SessionAware(ABC):
         pass
 
 
-class FileOperationCapable(ABC):
-    """Mixin interface for protocols that perform file operations"""
-
-    @abstractmethod
-    def create_file(
-        self, file_path: str, content: Any, file_type: str = "text"
-    ) -> bool:
-        """
-        Create a file with atomic write operations.
-
-        Args:
-            file_path: Path where file should be created
-            content: Content to write to file
-            file_type: Type of file (text, json, binary)
-
-        Returns:
-            True if file created successfully
-        """
-        pass
-
-    @abstractmethod
-    def append_to_file(self, file_path: str, content: Any) -> bool:
-        """
-        Append content to file with atomic operations.
-
-        Args:
-            file_path: Path to file to append to
-            content: Content to append
-
-        Returns:
-            True if append successful
-        """
-        pass
-
-    @abstractmethod
-    def ensure_directory_exists(self, directory_path: str) -> bool:
-        """
-        Ensure directory exists, creating if necessary.
-
-        Args:
-            directory_path: Path to directory
-
-        Returns:
-            True if directory exists or was created successfully
-        """
-        pass
 
 
 class ProtocolMetadata:

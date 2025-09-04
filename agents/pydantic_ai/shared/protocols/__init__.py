@@ -8,7 +8,6 @@ from .protocol_interface import (
     ProtocolInterface, 
     LoggingCapable, 
     SessionAware, 
-    FileOperationCapable,
     ProtocolMetadata,
     ProtocolRegistry,
     DependencyContainer,
@@ -18,16 +17,23 @@ from .protocol_interface import (
     get_protocol_health_status
 )
 from .session_management import SessionManagement, load_project_env
-from .protocol_loader import ProtocolConfig, BaseProtocol
+from .protocol_loader import (
+    ProtocolConfig, 
+    BaseProtocol,
+    ConfigurationValidator, 
+    ValidationResult, 
+    config_validator,
+    ValidationType,
+    ValidationRule,
+    ConfigurationSchema
+)
 from .worker_management import WorkerManager, WorkerSpec, create_worker_prompts_from_plan, WORKER_CONFIGS
-from .config_validator import ConfigurationValidator, ValidationResult, config_validator
 
 __all__ = [
     # Core interfaces
     'ProtocolInterface',
     'LoggingCapable', 
     'SessionAware', 
-    'FileOperationCapable',
     'ProtocolMetadata',
     'ProtocolRegistry',
     'DependencyContainer',
@@ -41,10 +47,13 @@ __all__ = [
     'WorkerSpec',
     'create_worker_prompts_from_plan',
     'WORKER_CONFIGS',
-    # Configuration and validation
+    # Configuration and validation (integrated from config_validator)
     'ConfigurationValidator',
     'ValidationResult',
     'config_validator',
+    'ValidationType',
+    'ValidationRule',
+    'ConfigurationSchema',
     # System initialization
     'initialize_protocol_system',
     'create_protocol_with_dependencies',
