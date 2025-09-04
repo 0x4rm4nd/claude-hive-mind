@@ -4,14 +4,37 @@ Shared Protocols for Pydantic AI Agents
 Protocol implementations used across all agents.
 """
 
+from .protocol_interface import (
+    ProtocolInterface, 
+    LoggingCapable, 
+    SessionAware, 
+    FileOperationCapable,
+    ProtocolMetadata,
+    ProtocolRegistry,
+    DependencyContainer,
+    dependency_container
+)
 from .session_management import SessionManagement
 from .logging_protocol import LoggingProtocol
 from .protocol_loader import ProtocolConfig, BaseProtocol
 from .worker_prompt_protocol import WorkerPromptProtocol
 from .env_loader import load_project_env
 from .prompt_generator import PromptGenerator, create_worker_prompts_from_plan
+from .config_validator import ConfigurationValidator, ValidationResult, config_validator
+from .error_recovery import ErrorRecoveryManager, ErrorContext, RecoveryResult, error_recovery_manager
+from .protocol_setup import initialize_protocol_system, create_protocol_with_dependencies, get_protocol_health_status
 
 __all__ = [
+    # Core interfaces
+    'ProtocolInterface',
+    'LoggingCapable', 
+    'SessionAware', 
+    'FileOperationCapable',
+    'ProtocolMetadata',
+    'ProtocolRegistry',
+    'DependencyContainer',
+    'dependency_container',
+    # Protocol implementations
     'SessionManagement',
     'LoggingProtocol',
     'ProtocolConfig', 
@@ -19,5 +42,16 @@ __all__ = [
     'WorkerPromptProtocol',
     'load_project_env',
     'PromptGenerator',
-    'create_worker_prompts_from_plan'
+    'create_worker_prompts_from_plan',
+    # Architectural improvements
+    'ConfigurationValidator',
+    'ValidationResult',
+    'config_validator',
+    'ErrorRecoveryManager', 
+    'ErrorContext',
+    'RecoveryResult',
+    'error_recovery_manager',
+    'initialize_protocol_system',
+    'create_protocol_with_dependencies',
+    'get_protocol_health_status'
 ]
