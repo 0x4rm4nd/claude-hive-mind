@@ -119,7 +119,7 @@ class PromptGenerator:
         # Consolidated batch logging (default behavior)
         if batch_logging and created_files:
             # Convert absolute path to relative path from project root
-            project_root = "/Users/Armand/Development/SmartWalletFX"
+            project_root = SessionManagement.detect_project_root()
             relative_prompts_dir = (
                 prompts_dir.replace(f"{project_root}/", "")
                 if prompts_dir.startswith(project_root)
