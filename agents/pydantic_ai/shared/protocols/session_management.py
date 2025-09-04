@@ -10,9 +10,8 @@ Includes environment variable loading utilities.
 import os
 import json
 import tempfile
-import re
 from pathlib import Path
-from typing import Dict, Any, Optional
+from typing import Dict, Any
 from datetime import datetime
 from dotenv import load_dotenv
 
@@ -129,7 +128,9 @@ class SessionManagement:
                 os.path.join(session_path, dir_name) if dir_name else session_path
             )
             if not os.path.isdir(dir_path):
-                raise FileNotFoundError(f"Required session directory missing: {dir_path}")
+                raise FileNotFoundError(
+                    f"Required session directory missing: {dir_path}"
+                )
 
         # Check files - fail hard if missing
         for file_name in required_files:
@@ -189,8 +190,7 @@ class SessionManagement:
 
 
 # Environment Variable Loading Utilities
-# ======================================
-# Merged from env_loader.py for consolidation
+
 
 def load_project_env():
     """Load environment variables from project root .env file"""
@@ -202,8 +202,3 @@ def load_project_env():
         load_dotenv(env_file)
 
     return project_root
-
-
-
-
-

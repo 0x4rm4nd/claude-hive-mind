@@ -14,5 +14,3 @@ load_project_env()
 def iso_now() -> str:
     """Generate ISO timestamp string"""
     return datetime.utcnow().strftime("%Y-%m-%dT%H:%M:%SZ")
-
-
