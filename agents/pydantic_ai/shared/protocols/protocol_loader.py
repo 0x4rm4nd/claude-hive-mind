@@ -513,11 +513,6 @@ class BaseProtocol(ProtocolInterface, LoggingCapable, SessionAware):
         )
         return self._status
 
-    def handle_error(self, error: Exception, context: Dict[str, Any]) -> bool:
-        """Handle protocol errors - fail hard, no recovery"""
-        # CRITICAL: Fail hard immediately
-        raise error
-
     # LoggingCapable implementation
     def log_event(
         self, event_type: str, details: Any, level: str = "INFO"

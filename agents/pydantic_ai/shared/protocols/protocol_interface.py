@@ -60,19 +60,6 @@ class ProtocolInterface(ABC):
         """
         pass
 
-    @abstractmethod
-    def handle_error(self, error: Exception, context: Dict[str, Any]) -> bool:
-        """
-        Handle protocol-specific errors - fail hard implementation.
-
-        Args:
-            error: Exception that occurred
-            context: Context information about the error
-
-        Returns:
-            Should not return - raises the original exception
-        """
-        pass
 
 
 class LoggingCapable(ABC):
