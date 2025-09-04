@@ -82,8 +82,8 @@ class PromptGenerator(BaseProtocol):
         return {"initialized": True, "session_id": self.session_id}
 
     def handle_error(self, error: Exception, context: Dict[str, Any]) -> bool:
-        """Error handling compatibility method"""
-        return False
+        """Error handling compatibility method - fail hard implementation"""
+        raise error
 
     def create_worker_prompts(
         self, worker_specs: List[WorkerPromptSpec]

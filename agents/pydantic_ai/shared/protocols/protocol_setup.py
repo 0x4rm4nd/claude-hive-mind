@@ -57,9 +57,6 @@ def initialize_protocol_system():
 
     # Test basic functionality
     try:
-        # Test session management dependency
-        session_manager = dependency_container.get("session_management")
-
         # Test that we can create protocol instances
         available_protocols = ProtocolRegistry.list_available_protocols()
 

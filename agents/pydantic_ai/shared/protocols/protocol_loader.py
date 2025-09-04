@@ -134,8 +134,8 @@ class BaseProtocol(ProtocolInterface, LoggingCapable, SessionAware, FileOperatio
             self.log_event("protocol_initialized", {"config_keys": list(config.keys())})
             return True
         except Exception as e:
+            # handle_error now raises exceptions (fail hard) - no return needed
             self.handle_error(e, {"operation": "initialization", "config": config})
-            return False
 
     def validate_config(self, config: Dict[str, Any]) -> bool:
         """Validate protocol configuration"""
@@ -231,9 +231,9 @@ class BaseProtocol(ProtocolInterface, LoggingCapable, SessionAware, FileOperatio
         return self.config.session_path
 
     def ensure_session_validity(self) -> bool:
-        """Ensure session exists and is valid"""
+        """Ensure session exists and is valid - fail hard if not"""
         if not self.config.session_id:
-            return False
+            raise ValueError("Session ID is required for session-aware protocols")
         
         from .session_management import SessionManagement
         return SessionManagement.ensure_session_exists(self.config.session_id)
@@ -260,8 +260,8 @@ class BaseProtocol(ProtocolInterface, LoggingCapable, SessionAware, FileOperatio
             return True
             
         except Exception as e:
+            # handle_error now raises exceptions (fail hard) - no return needed  
             self.handle_error(e, {"operation": "create_file", "path": file_path, "type": file_type})
-            return False
 
     def append_to_file(self, file_path: str, content: Any) -> bool:
         """Append content to file with atomic operations"""
@@ -275,8 +275,8 @@ class BaseProtocol(ProtocolInterface, LoggingCapable, SessionAware, FileOperatio
             return True
             
         except Exception as e:
+            # handle_error now raises exceptions (fail hard) - no return needed
             self.handle_error(e, {"operation": "append_to_file", "path": file_path})
-            return False
 
     def ensure_directory_exists(self, directory_path: str) -> bool:
         """Ensure directory exists, creating if necessary"""
@@ -284,8 +284,8 @@ class BaseProtocol(ProtocolInterface, LoggingCapable, SessionAware, FileOperatio
             Path(directory_path).mkdir(parents=True, exist_ok=True)
             return True
         except Exception as e:
+            # handle_error now raises exceptions (fail hard) - no return needed
             self.handle_error(e, {"operation": "ensure_directory", "path": directory_path})
-            return False
 
     # Private helper methods
     def _inject_dependencies(self) -> None:

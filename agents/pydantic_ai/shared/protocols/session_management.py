@@ -87,13 +87,17 @@ class SessionManagement:
     @staticmethod
     def ensure_session_exists(session_id: str) -> bool:
         """
-        Verify session directory and files exist.
+        Verify session directory and files exist - fail hard if invalid.
 
         Args:
             session_id: Session identifier
 
         Returns:
             True if session exists and is valid
+
+        Raises:
+            FileNotFoundError: If session directory or required files don't exist
+            ValueError: If session structure is invalid
         """
         session_path = SessionManagement.get_session_path(session_id)
 
@@ -112,19 +116,19 @@ class SessionManagement:
             "workers/notes",
         ]
 
-        # Check directories
+        # Check directories - fail hard if missing
         for dir_name in required_dirs:
             dir_path = (
                 os.path.join(session_path, dir_name) if dir_name else session_path
             )
             if not os.path.isdir(dir_path):
-                return False
+                raise FileNotFoundError(f"Required session directory missing: {dir_path}")
 
-        # Check files
+        # Check files - fail hard if missing
         for file_name in required_files:
             file_path = os.path.join(session_path, file_name)
             if not os.path.isfile(file_path):
-                return False
+                raise FileNotFoundError(f"Required session file missing: {file_path}")
 
         return True
 

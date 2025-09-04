@@ -75,7 +75,9 @@ class WorkerPromptProtocol(BaseProtocol):
 
         except FileNotFoundError as e:
             # CRITICAL: Prompt file must exist - protocol violation
-            raise FileNotFoundError(f"Protocol violation: Worker prompt file must exist at {prompt_file_path}") from e
+            raise FileNotFoundError(
+                f"Protocol violation: Worker prompt file must exist at {prompt_file_path}"
+            ) from e
 
         except Exception as e:
             raise
@@ -89,27 +91,27 @@ class WorkerPromptProtocol(BaseProtocol):
         - Markdown sections for different instruction types
         """
         try:
-            with open(file_path, 'r', encoding='utf-8') as f:
+            with open(file_path, "r", encoding="utf-8") as f:
                 content = f.read()
-            
+
             # Split YAML frontmatter and markdown content
-            if not content.startswith('---'):
+            if not content.startswith("---"):
                 raise ValueError("Prompt file must start with YAML frontmatter")
-            
+
             # Find the end of frontmatter
-            parts = content.split('---', 2)
+            parts = content.split("---", 2)
             if len(parts) < 3:
                 raise ValueError("Invalid YAML frontmatter format")
-            
+
             frontmatter_text = parts[1].strip()
             markdown_content = parts[2].strip()
-            
+
             # Parse YAML frontmatter
             frontmatter = yaml.safe_load(frontmatter_text) or {}
-            
+
             # Parse markdown sections
             markdown_sections = self._parse_markdown_sections(markdown_content)
-            
+
             # Combine into structured data
             return {
                 # From YAML frontmatter
@@ -124,7 +126,6 @@ class WorkerPromptProtocol(BaseProtocol):
                 "dependencies": frontmatter.get("dependencies", []),
                 "focus_areas": frontmatter.get("focus_areas", []),
                 "created_by": frontmatter.get("created_by", "unknown"),
-                
                 # From markdown sections
                 "worker_expertise": markdown_sections.get("worker_expertise", ""),
                 "rationale": markdown_sections.get("strategic_rationale", ""),
@@ -133,105 +134,119 @@ class WorkerPromptProtocol(BaseProtocol):
                 "available_tools": markdown_sections.get("available_tools", []),
                 "codebase_context": markdown_sections.get("codebase_context", {}),
                 "risk_context": markdown_sections.get("risk_context", []),
-                "coordination_strategy": markdown_sections.get("coordination_strategy", []),
-                
+                "coordination_strategy": markdown_sections.get(
+                    "coordination_strategy", []
+                ),
                 # Combined metadata
                 "timeout": 3600,  # Default timeout
                 "full_content": content,
                 "parsed_sections": list(markdown_sections.keys()),
             }
-            
+
         except FileNotFoundError:
             raise FileNotFoundError(f"Prompt file not found: {file_path}")
         except yaml.YAMLError as e:
             raise ValueError(f"Invalid YAML frontmatter in prompt file: {e}")
         except Exception as e:
             raise RuntimeError(f"Error parsing prompt file {file_path}: {e}")
-    
+
     def _parse_markdown_sections(self, markdown_content: str) -> Dict[str, Any]:
         """Parse markdown sections into structured data"""
         sections = {}
-        
+
         # Split by headers
-        lines = markdown_content.split('\n')
+        lines = markdown_content.split("\n")
         current_section = None
         current_content = []
-        
+
         for line in lines:
-            if line.startswith('##'):
+            if line.startswith("##"):
                 # Save previous section
                 if current_section:
                     sections[current_section] = self._process_section_content(
-                        current_section, '\n'.join(current_content).strip()
+                        current_section, "\n".join(current_content).strip()
                     )
-                
+
                 # Start new section
-                current_section = line.replace('##', '').strip().lower().replace(' ', '_')
+                current_section = (
+                    line.replace("##", "").strip().lower().replace(" ", "_")
+                )
                 current_content = []
-            elif line.startswith('#') and not line.startswith('##'):
+            elif line.startswith("#") and not line.startswith("##"):
                 # Skip main headers
                 continue
             else:
                 current_content.append(line)
-        
+
         # Save last section
         if current_section:
             sections[current_section] = self._process_section_content(
-                current_section, '\n'.join(current_content).strip()
+                current_section, "\n".join(current_content).strip()
             )
-        
+
         return sections
-    
+
     def _process_section_content(self, section_name: str, content: str) -> Any:
         """Process section content based on section type"""
-        if section_name in ['success_criteria', 'available_tools', 'focus_areas_priority_order', 'worker_dependencies']:
+        if section_name in [
+            "success_criteria",
+            "available_tools",
+            "focus_areas_priority_order",
+            "worker_dependencies",
+        ]:
             # List-based sections
             items = []
-            for line in content.split('\n'):
+            for line in content.split("\n"):
                 line = line.strip()
-                if line and (line.startswith('- ') or line.startswith('1. ') or line.startswith('2. ') or line.startswith('3. ')):
+                if line and (
+                    line.startswith("- ")
+                    or line.startswith("1. ")
+                    or line.startswith("2. ")
+                    or line.startswith("3. ")
+                ):
                     # Remove list markers
-                    item = re.sub(r'^[-\d\.]\s*', '', line).strip()
+                    item = re.sub(r"^[-\d\.]\s*", "", line).strip()
                     if item:
                         items.append(item)
             return items
-        
-        elif section_name == 'output_requirements':
+
+        elif section_name == "output_requirements":
             # Extract file requirements
             files = []
             json_format = {}
-            
+
             # Look for file listings
-            file_matches = re.findall(r'- `([^`]+)`', content)
+            file_matches = re.findall(r"- `([^`]+)`", content)
             files.extend(file_matches)
-            
+
             # Look for JSON format
-            json_match = re.search(r'```json\n(.*?)\n```', content, re.DOTALL)
+            json_match = re.search(r"```json\n(.*?)\n```", content, re.DOTALL)
             if json_match:
                 try:
                     json_format = json.loads(json_match.group(1))
                 except:
                     json_format = {"format": "json", "raw": json_match.group(1)}
-            
+
             return {
                 "required_files": files,
                 "json_format": json_format,
-                "raw_content": content
+                "raw_content": content,
             }
-        
-        elif section_name in ['codebase_context', 'critical_risk_context']:
+
+        elif section_name in ["codebase_context", "critical_risk_context"]:
             # Context sections - extract key points
             points = []
-            for line in content.split('\n'):
+            for line in content.split("\n"):
                 line = line.strip()
-                if line and (line.startswith('- ') or line.startswith('**') or line.startswith('###')):
+                if line and (
+                    line.startswith("- ")
+                    or line.startswith("**")
+                    or line.startswith("###")
+                ):
                     points.append(line)
-            
-            return {
-                "key_points": points,
-                "full_content": content
-            }
-        
+
+            return {"key_points": points, "full_content": content}
+
         else:
             # Default: return as string
             return content
@@ -250,10 +265,9 @@ class WorkerPromptProtocol(BaseProtocol):
                         "available_fields": list(data.keys()),
                         "validation_failure": True,
                     },
-                    "ERROR"
+                    "ERROR",
                 )
                 raise ValueError(f"Missing required field in prompt: {field}")
-
 
     def get_task_instructions(self) -> Dict[str, Any]:
         """
@@ -292,111 +306,114 @@ class WorkerPromptProtocol(BaseProtocol):
             self.get_task_instructions()
 
         return self.prompt_data.get("output_requirements", {})
-    
+
     def get_worker_expertise(self) -> str:
         """Get worker expertise description"""
         if not self.prompt_data:
             self.get_task_instructions()
-        
+
         return self.prompt_data.get("worker_expertise", "")
-    
+
     def get_codebase_context(self) -> Dict[str, Any]:
         """Get codebase context and insights"""
         if not self.prompt_data:
             self.get_task_instructions()
-            
+
         return self.prompt_data.get("codebase_context", {})
-    
+
     def get_risk_context(self) -> List[str]:
         """Get identified risks and concerns"""
         if not self.prompt_data:
             self.get_task_instructions()
-            
+
         return self.prompt_data.get("risk_context", [])
-    
+
     def get_coordination_strategy(self) -> List[str]:
         """Get coordination strategy notes"""
         if not self.prompt_data:
             self.get_task_instructions()
-            
+
         return self.prompt_data.get("coordination_strategy", [])
-    
+
     def get_target_services(self) -> List[str]:
         """Get target services for analysis"""
         if not self.prompt_data:
             self.get_task_instructions()
-            
+
         return self.prompt_data.get("target_services", [])
-    
+
     def get_primary_target(self) -> str:
         """Get primary target service"""
         if not self.prompt_data:
             self.get_task_instructions()
-            
+
         return self.prompt_data.get("primary_target", "unknown")
-    
+
     def get_complexity_level(self) -> int:
         """Get task complexity level (1-10)"""
         if not self.prompt_data:
             self.get_task_instructions()
-            
+
         return self.prompt_data.get("complexity_level", 1)
-    
+
     def get_priority(self) -> str:
         """Get task priority level"""
         if not self.prompt_data:
             self.get_task_instructions()
-            
+
         return self.prompt_data.get("priority", "medium")
-    
+
     def get_estimated_duration(self) -> str:
         """Get estimated duration for task"""
         if not self.prompt_data:
             self.get_task_instructions()
-            
+
         return self.prompt_data.get("estimated_duration", "1-2h")
-    
+
     def get_available_tools(self) -> List[str]:
         """Get list of available tools for this worker"""
         if not self.prompt_data:
             self.get_task_instructions()
-            
+
         return self.prompt_data.get("available_tools", [])
-    
+
     def get_full_prompt_content(self) -> str:
         """Get the full original prompt file content"""
         if not self.prompt_data:
             self.get_task_instructions()
-            
+
         return self.prompt_data.get("full_content", "")
-    
+
     def get_json_response_format(self) -> Dict[str, Any]:
         """Get the expected JSON response format"""
         if not self.prompt_data:
             self.get_task_instructions()
-            
+
         output_reqs = self.prompt_data.get("output_requirements", {})
         return output_reqs.get("json_format", {})
 
     def validate_task_completion(self, outputs: Dict[str, Any]) -> bool:
         """
-        Validate that task completion meets success criteria.
+        Validate that task completion meets success criteria - fail hard if not.
 
         Args:
             outputs: Dictionary of produced outputs
 
         Returns:
-            Boolean indicating if success criteria are met
+            True if success criteria are met
+
+        Raises:
+            ValueError: If required outputs are missing or invalid
         """
         criteria = self.get_success_criteria()
         output_paths = self.get_output_paths()
 
-        # Check required outputs exist
+        # Check required outputs exist - fail hard if missing
         if output_paths.get("notes_file") and "notes" not in outputs:
-            return False
+            raise ValueError(f"Required notes output missing from task completion")
 
         if output_paths.get("json_response") and "json_response" not in outputs:
-            return False
+            raise ValueError(f"Required JSON response missing from task completion")
 
         # Additional validation logic would go here
         return True
