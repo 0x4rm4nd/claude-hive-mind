@@ -9,6 +9,7 @@ import re
 from typing import Dict, Any, List
 from .protocol_loader import BaseProtocol, ProtocolConfig
 from .session_management import SessionManagement
+from .logging_protocol import LoggingProtocol
 
 
 class WorkerPromptProtocol(BaseProtocol):
@@ -18,6 +19,7 @@ class WorkerPromptProtocol(BaseProtocol):
         super().__init__(config)
         self.prompt_data = None
         self.task_instructions = None
+        self.logger = LoggingProtocol(config)
 
     def read_prompt_file(self, worker_type: str) -> Dict[str, Any]:
         """
@@ -67,7 +69,6 @@ class WorkerPromptProtocol(BaseProtocol):
                 },
             )
 
-            self.log_execution("read_prompt_file", "success", prompt_data)
             return prompt_data
 
         except FileNotFoundError:
@@ -75,7 +76,6 @@ class WorkerPromptProtocol(BaseProtocol):
             return self._extract_from_main_prompt()
 
         except Exception as e:
-            self.log_execution("read_prompt_file", "failed", {"error": str(e)})
             raise
 
     def _parse_prompt_content(self, file_path: str) -> Dict[str, Any]:
@@ -107,15 +107,15 @@ class WorkerPromptProtocol(BaseProtocol):
 
         for field in required_fields:
             if field not in data or not data[field]:
-                self.log_debug(
+                self.logger.log_debug(
                     "Prompt validation failed - missing required field",
-                    "ERROR",
                     details={
                         "missing_field": field,
                         "required_fields": required_fields,
                         "available_fields": list(data.keys()),
                         "validation_failure": True,
                     },
+                    level="ERROR"
                 )
                 raise ValueError(f"Missing required field in prompt: {field}")
 
