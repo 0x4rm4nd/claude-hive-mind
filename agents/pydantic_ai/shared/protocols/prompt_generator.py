@@ -4,9 +4,9 @@ Worker Prompt Generation Protocol
 =================================
 Framework-enforced prompt file creation for workers.
 """
+
 import os
-from pathlib import Path
-from typing import Dict, Any, List
+from typing import Dict, List, Any
 from dataclasses import dataclass
 from .session_management import SessionManagement
 from .logging_protocol import LoggingProtocol, ProtocolConfig
@@ -26,12 +26,26 @@ class WorkerPromptSpec:
     target_service: str = "unknown"
     dependencies: List[str] = None
     focus_areas: List[str] = None
+    # Enhanced context from orchestration plan
+    codebase_insights: List[Dict] = None
+    success_metrics: List[str] = None
+    identified_risks: List[str] = None
+    coordination_notes: List[str] = None
+    orchestration_plan: Any = None
 
     def __post_init__(self):
         if self.dependencies is None:
             self.dependencies = []
         if self.focus_areas is None:
             self.focus_areas = []
+        if self.codebase_insights is None:
+            self.codebase_insights = []
+        if self.success_metrics is None:
+            self.success_metrics = []
+        if self.identified_risks is None:
+            self.identified_risks = []
+        if self.coordination_notes is None:
+            self.coordination_notes = []
 
 
 class PromptGenerator:
@@ -84,19 +98,20 @@ class PromptGenerator:
                     )
 
             except Exception as e:
-                failed_prompts.append({
-                    "worker_type": spec.worker_type,
-                    "error": str(e),
-                    "exception_type": str(type(e))
-                })
-
-                # Log error (framework-enforced error handling)
-                self.logger.log_event(
-                    "worker_prompt_creation_failed",
+                failed_prompts.append(
                     {
                         "worker_type": spec.worker_type,
                         "error": str(e),
                         "exception_type": str(type(e)),
+                    }
+                )
+
+                self.logger.log_error(
+                    "worker_prompt_creation_failed",
+                    {
+                        "exception_type": str(type(e)),
+                        "error": str(e),
+                        "worker_type": spec.worker_type,
                     },
                 )
                 raise
@@ -105,15 +120,21 @@ class PromptGenerator:
         if batch_logging and created_files:
             # Convert absolute path to relative path from project root
             project_root = "/Users/Armand/Development/SmartWalletFX"
-            relative_prompts_dir = prompts_dir.replace(f"{project_root}/", "") if prompts_dir.startswith(project_root) else prompts_dir
-            
+            relative_prompts_dir = (
+                prompts_dir.replace(f"{project_root}/", "")
+                if prompts_dir.startswith(project_root)
+                else prompts_dir
+            )
+
             self.logger.log_event(
                 "worker_prompts_created",
                 {
                     "worker_types": list(created_files.keys()),
                     "total_prompts": len(created_files),
                     "prompt_folder": relative_prompts_dir,
-                    "complexity_level": worker_specs[0].complexity_level if worker_specs else 1,
+                    "complexity_level": (
+                        worker_specs[0].complexity_level if worker_specs else 1
+                    ),
                 },
             )
 
@@ -121,6 +142,13 @@ class PromptGenerator:
 
     def _generate_prompt_content(self, spec: WorkerPromptSpec) -> str:
         """Generate structured prompt content for a specific worker"""
+        
+        # Extract orchestration context from spec for enhanced prompts
+        orchestration_plan = getattr(spec, 'orchestration_plan', None)
+        codebase_insights = getattr(spec, 'codebase_insights', [])
+        success_metrics = getattr(spec, 'success_metrics', [])
+        identified_risks = getattr(spec, 'identified_risks', [])
+        coordination_notes = getattr(spec, 'coordination_notes', [])
 
         # Worker-specific configurations
         worker_configs = {
@@ -280,6 +308,52 @@ class PromptGenerator:
             },
         )
 
+        # Extract target services from codebase insights
+        target_services = []
+        if spec.codebase_insights:
+            target_services = [insight.get('service_name', 'unknown') for insight in spec.codebase_insights]
+        primary_target_service = target_services[0] if target_services else "system-wide"
+
+        # Generate codebase context section
+        codebase_context = ""
+        if spec.codebase_insights:
+            codebase_context = "\n## Codebase Context\n"
+            for insight in spec.codebase_insights:
+                service_name = insight.get('service_name', 'unknown')
+                key_files = insight.get('key_files', [])
+                architecture_notes = insight.get('architecture_notes', [])
+                potential_issues = insight.get('potential_issues', [])
+                
+                codebase_context += f"### {service_name}\n"
+                if key_files:
+                    codebase_context += f"**Key Files**: {', '.join(key_files)}\n"
+                if architecture_notes:
+                    codebase_context += f"**Architecture**: {' | '.join(architecture_notes)}\n"
+                if potential_issues:
+                    codebase_context += f"**Known Issues**: {' | '.join(potential_issues)}\n"
+                codebase_context += "\n"
+
+        # Generate risk context section
+        risk_context = ""
+        if spec.identified_risks:
+            risk_context = f"\n## Critical Risk Context\n"
+            for i, risk in enumerate(spec.identified_risks, 1):
+                risk_context += f"{i}. {risk}\n"
+
+        # Generate strategic success metrics
+        strategic_metrics = ""
+        if spec.success_metrics:
+            strategic_metrics = f"\n## Strategic Success Metrics (Queen-Defined)\n"
+            for metric in spec.success_metrics:
+                strategic_metrics += f"- {metric}\n"
+
+        # Generate coordination strategy
+        coordination_strategy = ""
+        if spec.coordination_notes:
+            coordination_strategy = f"\n## Strategic Coordination\n"
+            for note in spec.coordination_notes:
+                coordination_strategy += f"- {note}\n"
+
         return f"""---
 worker_type: {spec.worker_type}
 session_id: {spec.session_id}
@@ -287,7 +361,8 @@ task_focus: {spec.task_focus}
 priority: {spec.priority}
 estimated_duration: {spec.estimated_duration}
 complexity_level: {spec.complexity_level}
-target_service: {spec.target_service}
+target_services: {target_services}
+primary_target: {primary_target_service}
 dependencies: {spec.dependencies}
 focus_areas: {spec.focus_areas or config['focus_areas']}
 created_by: queen-orchestrator
@@ -301,15 +376,19 @@ created_by: queen-orchestrator
 ## Worker Expertise
 {config['expertise']}
 
-## Rationale
+## Strategic Rationale
 {spec.rationale}
-
+{codebase_context}
+{risk_context}
+{strategic_metrics}
+{coordination_strategy}
 ## Success Criteria
 - Complete analysis of assigned focus areas
 - Generate comprehensive findings with evidence
-- Provide actionable recommendations
+- Provide actionable recommendations targeting identified issues
 - Document potential risks and mitigation strategies
 - Create required output files
+- Address codebase-specific issues identified by Queen
 
 ## Output Requirements
 ### Required Files
@@ -321,19 +400,23 @@ created_by: queen-orchestrator
     "worker_type": "{spec.worker_type}",
     "status": "completed",
     "task_focus": "{spec.task_focus}",
+    "target_services": {target_services},
     "findings": [
         {{
             "category": "string",
             "severity": "high|medium|low",
             "description": "string", 
             "evidence": "string",
-            "recommendation": "string"
+            "recommendation": "string",
+            "target_service": "string"
         }}
     ],
     "analysis_summary": "string",
     "key_recommendations": ["string"],
     "potential_blockers": ["string"],
-    "next_steps": ["string"]
+    "next_steps": ["string"],
+    "risk_mitigation": ["string"],
+    "strategic_alignment": "string"
 }}
 ```
 
@@ -343,24 +426,20 @@ created_by: queen-orchestrator
 ## Focus Areas (Priority Order)
 {chr(10).join(f"{i+1}. {area}" for i, area in enumerate(spec.focus_areas or config['focus_areas']))}
 
-## Dependencies
-{chr(10).join(f"- {dep}" for dep in spec.dependencies) if spec.dependencies else "- No dependencies"}
+## Worker Dependencies
+{chr(10).join(f"- Wait for: {dep}" for dep in spec.dependencies) if spec.dependencies else "- No dependencies - start immediately"}
 
-## Coordination Notes
-- Session: {spec.session_id}
-- Complexity Level: {spec.complexity_level}/4
-- Target Service: {spec.target_service}
-- Priority: {spec.priority}
-
-## Protocol Compliance
-- Follow worker-startup-protocol.md exactly
-- Log all significant events to EVENTS.jsonl
-- Update session state upon task completion
-- Signal completion with status update
+## Enhanced Coordination Context
+- **Session**: {spec.session_id}
+- **Complexity Level**: {spec.complexity_level}/10
+- **Primary Target**: {primary_target_service}
+- **Priority**: {spec.priority}
+- **Strategic Value**: Address Queen-identified issues in codebase insights
+- **Coordination**: Work aligns with overall orchestration strategy
 
 ---
 
-**IMPORTANT**: This prompt file was generated by the Queen orchestrator. Follow all instructions exactly as specified. Your task completion will be validated against these success criteria.
+**QUEEN'S DIRECTIVE**: This prompt integrates strategic context from orchestration analysis. Your work must address the specific issues identified in the codebase insights and align with the success metrics defined above. Follow the coordination strategy to ensure your output integrates effectively with other workers.
 """
 
 
@@ -369,14 +448,19 @@ def create_worker_prompts_from_plan(
 ) -> Dict[str, str]:
     """
     Convenience function to create worker prompts from Queen orchestration plan.
-    Framework-enforced integration point.
+    Framework-enforced integration point with enhanced strategic context.
     """
     generator = PromptGenerator(session_id)
 
-    # Convert orchestration plan to worker specs
-    worker_specs = []
+    # Extract orchestration context
     target_service = getattr(orchestration_plan, "target_service", "unknown")
+    codebase_insights = getattr(orchestration_plan, "codebase_insights", [])
+    success_metrics = getattr(orchestration_plan, "success_metrics", [])
+    identified_risks = getattr(orchestration_plan, "identified_risks", [])
+    coordination_notes = getattr(orchestration_plan, "coordination_notes", [])
 
+    # Convert orchestration plan to enhanced worker specs
+    worker_specs = []
     for assignment in orchestration_plan.worker_assignments:
         spec = WorkerPromptSpec(
             worker_type=assignment.worker_type,
@@ -389,6 +473,12 @@ def create_worker_prompts_from_plan(
             target_service=target_service,
             dependencies=getattr(assignment, "dependencies", []),
             focus_areas=getattr(assignment, "focus_areas", []),
+            # Enhanced strategic context
+            codebase_insights=codebase_insights,
+            success_metrics=success_metrics,
+            identified_risks=identified_risks,
+            coordination_notes=coordination_notes,
+            orchestration_plan=orchestration_plan,
         )
         worker_specs.append(spec)
 
