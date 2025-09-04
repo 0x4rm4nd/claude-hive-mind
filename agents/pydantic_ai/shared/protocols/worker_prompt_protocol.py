@@ -11,17 +11,15 @@ from pathlib import Path
 from typing import Dict, Any, List, Optional
 from .protocol_loader import BaseProtocol, ProtocolConfig
 from .session_management import SessionManagement
-from .logging_protocol import LoggingProtocol
 
 
 class WorkerPromptProtocol(BaseProtocol):
     """Handles worker prompt file reading and parsing"""
 
     def __init__(self, config: ProtocolConfig):
-        super().__init__(config)
+        super().__init__(config.to_dict())
         self.prompt_data = None
         self.task_instructions = None
-        self.logger = LoggingProtocol(config)
 
     def read_prompt_file(self, worker_type: str) -> Dict[str, Any]:
         """
@@ -243,15 +241,15 @@ class WorkerPromptProtocol(BaseProtocol):
 
         for field in required_fields:
             if field not in data or not data[field]:
-                self.logger.log_debug(
+                self.log_debug(
                     "Prompt validation failed - missing required field",
-                    details={
+                    {
                         "missing_field": field,
                         "required_fields": required_fields,
                         "available_fields": list(data.keys()),
                         "validation_failure": True,
                     },
-                    level="ERROR"
+                    "ERROR"
                 )
                 raise ValueError(f"Missing required field in prompt: {field}")
 

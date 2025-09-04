@@ -8,7 +8,7 @@ Sets up dependency injection container and registers all protocols.
 from typing import Dict, Any
 from .protocol_interface import ProtocolRegistry, dependency_container
 from .session_management import SessionManagement
-from .logging_protocol import LoggingProtocol
+from .protocol_loader import BaseProtocol
 from .prompt_generator import PromptGenerator
 
 
@@ -20,12 +20,6 @@ def setup_dependencies():
         """Factory function for SessionManagement singleton"""
         return SessionManagement()
     
-    def create_logging_protocol():
-        """Factory function for LoggingProtocol"""
-        # Return a factory that creates LoggingProtocol instances
-        def logging_factory(config):
-            return LoggingProtocol(config)
-        return logging_factory
     
     def create_prompt_generator():
         """Factory function for PromptGenerator"""
@@ -35,7 +29,6 @@ def setup_dependencies():
     
     # Register dependencies in container
     dependency_container.register_factory("session_management", create_session_management)
-    dependency_container.register_factory("logging_protocol", create_logging_protocol)
     dependency_container.register_factory("prompt_generator", create_prompt_generator)
 
 
@@ -44,7 +37,6 @@ def register_protocols():
     
     # Register core protocols
     ProtocolRegistry.register("base_protocol", BaseProtocol)
-    ProtocolRegistry.register("logging_protocol", LoggingProtocol) 
     ProtocolRegistry.register("prompt_generator", PromptGenerator)
     
     # Could register more specialized protocols here
@@ -103,16 +95,11 @@ def create_protocol_with_dependencies(protocol_name: str, config: Dict[str, Any]
     if inject_deps:
         # Define common dependency mappings
         dependency_mappings = {
-            "logging_protocol": {
+            "prompt_generator": {
                 "session_manager": "session_management"
             },
-            "prompt_generator": {
-                "session_manager": "session_management",
-                "logger": "logging_protocol"
-            },
             "base_protocol": {
-                "session_manager": "session_management",
-                "logger": "logging_protocol"
+                "session_manager": "session_management"
             }
         }
         

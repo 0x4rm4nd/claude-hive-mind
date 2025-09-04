@@ -40,39 +40,28 @@ class ProtocolConfig:
 
     def _validate_config(self) -> None:
         """Validate configuration using comprehensive validation system"""
-        try:
-            from .config_validator import config_validator
-            
-            # Create validation dict with actual field values after defaults applied
-            validation_config = {
-                "session_id": self.session_id,
-                "agent_name": self.agent_name,
-                "timeout": self.timeout,
-                "retries": self.retries,
-                "prompt_text": self.prompt_text,
-                "session_path": self.session_path
-            }
-            
-            # Use comprehensive validation
-            validation_result = config_validator.validate_config(validation_config, "base_protocol")
-            
-            if not validation_result.is_valid:
-                error_details = "; ".join(validation_result.errors)
-                raise ValueError(f"Configuration validation failed: {error_details}")
-            
-            # Log warnings if any
-            if validation_result.warnings:
-                print(f"Configuration warnings: {'; '.join(validation_result.warnings)}")
-                
-        except ImportError:
-            # Fallback to basic validation if validator not available
-            missing_fields = []
-            for field in self.REQUIRED_FIELDS:
-                if not getattr(self, field, None):
-                    missing_fields.append(field)
-            
-            if missing_fields:
-                raise ValueError(f"Missing required configuration fields: {missing_fields}")
+        from .config_validator import config_validator
+        
+        # Create validation dict with actual field values after defaults applied
+        validation_config = {
+            "session_id": self.session_id,
+            "agent_name": self.agent_name,
+            "timeout": self.timeout,
+            "retries": self.retries,
+            "prompt_text": self.prompt_text,
+            "session_path": self.session_path
+        }
+        
+        # Use comprehensive validation
+        validation_result = config_validator.validate_config(validation_config, "base_protocol")
+        
+        if not validation_result.is_valid:
+            error_details = "; ".join(validation_result.errors)
+            raise ValueError(f"Configuration validation failed: {error_details}")
+        
+        # Log warnings if any
+        if validation_result.warnings:
+            print(f"Configuration warnings: {'; '.join(validation_result.warnings)}")
 
     def _set_canonical_fields(self) -> None:
         """Set canonical field values with defaults"""
@@ -91,12 +80,8 @@ class ProtocolConfig:
     def _resolve_session_path(self) -> None:
         """Resolve session path from session_id if not provided"""
         if not self.session_path and self.session_id:
-            try:
-                from .session_management import SessionManagement
-                self.session_path = SessionManagement.get_session_path(self.session_id)
-            except Exception:
-                # Fallback to None if session management fails
-                self.session_path = None
+            from .session_management import SessionManagement
+            self.session_path = SessionManagement.get_session_path(self.session_id)
     
     def to_dict(self) -> Dict[str, Any]:
         """Convert configuration to dictionary"""
@@ -179,9 +164,9 @@ class BaseProtocol(ProtocolInterface, LoggingCapable, SessionAware, FileOperatio
 
     def handle_error(self, error: Exception, context: Dict[str, Any]) -> bool:
         """Handle protocol errors with advanced recovery system"""
+        from .error_recovery import error_recovery_manager, ErrorContext, ErrorSeverity
+        
         try:
-            from .error_recovery import error_recovery_manager, ErrorContext, ErrorSeverity
-            
             # Create error context for recovery system
             error_context = ErrorContext(
                 error=error,
@@ -214,9 +199,6 @@ class BaseProtocol(ProtocolInterface, LoggingCapable, SessionAware, FileOperatio
                 # Fallback to basic recovery for operations without function context
                 return self._basic_error_recovery(error, context)
                 
-        except ImportError:
-            # Fallback to basic recovery if advanced system unavailable
-            return self._basic_error_recovery(error, context)
         except Exception as recovery_error:
             self.log_event("protocol_recovery_failed", {
                 "original_error": str(error),
@@ -242,12 +224,8 @@ class BaseProtocol(ProtocolInterface, LoggingCapable, SessionAware, FileOperatio
         
         # Log to session if available
         if self.config.session_id:
-            try:
-                from .session_management import SessionManagement
-                SessionManagement.append_to_events(self.config.session_id, event)
-            except Exception:
-                # Silent fail if session logging unavailable
-                pass
+            from .session_management import SessionManagement
+            SessionManagement.append_to_events(self.config.session_id, event)
         
         return event
 
@@ -265,12 +243,8 @@ class BaseProtocol(ProtocolInterface, LoggingCapable, SessionAware, FileOperatio
         
         # Log to session if available
         if self.config.session_id:
-            try:
-                from .session_management import SessionManagement
-                SessionManagement.append_to_debug(self.config.session_id, debug_entry)
-            except Exception:
-                # Silent fail if session logging unavailable
-                pass
+            from .session_management import SessionManagement
+            SessionManagement.append_to_debug(self.config.session_id, debug_entry)
         
         return debug_entry
 
@@ -290,11 +264,8 @@ class BaseProtocol(ProtocolInterface, LoggingCapable, SessionAware, FileOperatio
         if not self.config.session_id:
             return False
         
-        try:
-            from .session_management import SessionManagement
-            return SessionManagement.ensure_session_exists(self.config.session_id)
-        except Exception:
-            return False
+        from .session_management import SessionManagement
+        return SessionManagement.ensure_session_exists(self.config.session_id)
 
     # FileOperationCapable implementation
     def create_file(self, file_path: str, content: Any, file_type: str = "text") -> bool:
@@ -399,29 +370,25 @@ class BaseProtocol(ProtocolInterface, LoggingCapable, SessionAware, FileOperatio
 
     def _determine_error_severity(self, error: Exception) -> 'ErrorSeverity':
         """Determine severity level of an error"""
-        try:
-            from .error_recovery import ErrorSeverity
-            
-            critical_errors = [MemoryError, SystemError, KeyboardInterrupt, SystemExit]
-            high_errors = [PermissionError, FileNotFoundError, OSError]
-            medium_errors = [ValueError, TypeError, AttributeError]
-            
-            for error_type in critical_errors:
-                if isinstance(error, error_type):
-                    return ErrorSeverity.CRITICAL
-            
-            for error_type in high_errors:
-                if isinstance(error, error_type):
-                    return ErrorSeverity.HIGH
-                    
-            for error_type in medium_errors:
-                if isinstance(error, error_type):
-                    return ErrorSeverity.MEDIUM
-            
-            return ErrorSeverity.LOW
-            
-        except ImportError:
-            return "medium"  # Fallback string value
+        from .error_recovery import ErrorSeverity
+        
+        critical_errors = [MemoryError, SystemError, KeyboardInterrupt, SystemExit]
+        high_errors = [PermissionError, FileNotFoundError, OSError]
+        medium_errors = [ValueError, TypeError, AttributeError]
+        
+        for error_type in critical_errors:
+            if isinstance(error, error_type):
+                return ErrorSeverity.CRITICAL
+        
+        for error_type in high_errors:
+            if isinstance(error, error_type):
+                return ErrorSeverity.HIGH
+                
+        for error_type in medium_errors:
+            if isinstance(error, error_type):
+                return ErrorSeverity.MEDIUM
+        
+        return ErrorSeverity.LOW
     
     def _basic_error_recovery(self, error: Exception, context: Dict[str, Any]) -> bool:
         """Basic error recovery fallback when advanced system unavailable"""

@@ -14,9 +14,9 @@ from abc import ABC, abstractmethod
 
 from .protocols import (
     SessionManagement,
-    LoggingProtocol,
     ProtocolConfig,
     WorkerPromptProtocol,
+    BaseProtocol,
 )
 
 from .worker_config import WorkerConfig
@@ -27,7 +27,7 @@ from pydantic import BaseModel
 T = TypeVar("T", bound=BaseModel)
 
 
-class BaseWorker(ABC, Generic[T]):
+class BaseWorker(BaseProtocol, ABC, Generic[T]):
     """
     Base class for all Pydantic AI workers.
 
@@ -49,41 +49,28 @@ class BaseWorker(ABC, Generic[T]):
             worker_config: Worker configuration instance (can be None, set at runtime)
             output_model: Pydantic model class for worker output validation
         """
+        # Initialize BaseProtocol with dummy config (session_id will be set at runtime)
+        super().__init__({"session_id": "temp", "agent_name": worker_type})
+        
         self.worker_type = worker_type
         self.worker_config = worker_config
         self.output_model = output_model
         self._prompt_protocol: Optional[WorkerPromptProtocol] = None
         self._prompt_data: Optional[Dict[str, Any]] = None
 
-    def log_event(self, session_id: str, event_type: str, details: Any) -> None:
-        """Framework-enforced event logging"""
-        try:
-            cfg = ProtocolConfig(
-                {"session_id": session_id, "agent_name": self.worker_type}
-            )
-            logger = LoggingProtocol(cfg)
-            logger.log_event(event_type, details)
-        except Exception as e:
-            print(f"Logging failed: {e}")
+    def update_session_config(self, session_id: str) -> None:
+        """Update the protocol configuration with actual session ID"""
+        self.config = ProtocolConfig({
+            "session_id": session_id, 
+            "agent_name": self.worker_type
+        })
 
-    def log_debug(
+    def log_worker_debug(
         self, session_id: str, message: str, details: Any = {}, level: str = "DEBUG"
     ) -> None:
-        """Framework-enforced debug logging"""
-        try:
-            cfg = ProtocolConfig(
-                {"session_id": session_id, "agent_name": self.worker_type}
-            )
-            logger = LoggingProtocol(cfg)
-
-            if level == "ERROR":
-                logger.log_error(message, details)
-            elif level == "WARNING":
-                logger.log_warning(message, details)
-            else:
-                logger.log_debug(message, details)
-        except Exception as e:
-            print(f"Debug logging failed: {e}")
+        """Framework-enforced debug logging with session update"""
+        self.update_session_config(session_id)
+        self.log_debug(message, details, level)
 
     def read_worker_prompt(self, session_id: str) -> Dict[str, Any]:
         """
@@ -110,7 +97,7 @@ class BaseWorker(ABC, Generic[T]):
                 self._prompt_protocol = WorkerPromptProtocol(cfg)
                 self._prompt_data = self._prompt_protocol.read_prompt_file(self.worker_type)
                 
-                self.log_debug(
+                self.log_worker_debug(
                     session_id, 
                     f"Successfully loaded prompt data for {self.worker_type}",
                     {
@@ -122,7 +109,7 @@ class BaseWorker(ABC, Generic[T]):
                 )
                 
             except Exception as e:
-                self.log_debug(
+                self.log_worker_debug(
                     session_id,
                     f"Failed to read prompt file for {self.worker_type}",
                     {"error": str(e)},
@@ -166,9 +153,9 @@ class BaseWorker(ABC, Generic[T]):
         try:
             if not SessionManagement.ensure_session_exists(session_id):
                 raise ValueError(f"Session {session_id} does not exist or is invalid")
-            self.log_debug(session_id, "Session validation successful")
+            self.log_worker_debug(session_id, "Session validation successful")
         except Exception as e:
-            self.log_debug(
+            self.log_worker_debug(
                 session_id, "Session validation failed", {"error": str(e)}, "ERROR"
             )
             raise
@@ -220,7 +207,7 @@ class BaseWorker(ABC, Generic[T]):
                 except ValueError:
                     # File is outside project root, use absolute path
                     path_str = str(notes_file)
-                self.log_debug(
+                self.log_worker_debug(
                     session_id,
                     f"Created {file_prefix} notes file",
                     {"path": path_str},
@@ -235,7 +222,7 @@ class BaseWorker(ABC, Generic[T]):
             except ValueError:
                 # File is outside project root, use absolute path
                 path_str = str(output_file)
-            self.log_debug(
+            self.log_worker_debug(
                 session_id,
                 f"Created {file_prefix} output JSON",
                 {"path": path_str},
@@ -245,7 +232,7 @@ class BaseWorker(ABC, Generic[T]):
             self.create_worker_specific_files(session_id, output, session_path)
 
         except Exception as e:
-            self.log_debug(
+            self.log_worker_debug(
                 session_id, "File creation failed", {"error": str(e)}, "ERROR"
             )
             raise
@@ -275,14 +262,15 @@ class BaseWorker(ABC, Generic[T]):
             file_prefix = self.get_file_prefix()
             self.create_output_files_base(session_id, output, file_prefix)
 
-            # Log completion with worker-specific details
+            # Update session config and log completion with worker-specific details
+            self.update_session_config(session_id)
             completion_details = self.get_completion_event_details(output)
-            self.log_event(session_id, "analysis_completed", completion_details)
+            self.log_event("analysis_completed", completion_details)
 
             return output
 
         except Exception as e:
-            self.log_debug(
+            self.log_worker_debug(
                 session_id,
                 f"{self.worker_type} analysis failed",
                 {"error": str(e), "task": task_description},

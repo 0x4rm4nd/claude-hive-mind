@@ -9,7 +9,7 @@ import os
 from typing import Dict, List, Any
 from dataclasses import dataclass
 from .session_management import SessionManagement
-from .logging_protocol import LoggingProtocol, ProtocolConfig
+from .protocol_loader import ProtocolConfig, BaseProtocol
 from .protocol_interface import ProtocolInterface
 
 
@@ -49,19 +49,17 @@ class WorkerPromptSpec:
             self.coordination_notes = []
 
 
-class PromptGenerator(ProtocolInterface):
+class PromptGenerator(BaseProtocol):
     """Framework-enforced worker prompt file creation"""
 
     def __init__(self, session_id: str = None, config: Dict[str, Any] = None):
         if config:
-            self.config = ProtocolConfig(config)
+            super().__init__(config)
             self.session_id = self.config.session_id
         else:
             self.session_id = session_id or "default-session"
-            self.config = ProtocolConfig(
-                {"session_id": self.session_id, "agent_name": "queen-orchestrator"}
-            )
-        self.logger = LoggingProtocol(self.config)
+            config_dict = {"session_id": self.session_id, "agent_name": "queen-orchestrator"}
+            super().__init__(config_dict)
         
     # Make compatible with ProtocolInterface expectations (though not fully implementing it)
     def initialize(self, config: Dict[str, Any]) -> bool:
@@ -113,7 +111,7 @@ class PromptGenerator(ProtocolInterface):
 
                 # Individual logging (only if batch_logging is disabled)
                 if not batch_logging:
-                    self.logger.log_event(
+                    self.log_event(
                         "worker_prompt_created",
                         {
                             "worker_type": spec.worker_type,
@@ -132,13 +130,14 @@ class PromptGenerator(ProtocolInterface):
                     }
                 )
 
-                self.logger.log_error(
+                self.log_event(
                     "worker_prompt_creation_failed",
                     {
                         "exception_type": str(type(e)),
                         "error": str(e),
                         "worker_type": spec.worker_type,
                     },
+                    "ERROR"
                 )
                 raise
 
@@ -152,7 +151,7 @@ class PromptGenerator(ProtocolInterface):
                 else prompts_dir
             )
 
-            self.logger.log_event(
+            self.log_event(
                 "worker_prompts_created",
                 {
                     "worker_types": list(created_files.keys()),

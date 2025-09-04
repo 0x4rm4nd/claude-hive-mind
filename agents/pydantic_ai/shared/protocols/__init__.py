@@ -15,7 +15,7 @@ from .protocol_interface import (
     dependency_container
 )
 from .session_management import SessionManagement
-from .logging_protocol import LoggingProtocol
+# LoggingProtocol deprecated - use LoggingCapable mixin from BaseProtocol
 from .protocol_loader import ProtocolConfig, BaseProtocol
 from .worker_prompt_protocol import WorkerPromptProtocol
 from .env_loader import load_project_env
@@ -36,7 +36,6 @@ __all__ = [
     'dependency_container',
     # Protocol implementations
     'SessionManagement',
-    'LoggingProtocol',
     'ProtocolConfig', 
     'BaseProtocol',
     'WorkerPromptProtocol',
