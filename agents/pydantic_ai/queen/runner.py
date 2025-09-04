@@ -56,20 +56,20 @@ class QueenWorker(BaseWorker[QueenOutput]):
         """Execute orchestration analysis using Pydantic AI agent"""
         # Log queen spawned event
         self.log_event(
-            session_id,
             "queen_spawned",
             {
                 "worker_type": "queen-orchestrator",
                 "mode": "orchestration",
                 "purpose": "Task AI Analysis",
             },
+            "INFO"
         )
 
         # Log analysis started event after queen spawned
         self.log_event(
-            session_id,
             "analysis_started",
             self.get_analysis_event_details(task_description),
+            "INFO"
         )
 
         monitoring_mode = "--monitor" in task_description
@@ -121,7 +121,6 @@ class QueenWorker(BaseWorker[QueenOutput]):
 
             # Log prompt generation success
             self.log_event(
-                session_id,
                 "worker_prompts_generated",
                 {
                     "total_workers": len(orchestration_plan.worker_assignments),
@@ -129,6 +128,7 @@ class QueenWorker(BaseWorker[QueenOutput]):
                     "worker_types": list(created_prompt_files.keys()),
                     "orchestration_complexity": orchestration_plan.complexity_assessment,
                 },
+                "INFO"
             )
 
         except Exception as e:

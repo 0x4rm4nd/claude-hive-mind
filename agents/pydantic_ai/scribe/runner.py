@@ -126,7 +126,6 @@ class ScribeWorker(BaseWorker[ScribeOutput]):
         """Create completion result for session creation"""
         # Log session creation event
         self.log_event(
-            session_id,
             "session_created",
             {
                 "session_id": session_id,
@@ -134,17 +133,18 @@ class ScribeWorker(BaseWorker[ScribeOutput]):
                 "session_path": f"Docs/hive-mind/sessions/{session_id}",
                 "generated_by": "scribe",
             },
+            "INFO"
         )
 
         # Log scribe spawn event
         self.log_event(
-            session_id,
             "worker_spawned",
             {
                 "worker_type": "scribe",
                 "mode": "create",
                 "purpose": "session_creation",
             },
+            "INFO"
         )
 
         # Use the complexity level calculated during session ID generation
