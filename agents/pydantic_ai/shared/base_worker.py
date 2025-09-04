@@ -15,7 +15,7 @@ from abc import ABC, abstractmethod
 from .protocols import (
     SessionManagement,
     ProtocolConfig,
-    WorkerPromptProtocol,
+    WorkerManager,
     BaseProtocol,
 )
 
@@ -55,7 +55,7 @@ class BaseWorker(BaseProtocol, ABC, Generic[T]):
         self.worker_type = worker_type
         self.worker_config = worker_config
         self.output_model = output_model
-        self._prompt_protocol: Optional[WorkerPromptProtocol] = None
+        self._prompt_protocol: Optional[WorkerManager] = None
         self._prompt_data: Optional[Dict[str, Any]] = None
 
     def update_session_config(self, session_id: str) -> None:
@@ -94,7 +94,7 @@ class BaseWorker(BaseProtocol, ABC, Generic[T]):
                     "agent_name": self.worker_type
                 })
                 
-                self._prompt_protocol = WorkerPromptProtocol(cfg)
+                self._prompt_protocol = WorkerManager(cfg.to_dict())
                 self._prompt_data = self._prompt_protocol.read_prompt_file(self.worker_type)
                 
                 self.log_worker_debug(

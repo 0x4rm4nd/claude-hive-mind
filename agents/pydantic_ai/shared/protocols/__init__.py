@@ -12,16 +12,15 @@ from .protocol_interface import (
     ProtocolMetadata,
     ProtocolRegistry,
     DependencyContainer,
-    dependency_container
+    dependency_container,
+    initialize_protocol_system,
+    create_protocol_with_dependencies,
+    get_protocol_health_status
 )
-from .session_management import SessionManagement
-# LoggingProtocol deprecated - use LoggingCapable mixin from BaseProtocol
+from .session_management import SessionManagement, load_project_env
 from .protocol_loader import ProtocolConfig, BaseProtocol
-from .worker_prompt_protocol import WorkerPromptProtocol
-from .env_loader import load_project_env
-from .prompt_generator import PromptGenerator, create_worker_prompts_from_plan
+from .worker_management import WorkerManager, WorkerSpec, create_worker_prompts_from_plan, WORKER_CONFIGS
 from .config_validator import ConfigurationValidator, ValidationResult, config_validator
-from .protocol_setup import initialize_protocol_system, create_protocol_with_dependencies, get_protocol_health_status
 
 __all__ = [
     # Core interfaces
@@ -35,16 +34,18 @@ __all__ = [
     'dependency_container',
     # Protocol implementations
     'SessionManagement',
+    'load_project_env',
     'ProtocolConfig', 
     'BaseProtocol',
-    'WorkerPromptProtocol',
-    'load_project_env',
-    'PromptGenerator',
+    'WorkerManager',
+    'WorkerSpec',
     'create_worker_prompts_from_plan',
-    # Architectural improvements
+    'WORKER_CONFIGS',
+    # Configuration and validation
     'ConfigurationValidator',
     'ValidationResult',
     'config_validator',
+    # System initialization
     'initialize_protocol_system',
     'create_protocol_with_dependencies',
     'get_protocol_health_status',

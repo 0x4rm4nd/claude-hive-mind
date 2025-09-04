@@ -4,6 +4,7 @@ Session Management Protocol
 
 Unified session path detection and append-safe file operations.
 Ensures all agents use consistent paths and never overwrite session data.
+Includes environment variable loading utilities.
 """
 
 import os
@@ -13,6 +14,7 @@ import re
 from pathlib import Path
 from typing import Dict, Any, Optional
 from datetime import datetime
+from dotenv import load_dotenv
 
 
 class SessionManagement:
@@ -181,33 +183,20 @@ class SessionManagement:
         return True
 
 
-    @staticmethod
-    def _deep_merge(base: Dict[str, Any], updates: Dict[str, Any]) -> Dict[str, Any]:
-        """
-        Deep merge updates into base dictionary.
+# Environment Variable Loading Utilities
+# ======================================
+# Merged from env_loader.py for consolidation
 
-        Args:
-            base: Base dictionary
-            updates: Updates to merge
+def load_project_env():
+    """Load environment variables from project root .env file"""
+    # Use SessionManagement to avoid duplication of project detection logic
+    project_root = SessionManagement.detect_project_root()
+    env_file = Path(project_root) / ".env"
 
-        Returns:
-            Merged dictionary
-        """
-        result = base.copy()
+    if env_file.exists():
+        load_dotenv(env_file)
 
-        for key, value in updates.items():
-            if (
-                key in result
-                and isinstance(result[key], dict)
-                and isinstance(value, dict)
-            ):
-                # Recursive merge for nested dicts
-                result[key] = SessionManagement._deep_merge(result[key], value)
-            else:
-                # Direct update for non-dict values
-                result[key] = value
-
-        return result
+    return project_root
 
 
 
