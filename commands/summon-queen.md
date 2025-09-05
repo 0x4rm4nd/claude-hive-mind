@@ -11,15 +11,17 @@ Launch the hive-mind system: Create session → Queen orchestration → Automati
 ## Core Two-Phase Workflow
 
 ### Phase 1: Session Creation
+Use Bash tool with 5-minute timeout:
 ```bash
 cd .claude
-python agents/pydantic_ai/cli.py scribe create --task "$ARGUMENTS" --model openai:gpt-5-mini
+python agents/pydantic_ai/cli.py scribe create --task "$ARGUMENTS" --model custom:max-subscription
 ```
 *Extract `session_id` from JSON response for Phase 2.*
 
 ### Phase 2: Queen Orchestration  
+Use Bash tool with 5-minute timeout:
 ```bash
-python agents/pydantic_ai/cli.py queen --session [SESSION_ID] --task "$ARGUMENTS" --model google-gla:gemini-2.5-pro
+python agents/pydantic_ai/cli.py queen --session [SESSION_ID] --task "$ARGUMENTS" --model custom:max-subscription
 ```
 
 ## Queen's Strategic Responsibilities
@@ -65,8 +67,8 @@ SHARED_CONTRACTS: [PRE_ESTABLISHED_DATA_CONTRACTS]
 
 Your responsibility:
 1. Navigate to .claude/agents/pydantic_ai/
-2. Execute: python cli.py [your-worker-type] --session [SESSION_ID] --task '[YOUR_SPECIFIC_TASK]'
-3. Use --model google-gla:gemini-2.5-flash if defaults fail
+2. Execute using Bash tool with 5-minute timeout: python cli.py [your-worker-type] --session [SESSION_ID] --task '[YOUR_SPECIFIC_TASK]'
+3. Use --model custom:max-subscription if defaults fail
 4. Follow the shared contracts established by Queen
 5. Report results back to session coordination system"
 ```
