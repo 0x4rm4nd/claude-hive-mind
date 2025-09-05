@@ -61,7 +61,7 @@ The Pydantic AI Queen is **THE CENTRAL ORCHESTRATOR** and MUST perform these cri
 2. **System Impact Analysis**:
 
    - Analyze task complexity and cross-service dependencies
-   - Identify which SmartWalletFX services will be affected (API, Frontend, Sara, Crypto-Data, Archon)
+   - Identify which services will be affected (API, Frontend, Sara, Crypto-Data, Archon)
    - Map domain boundaries and event flow requirements
    - Document architectural constraints in SESSION.json
 
