@@ -112,11 +112,19 @@ class QueenWorker(BaseWorker[QueenOutput]):
 
         orchestration_plan = orchestration_result.output
         session_path = SessionManagement.get_session_path(session_id)
+        
+        # Convert to relative path for logging
+        try:
+            project_root = Path(SessionManagement.detect_project_root())
+            relative_session_path = str(Path(session_path).relative_to(project_root))
+        except ValueError:
+            # Fallback to absolute if outside project root
+            relative_session_path = session_path
 
         # Generate worker-specific prompts from orchestration plan
         try:
             created_prompt_files = create_worker_prompts_from_plan(
-                session_id, orchestration_plan, batch_logging=True
+                session_id, orchestration_plan
             )
 
             # Log prompt generation success
@@ -165,7 +173,7 @@ class QueenWorker(BaseWorker[QueenOutput]):
             ],
             coordination_status="planned",
             monitoring_active=monitoring_mode,
-            session_path=str(session_path),
+            session_path=relative_session_path,
         )
 
         # Store orchestration_plan temporarily for file creation

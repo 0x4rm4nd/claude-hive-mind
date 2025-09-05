@@ -195,7 +195,7 @@ class BaseWorker(BaseProtocol, ABC, Generic[T]):
             json_dir.mkdir(parents=True, exist_ok=True)
 
             # Get project root for relative paths
-            project_root = Path.cwd()
+            project_root = Path(SessionManagement.detect_project_root())
 
             # Create notes file if content provided
             if hasattr(output, "notes_markdown") and output.notes_markdown:
