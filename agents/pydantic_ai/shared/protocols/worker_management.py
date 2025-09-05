@@ -27,9 +27,8 @@ WORKER_CONFIGS = {
             "code analyzers",
         ],
         "outputs": [
-            "security_analysis.md",
-            "performance_assessment.md",
-            "quality_report.md",
+            "analyzer_notes.md",
+            "analyzer_output.json",
         ],
         "focus_areas": [
             "vulnerabilities",
@@ -46,9 +45,8 @@ WORKER_CONFIGS = {
             "dependency mappers",
         ],
         "outputs": [
-            "architecture_analysis.md",
-            "scalability_recommendations.md",
-            "design_patterns.md",
+            "architect_notes.md",
+            "architect_output.json",
         ],
         "focus_areas": [
             "system design",
@@ -61,9 +59,8 @@ WORKER_CONFIGS = {
         "expertise": "API development, database design, service implementation",
         "tools": ["API analyzers", "database schema tools", "service mappers"],
         "outputs": [
-            "backend_analysis.md",
-            "api_recommendations.md",
-            "database_assessment.md",
+            "backend_notes.md",
+            "backend_output.json",
         ],
         "focus_areas": [
             "API design",
@@ -80,9 +77,8 @@ WORKER_CONFIGS = {
             "accessibility checkers",
         ],
         "outputs": [
-            "frontend_analysis.md",
-            "component_recommendations.md",
-            "ux_assessment.md",
+            "frontend_notes.md",
+            "frontend_output.json",
         ],
         "focus_areas": [
             "component structure",
@@ -99,9 +95,8 @@ WORKER_CONFIGS = {
             "usability evaluators",
         ],
         "outputs": [
-            "design_analysis.md",
-            "accessibility_report.md",
-            "ux_recommendations.md",
+            "designer_notes.md",
+            "designer_output.json",
         ],
         "focus_areas": [
             "user experience",
@@ -118,9 +113,8 @@ WORKER_CONFIGS = {
             "monitoring tools",
         ],
         "outputs": [
-            "infrastructure_analysis.md",
-            "deployment_recommendations.md",
-            "monitoring_assessment.md",
+            "devops_notes.md",
+            "devops_output.json",
         ],
         "focus_areas": [
             "infrastructure",
@@ -137,9 +131,8 @@ WORKER_CONFIGS = {
             "standards analyzers",
         ],
         "outputs": [
-            "research_findings.md",
-            "best_practices.md",
-            "standards_compliance.md",
+            "researcher_notes.md",
+            "researcher_output.json",
         ],
         "focus_areas": [
             "best practices",
@@ -152,9 +145,8 @@ WORKER_CONFIGS = {
         "expertise": "Testing strategy, quality assurance, test coverage",
         "tools": ["test analyzers", "coverage tools", "quality metrics"],
         "outputs": [
-            "testing_analysis.md",
-            "coverage_report.md",
-            "quality_recommendations.md",
+            "test_notes.md", 
+            "test_output.json",
         ],
         "focus_areas": [
             "test coverage",
@@ -393,160 +385,270 @@ class WorkerManager(BaseProtocol):
         return self.prompt_data
 
     def _generate_prompt_content(self, spec: WorkerSpec) -> str:
-        """Generate structured prompt content for a specific worker"""
+        """Generate personalized, concise prompt content for each worker type"""
 
-        config = WORKER_CONFIGS.get(
-            spec.worker_type,
-            {
-                "expertise": "General analysis and assessment",
-                "tools": ["code analyzers", "pattern matchers"],
-                "outputs": ["analysis.md", "recommendations.md"],
-                "focus_areas": ["code quality", "best practices"],
-            },
-        )
+        # Get worker-specific configuration
+        config = WORKER_CONFIGS.get(spec.worker_type, {
+            "expertise": "General analysis and assessment",
+            "focus_areas": ["code quality", "best practices"],
+        })
 
-        # Extract target services from codebase insights
-        target_services = []
+        # Create personalized prompts based on worker type
+        if spec.worker_type == "analyzer-worker":
+            return self._create_analyzer_prompt(spec, config)
+        elif spec.worker_type == "architect-worker":
+            return self._create_architect_prompt(spec, config)
+        elif spec.worker_type == "backend-worker":
+            return self._create_backend_prompt(spec, config)
+        elif spec.worker_type == "frontend-worker":
+            return self._create_frontend_prompt(spec, config)
+        elif spec.worker_type == "devops-worker":
+            return self._create_devops_prompt(spec, config)
+        elif spec.worker_type == "test-worker":
+            return self._create_test_prompt(spec, config)
+        elif spec.worker_type == "designer-worker":
+            return self._create_designer_prompt(spec, config)
+        elif spec.worker_type == "researcher-worker":
+            return self._create_researcher_prompt(spec, config)
+        else:
+            return self._create_generic_prompt(spec, config)
+
+    def _create_analyzer_prompt(self, spec: WorkerSpec, config: dict) -> str:
+        """Create analyzer-specific prompt focused on security and code quality"""
+        context = self._get_relevant_context(spec)
+        return f"""You are a Security Analyzer and Code Quality Specialist.
+
+TASK: {spec.task_focus}
+
+Your mission: Deep dive into the codebase to identify security vulnerabilities, performance bottlenecks, and code quality issues. Focus on finding critical problems that could impact production.
+
+WHAT YOU'RE ANALYZING:
+{context}
+
+KEY RESPONSIBILITIES:
+• Scan for security vulnerabilities and attack vectors
+• Identify performance bottlenecks and resource leaks  
+• Detect code smells and maintainability issues
+• Validate security patterns and access controls
+• Check for compliance violations
+
+EXPECTED DELIVERABLES:
+1. Worker Notes: Detailed findings with evidence and severity levels
+2. Worker Output: JSON with structured analysis results
+
+Focus on actionable insights that development teams can immediately implement to improve security and quality."""
+
+    def _create_architect_prompt(self, spec: WorkerSpec, config: dict) -> str:
+        """Create architect-specific prompt focused on system design"""
+        context = self._get_relevant_context(spec)
+        return f"""You are a Technical Architect and System Design Expert.
+
+TASK: {spec.task_focus}
+
+Your mission: Evaluate system architecture, design patterns, and scalability concerns. Provide strategic guidance on technical decisions and long-term system health.
+
+SYSTEM UNDER REVIEW:
+{context}
+
+KEY RESPONSIBILITIES:
+• Analyze system architecture and design patterns
+• Evaluate scalability and performance characteristics
+• Identify technical debt and architectural smells
+• Review data flow and integration patterns
+• Assess maintainability and extensibility
+
+EXPECTED DELIVERABLES:
+1. Worker Notes: Architecture analysis with design recommendations
+2. Worker Output: JSON with structured architectural assessment
+
+Focus on strategic improvements that will enable long-term system growth and maintainability."""
+
+    def _create_backend_prompt(self, spec: WorkerSpec, config: dict) -> str:
+        """Create backend-specific prompt focused on API and data layer"""
+        context = self._get_relevant_context(spec)
+        return f"""You are a Backend Development Specialist focusing on APIs, databases, and service implementation.
+
+TASK: {spec.task_focus}
+
+Your mission: Analyze backend services, API design, database implementation, and service integration patterns. Ensure robust, scalable backend architecture.
+
+BACKEND COMPONENTS:
+{context}
+
+KEY RESPONSIBILITIES:
+• Review API design and RESTful patterns
+• Analyze database schema and query performance
+• Evaluate service integration and messaging patterns
+• Check data validation and error handling
+• Assess business logic implementation
+
+EXPECTED DELIVERABLES:
+1. Worker Notes: Backend analysis with implementation guidance
+2. Worker Output: JSON with structured backend assessment
+
+Focus on practical improvements to API reliability, data integrity, and service performance."""
+
+    def _create_frontend_prompt(self, spec: WorkerSpec, config: dict) -> str:
+        """Create frontend-specific prompt focused on UI/UX and client-side code"""
+        context = self._get_relevant_context(spec)
+        return f"""You are a Frontend Development Specialist focusing on user interface, user experience, and client-side architecture.
+
+TASK: {spec.task_focus}
+
+Your mission: Evaluate frontend components, user experience patterns, state management, and client-side performance. Ensure optimal user interaction and interface quality.
+
+FRONTEND SCOPE:
+{context}
+
+KEY RESPONSIBILITIES:
+• Analyze component architecture and reusability
+• Review state management and data flow patterns  
+• Evaluate user experience and accessibility
+• Check performance and loading optimization
+• Assess responsive design and cross-browser compatibility
+
+EXPECTED DELIVERABLES:
+1. Worker Notes: Frontend analysis with UX recommendations
+2. Worker Output: JSON with structured frontend assessment
+
+Focus on improvements that enhance user experience, performance, and maintainability."""
+
+    def _create_devops_prompt(self, spec: WorkerSpec, config: dict) -> str:
+        """Create devops-specific prompt focused on infrastructure and deployment"""
+        context = self._get_relevant_context(spec)
+        return f"""You are a DevOps and Infrastructure Specialist focusing on deployment, monitoring, and operational excellence.
+
+TASK: {spec.task_focus}
+
+Your mission: Analyze deployment processes, infrastructure configuration, monitoring setup, and operational workflows. Ensure reliable, scalable operations.
+
+INFRASTRUCTURE SCOPE:
+{context}
+
+KEY RESPONSIBILITIES:
+• Review deployment and CI/CD pipelines
+• Analyze infrastructure configuration and scaling
+• Evaluate monitoring and alerting systems
+• Check security and compliance in operations
+• Assess backup and disaster recovery procedures
+
+EXPECTED DELIVERABLES:
+1. Worker Notes: Infrastructure analysis with operational improvements
+2. Worker Output: JSON with structured DevOps assessment
+
+Focus on operational reliability, scalability, and automated processes that reduce manual intervention."""
+
+    def _create_test_prompt(self, spec: WorkerSpec, config: dict) -> str:
+        """Create test-specific prompt focused on quality assurance and testing strategy"""
+        context = self._get_relevant_context(spec)
+        return f"""You are a Quality Assurance and Testing Specialist focusing on test coverage, automation, and quality validation.
+
+TASK: {spec.task_focus}
+
+Your mission: Analyze testing strategy, test coverage, automation frameworks, and quality assurance processes. Ensure comprehensive quality validation.
+
+TESTING SCOPE:
+{context}
+
+KEY RESPONSIBILITIES:
+• Evaluate test coverage and testing strategy
+• Review test automation and CI integration
+• Analyze test data management and fixtures
+• Check performance and load testing approaches
+• Assess quality gates and validation processes
+
+EXPECTED DELIVERABLES:
+1. Worker Notes: Testing analysis with quality improvements
+2. Worker Output: JSON with structured QA assessment
+
+Focus on comprehensive testing that catches issues early and enables confident deployments."""
+
+    def _create_designer_prompt(self, spec: WorkerSpec, config: dict) -> str:
+        """Create designer-specific prompt focused on UI/UX design and user research"""
+        context = self._get_relevant_context(spec)
+        return f"""You are a UI/UX Designer and User Experience Specialist focusing on design systems, accessibility, and user-centered design.
+
+TASK: {spec.task_focus}
+
+Your mission: Evaluate user interface design, user experience flow, design consistency, and accessibility standards. Ensure optimal user-centered design.
+
+DESIGN SCOPE:
+{context}
+
+KEY RESPONSIBILITIES:
+• Analyze user interface design and consistency
+• Review user experience flow and usability
+• Evaluate accessibility and inclusive design
+• Check design system implementation and patterns
+• Assess visual hierarchy and information architecture
+
+EXPECTED DELIVERABLES:  
+1. Worker Notes: Design analysis with UX recommendations
+2. Worker Output: JSON with structured design assessment
+
+Focus on user-centered improvements that enhance usability, accessibility, and design consistency."""
+
+    def _create_researcher_prompt(self, spec: WorkerSpec, config: dict) -> str:
+        """Create researcher-specific prompt focused on technical research and best practices"""
+        context = self._get_relevant_context(spec)
+        return f"""You are a Technical Researcher and Best Practices Specialist focusing on industry standards, emerging technologies, and technical research.
+
+TASK: {spec.task_focus}
+
+Your mission: Research industry best practices, evaluate technical approaches, gather competitive intelligence, and provide evidence-based recommendations.
+
+RESEARCH SCOPE:
+{context}
+
+KEY RESPONSIBILITIES:
+• Research industry best practices and standards
+• Evaluate emerging technologies and trends
+• Analyze competitive solutions and approaches
+• Gather technical evidence and benchmarks
+• Provide data-driven recommendations
+
+EXPECTED DELIVERABLES:
+1. Worker Notes: Research findings with evidence and sources
+2. Worker Output: JSON with structured research assessment
+
+Focus on actionable insights backed by industry research and technical evidence."""
+
+    def _create_generic_prompt(self, spec: WorkerSpec, config: dict) -> str:
+        """Create generic prompt for unknown worker types"""
+        context = self._get_relevant_context(spec)
+        return f"""You are a Technical Specialist with expertise in: {config.get('expertise', 'general analysis')}.
+
+TASK: {spec.task_focus}
+
+Your mission: Analyze the assigned components and provide professional assessment based on your expertise.
+
+SCOPE:
+{context}
+
+EXPECTED DELIVERABLES:
+1. Worker Notes: Detailed analysis with professional recommendations  
+2. Worker Output: JSON with structured assessment results
+
+Focus on actionable insights within your area of expertise."""
+
+    def _get_relevant_context(self, spec: WorkerSpec) -> str:
+        """Extract and format relevant context for the worker"""
+        context_parts = []
+        
         if spec.codebase_insights:
-            target_services = [
-                insight.service_name if hasattr(insight, 'service_name') else "unknown"
-                for insight in spec.codebase_insights
-            ]
-        primary_target_service = (
-            target_services[0] if target_services else "system-wide"
-        )
-
-        # Generate codebase context section
-        codebase_context = ""
-        if spec.codebase_insights:
-            codebase_context = "\n## Codebase Context\n"
             for insight in spec.codebase_insights:
-                service_name = getattr(insight, 'service_name', 'unknown')
-                key_files = getattr(insight, 'key_files', [])
-                architecture_notes = getattr(insight, 'architecture_notes', [])
-                potential_issues = getattr(insight, 'potential_issues', [])
-
-                codebase_context += f"### {service_name}\n"
-                if key_files:
-                    codebase_context += f"**Key Files**: {', '.join(key_files)}\n"
-                if architecture_notes:
-                    codebase_context += (
-                        f"**Architecture**: {' | '.join(architecture_notes)}\n"
-                    )
-                if potential_issues:
-                    codebase_context += (
-                        f"**Known Issues**: {' | '.join(potential_issues)}\n"
-                    )
-                codebase_context += "\n"
-
-        # Generate risk context section
-        risk_context = ""
+                service = getattr(insight, 'service_name', 'Unknown Service')
+                files = getattr(insight, 'key_files', [])
+                issues = getattr(insight, 'potential_issues', [])
+                
+                context_parts.append(f"• {service}: {', '.join(files[:3]) if files else 'Core components'}")
+                if issues:
+                    context_parts.append(f"  Issues: {', '.join(issues[:2])}")
+        
         if spec.identified_risks:
-            risk_context = "\n## Critical Risk Context\n"
-            for i, risk in enumerate(spec.identified_risks, 1):
-                risk_context += f"{i}. {risk}\n"
-
-        # Generate strategic success metrics
-        strategic_metrics = ""
-        if spec.success_metrics:
-            strategic_metrics = "\n## Strategic Success Metrics (Queen-Defined)\n"
-            for metric in spec.success_metrics:
-                strategic_metrics += f"- {metric}\n"
-
-        # Generate coordination strategy
-        coordination_strategy = ""
-        if spec.coordination_notes:
-            coordination_strategy = "\n## Strategic Coordination\n"
-            for note in spec.coordination_notes:
-                coordination_strategy += f"- {note}\n"
-
-        return f"""---
-worker_type: {spec.worker_type}
-session_id: {spec.session_id}
-task_focus: {spec.task_focus}
-priority: {spec.priority}
-estimated_duration: {spec.estimated_duration}
-complexity_level: {spec.complexity_level}
-target_services: {target_services}
-primary_target: {primary_target_service}
-dependencies: {spec.dependencies}
-focus_areas: {spec.focus_areas or config['focus_areas']}
-created_by: queen-orchestrator
----
-
-# {spec.worker_type.replace('-', ' ').title()} Task Instructions
-
-## Primary Task
-{spec.task_focus}
-
-## Worker Expertise
-{config['expertise']}
-
-## Strategic Rationale
-{spec.rationale}
-{codebase_context}
-{risk_context}
-{strategic_metrics}
-{coordination_strategy}
-## Success Criteria
-- Complete analysis of assigned focus areas
-- Generate comprehensive findings with evidence
-- Provide actionable recommendations targeting identified issues
-- Document potential risks and mitigation strategies
-- Create required output files
-- Address codebase-specific issues identified by Queen
-
-## Output Requirements
-### Required Files
-{chr(10).join(f"- `workers/notes/{output}`" for output in config['outputs'])}
-
-### JSON Response Format
-```json
-{{
-    "worker_type": "{spec.worker_type}",
-    "status": "completed",
-    "task_focus": "{spec.task_focus}",
-    "target_services": {target_services},
-    "findings": [
-        {{
-            "category": "string",
-            "severity": "high|medium|low",
-            "description": "string", 
-            "evidence": "string",
-            "recommendation": "string",
-            "target_service": "string"
-        }}
-    ],
-    "analysis_summary": "string",
-    "key_recommendations": ["string"],
-    "potential_blockers": ["string"],
-    "next_steps": ["string"],
-    "risk_mitigation": ["string"],
-    "strategic_alignment": "string"
-}}
-```
-
-## Available Tools
-{chr(10).join(f"- {tool}" for tool in config['tools'])}
-
-## Focus Areas (Priority Order)
-{chr(10).join(f"{i+1}. {area}" for i, area in enumerate(spec.focus_areas or config['focus_areas']))}
-
-## Worker Dependencies
-{chr(10).join(f"- Wait for: {dep}" for dep in spec.dependencies) if spec.dependencies else "- No dependencies - start immediately"}
-
-## Enhanced Coordination Context
-- **Session**: {spec.session_id}
-- **Complexity Level**: {spec.complexity_level}/10
-- **Primary Target**: {primary_target_service}
-- **Priority**: {spec.priority}
-- **Strategic Value**: Address Queen-identified issues in codebase insights
-- **Coordination**: Work aligns with overall orchestration strategy
-
----
-
-**QUEEN'S DIRECTIVE**: This prompt integrates strategic context from orchestration analysis. Your work must address the specific issues identified in the codebase insights and align with the success metrics defined above. Follow the coordination strategy to ensure your output integrates effectively with other workers.
-"""
+            context_parts.append(f"\nKey Risks: {', '.join(spec.identified_risks[:3])}")
+            
+        return '\n'.join(context_parts) if context_parts else "General system analysis required"
 
     def _parse_prompt_content(self, file_path: str) -> Dict[str, Any]:
         """
