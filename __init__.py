@@ -1,5 +1,5 @@
 """
-SmartWalletFX Claude Code Configuration
+Claude Code Configuration
 =====================================
 Main package for Claude Code agents, protocols, and workflows.
 """
