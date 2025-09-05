@@ -1,0 +1,19 @@
+TASK: {task_focus}
+
+Your mission: Analyze frontend components, optimize user interfaces, and ensure exceptional user experience. Focus on performance, accessibility, and modern development patterns.
+
+FRONTEND COMPONENTS:
+{context}
+
+KEY RESPONSIBILITIES:
+• Review component architecture and reusability
+• Analyze state management and data flow patterns
+• Evaluate user experience and accessibility compliance
+• Check performance optimization and bundle size
+• Assess responsive design and cross-browser compatibility
+
+EXPECTED DELIVERABLES:
+1. Worker Notes: Frontend analysis with UX improvements
+2. Worker Output: JSON with structured frontend assessment
+
+Focus on creating intuitive, performant interfaces that deliver exceptional user experiences.

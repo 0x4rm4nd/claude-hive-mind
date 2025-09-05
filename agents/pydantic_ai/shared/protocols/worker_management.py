@@ -15,147 +15,10 @@ from dataclasses import dataclass, field
 from .session_management import SessionManagement, iso_now
 from .protocol_loader import BaseProtocol
 from .protocol_interface import ProtocolMetadata
+from .worker_templates import load_template, format_template
+from .worker_templates.worker_configs import WORKER_CONFIGS
 
 
-# Single source of truth for all worker configurations
-WORKER_CONFIGS = {
-    "analyzer-worker": {
-        "expertise": "Security analysis, performance optimization, code quality assessment",
-        "tools": [
-            "security scanners",
-            "performance profilers",
-            "code analyzers",
-        ],
-        "outputs": [
-            "analyzer_notes.md",
-            "analyzer_output.json",
-        ],
-        "focus_areas": [
-            "vulnerabilities",
-            "performance bottlenecks",
-            "code smells",
-            "security patterns",
-        ],
-    },
-    "architect-worker": {
-        "expertise": "System design, scalability patterns, technical architecture",
-        "tools": [
-            "architecture analyzers",
-            "pattern matchers",
-            "dependency mappers",
-        ],
-        "outputs": [
-            "architect_notes.md",
-            "architect_output.json",
-        ],
-        "focus_areas": [
-            "system design",
-            "scalability",
-            "maintainability",
-            "technical debt",
-        ],
-    },
-    "backend-worker": {
-        "expertise": "API development, database design, service implementation",
-        "tools": ["API analyzers", "database schema tools", "service mappers"],
-        "outputs": [
-            "backend_notes.md",
-            "backend_output.json",
-        ],
-        "focus_areas": [
-            "API design",
-            "data models",
-            "business logic",
-            "integration patterns",
-        ],
-    },
-    "frontend-worker": {
-        "expertise": "UI/UX implementation, component architecture, state management",
-        "tools": [
-            "component analyzers",
-            "bundle analyzers",
-            "accessibility checkers",
-        ],
-        "outputs": [
-            "frontend_notes.md",
-            "frontend_output.json",
-        ],
-        "focus_areas": [
-            "component structure",
-            "state management",
-            "user experience",
-            "performance",
-        ],
-    },
-    "designer-worker": {
-        "expertise": "User experience design, visual design, accessibility",
-        "tools": [
-            "design analyzers",
-            "accessibility checkers",
-            "usability evaluators",
-        ],
-        "outputs": [
-            "designer_notes.md",
-            "designer_output.json",
-        ],
-        "focus_areas": [
-            "user experience",
-            "accessibility",
-            "visual design",
-            "usability",
-        ],
-    },
-    "devops-worker": {
-        "expertise": "Infrastructure, deployment, monitoring, CI/CD pipelines",
-        "tools": [
-            "infrastructure scanners",
-            "deployment analyzers",
-            "monitoring tools",
-        ],
-        "outputs": [
-            "devops_notes.md",
-            "devops_output.json",
-        ],
-        "focus_areas": [
-            "infrastructure",
-            "deployment",
-            "monitoring",
-            "automation",
-        ],
-    },
-    "researcher-worker": {
-        "expertise": "Technical research, best practices, industry standards",
-        "tools": [
-            "research databases",
-            "pattern libraries",
-            "standards analyzers",
-        ],
-        "outputs": [
-            "researcher_notes.md",
-            "researcher_output.json",
-        ],
-        "focus_areas": [
-            "best practices",
-            "industry standards",
-            "emerging patterns",
-            "technology trends",
-        ],
-    },
-    "test-worker": {
-        "expertise": "Testing strategy, quality assurance, test coverage",
-        "tools": ["test analyzers", "coverage tools", "quality metrics"],
-        "outputs": [
-            "test_notes.md", 
-            "test_output.json",
-        ],
-        "focus_areas": [
-            "test coverage",
-            "quality metrics",
-            "testing strategy",
-            "automated testing",
-        ],
-    },
-}
 
 
 @dataclass
@@ -385,236 +248,28 @@ class WorkerManager(BaseProtocol):
         return self.prompt_data
 
     def _generate_prompt_content(self, spec: WorkerSpec) -> str:
-        """Generate personalized, concise prompt content for each worker type"""
+        """Generate personalized, concise prompt content using external templates"""
+        try:
+            # Load template from external file
+            template_content = load_template(spec.worker_type)
+            
+            # Get relevant context for the worker
+            context = self._get_relevant_context(spec)
+            
+            # Format template with task-specific content
+            return format_template(template_content, spec.task_focus, context)
+            
+        except FileNotFoundError:
+            # Fallback for unknown worker types
+            return self._create_generic_prompt(spec)
 
-        # Get worker-specific configuration
-        config = WORKER_CONFIGS.get(spec.worker_type, {
+    def _create_generic_prompt(self, spec: WorkerSpec) -> str:
+        """Create generic prompt for unknown worker types"""
+        config = WORKER_CONFIGS.get("generic", {
             "expertise": "General analysis and assessment",
             "focus_areas": ["code quality", "best practices"],
         })
-
-        # Create personalized prompts based on worker type
-        if spec.worker_type == "analyzer-worker":
-            return self._create_analyzer_prompt(spec, config)
-        elif spec.worker_type == "architect-worker":
-            return self._create_architect_prompt(spec, config)
-        elif spec.worker_type == "backend-worker":
-            return self._create_backend_prompt(spec, config)
-        elif spec.worker_type == "frontend-worker":
-            return self._create_frontend_prompt(spec, config)
-        elif spec.worker_type == "devops-worker":
-            return self._create_devops_prompt(spec, config)
-        elif spec.worker_type == "test-worker":
-            return self._create_test_prompt(spec, config)
-        elif spec.worker_type == "designer-worker":
-            return self._create_designer_prompt(spec, config)
-        elif spec.worker_type == "researcher-worker":
-            return self._create_researcher_prompt(spec, config)
-        else:
-            return self._create_generic_prompt(spec, config)
-
-    def _create_analyzer_prompt(self, spec: WorkerSpec, config: dict) -> str:
-        """Create analyzer-specific prompt focused on security and code quality"""
-        context = self._get_relevant_context(spec)
-        return f"""You are a Security Analyzer and Code Quality Specialist.
-
-TASK: {spec.task_focus}
-
-Your mission: Deep dive into the codebase to identify security vulnerabilities, performance bottlenecks, and code quality issues. Focus on finding critical problems that could impact production.
-
-WHAT YOU'RE ANALYZING:
-{context}
-
-KEY RESPONSIBILITIES:
-• Scan for security vulnerabilities and attack vectors
-• Identify performance bottlenecks and resource leaks  
-• Detect code smells and maintainability issues
-• Validate security patterns and access controls
-• Check for compliance violations
-
-EXPECTED DELIVERABLES:
-1. Worker Notes: Detailed findings with evidence and severity levels
-2. Worker Output: JSON with structured analysis results
-
-Focus on actionable insights that development teams can immediately implement to improve security and quality."""
-
-    def _create_architect_prompt(self, spec: WorkerSpec, config: dict) -> str:
-        """Create architect-specific prompt focused on system design"""
-        context = self._get_relevant_context(spec)
-        return f"""You are a Technical Architect and System Design Expert.
-
-TASK: {spec.task_focus}
-
-Your mission: Evaluate system architecture, design patterns, and scalability concerns. Provide strategic guidance on technical decisions and long-term system health.
-
-SYSTEM UNDER REVIEW:
-{context}
-
-KEY RESPONSIBILITIES:
-• Analyze system architecture and design patterns
-• Evaluate scalability and performance characteristics
-• Identify technical debt and architectural smells
-• Review data flow and integration patterns
-• Assess maintainability and extensibility
-
-EXPECTED DELIVERABLES:
-1. Worker Notes: Architecture analysis with design recommendations
-2. Worker Output: JSON with structured architectural assessment
-
-Focus on strategic improvements that will enable long-term system growth and maintainability."""
-
-    def _create_backend_prompt(self, spec: WorkerSpec, config: dict) -> str:
-        """Create backend-specific prompt focused on API and data layer"""
-        context = self._get_relevant_context(spec)
-        return f"""You are a Backend Development Specialist focusing on APIs, databases, and service implementation.
-
-TASK: {spec.task_focus}
-
-Your mission: Analyze backend services, API design, database implementation, and service integration patterns. Ensure robust, scalable backend architecture.
-
-BACKEND COMPONENTS:
-{context}
-
-KEY RESPONSIBILITIES:
-• Review API design and RESTful patterns
-• Analyze database schema and query performance
-• Evaluate service integration and messaging patterns
-• Check data validation and error handling
-• Assess business logic implementation
-
-EXPECTED DELIVERABLES:
-1. Worker Notes: Backend analysis with implementation guidance
-2. Worker Output: JSON with structured backend assessment
-
-Focus on practical improvements to API reliability, data integrity, and service performance."""
-
-    def _create_frontend_prompt(self, spec: WorkerSpec, config: dict) -> str:
-        """Create frontend-specific prompt focused on UI/UX and client-side code"""
-        context = self._get_relevant_context(spec)
-        return f"""You are a Frontend Development Specialist focusing on user interface, user experience, and client-side architecture.
-
-TASK: {spec.task_focus}
-
-Your mission: Evaluate frontend components, user experience patterns, state management, and client-side performance. Ensure optimal user interaction and interface quality.
-
-FRONTEND SCOPE:
-{context}
-
-KEY RESPONSIBILITIES:
-• Analyze component architecture and reusability
-• Review state management and data flow patterns  
-• Evaluate user experience and accessibility
-• Check performance and loading optimization
-• Assess responsive design and cross-browser compatibility
-
-EXPECTED DELIVERABLES:
-1. Worker Notes: Frontend analysis with UX recommendations
-2. Worker Output: JSON with structured frontend assessment
-
-Focus on improvements that enhance user experience, performance, and maintainability."""
-
-    def _create_devops_prompt(self, spec: WorkerSpec, config: dict) -> str:
-        """Create devops-specific prompt focused on infrastructure and deployment"""
-        context = self._get_relevant_context(spec)
-        return f"""You are a DevOps and Infrastructure Specialist focusing on deployment, monitoring, and operational excellence.
-
-TASK: {spec.task_focus}
-
-Your mission: Analyze deployment processes, infrastructure configuration, monitoring setup, and operational workflows. Ensure reliable, scalable operations.
-
-INFRASTRUCTURE SCOPE:
-{context}
-
-KEY RESPONSIBILITIES:
-• Review deployment and CI/CD pipelines
-• Analyze infrastructure configuration and scaling
-• Evaluate monitoring and alerting systems
-• Check security and compliance in operations
-• Assess backup and disaster recovery procedures
-
-EXPECTED DELIVERABLES:
-1. Worker Notes: Infrastructure analysis with operational improvements
-2. Worker Output: JSON with structured DevOps assessment
-
-Focus on operational reliability, scalability, and automated processes that reduce manual intervention."""
-
-    def _create_test_prompt(self, spec: WorkerSpec, config: dict) -> str:
-        """Create test-specific prompt focused on quality assurance and testing strategy"""
-        context = self._get_relevant_context(spec)
-        return f"""You are a Quality Assurance and Testing Specialist focusing on test coverage, automation, and quality validation.
-
-TASK: {spec.task_focus}
-
-Your mission: Analyze testing strategy, test coverage, automation frameworks, and quality assurance processes. Ensure comprehensive quality validation.
-
-TESTING SCOPE:
-{context}
-
-KEY RESPONSIBILITIES:
-• Evaluate test coverage and testing strategy
-• Review test automation and CI integration
-• Analyze test data management and fixtures
-• Check performance and load testing approaches
-• Assess quality gates and validation processes
-
-EXPECTED DELIVERABLES:
-1. Worker Notes: Testing analysis with quality improvements
-2. Worker Output: JSON with structured QA assessment
-
-Focus on comprehensive testing that catches issues early and enables confident deployments."""
-
-    def _create_designer_prompt(self, spec: WorkerSpec, config: dict) -> str:
-        """Create designer-specific prompt focused on UI/UX design and user research"""
-        context = self._get_relevant_context(spec)
-        return f"""You are a UI/UX Designer and User Experience Specialist focusing on design systems, accessibility, and user-centered design.
-
-TASK: {spec.task_focus}
-
-Your mission: Evaluate user interface design, user experience flow, design consistency, and accessibility standards. Ensure optimal user-centered design.
-
-DESIGN SCOPE:
-{context}
-
-KEY RESPONSIBILITIES:
-• Analyze user interface design and consistency
-• Review user experience flow and usability
-• Evaluate accessibility and inclusive design
-• Check design system implementation and patterns
-• Assess visual hierarchy and information architecture
-
-EXPECTED DELIVERABLES:  
-1. Worker Notes: Design analysis with UX recommendations
-2. Worker Output: JSON with structured design assessment
-
-Focus on user-centered improvements that enhance usability, accessibility, and design consistency."""
-
-    def _create_researcher_prompt(self, spec: WorkerSpec, config: dict) -> str:
-        """Create researcher-specific prompt focused on technical research and best practices"""
-        context = self._get_relevant_context(spec)
-        return f"""You are a Technical Researcher and Best Practices Specialist focusing on industry standards, emerging technologies, and technical research.
-
-TASK: {spec.task_focus}
-
-Your mission: Research industry best practices, evaluate technical approaches, gather competitive intelligence, and provide evidence-based recommendations.
-
-RESEARCH SCOPE:
-{context}
-
-KEY RESPONSIBILITIES:
-• Research industry best practices and standards
-• Evaluate emerging technologies and trends
-• Analyze competitive solutions and approaches
-• Gather technical evidence and benchmarks
-• Provide data-driven recommendations
-
-EXPECTED DELIVERABLES:
-1. Worker Notes: Research findings with evidence and sources
-2. Worker Output: JSON with structured research assessment
-
-Focus on actionable insights backed by industry research and technical evidence."""
-
-    def _create_generic_prompt(self, spec: WorkerSpec, config: dict) -> str:
-        """Create generic prompt for unknown worker types"""
+        
         context = self._get_relevant_context(spec)
         return f"""You are a Technical Specialist with expertise in: {config.get('expertise', 'general analysis')}.
 
@@ -630,6 +285,7 @@ EXPECTED DELIVERABLES:
 2. Worker Output: JSON with structured assessment results
 
 Focus on actionable insights within your area of expertise."""
+
 
     def _get_relevant_context(self, spec: WorkerSpec) -> str:
         """Extract and format relevant context for the worker"""

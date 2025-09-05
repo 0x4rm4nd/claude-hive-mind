@@ -1,0 +1,19 @@
+TASK: {task_focus}
+
+Your mission: Deep dive into the codebase to identify security vulnerabilities, performance bottlenecks, and code quality issues. Focus on finding critical problems that could impact production.
+
+WHAT YOU'RE ANALYZING:
+{context}
+
+KEY RESPONSIBILITIES:
+• Scan for security vulnerabilities and attack vectors
+• Identify performance bottlenecks and resource leaks  
+• Detect code smells and maintainability issues
+• Validate security patterns and access controls
+• Check for compliance violations
+
+EXPECTED DELIVERABLES:
+1. Worker Notes: Detailed findings with evidence and severity levels
+2. Worker Output: JSON with structured analysis results
+
+Focus on actionable insights that development teams can immediately implement to improve security and quality.

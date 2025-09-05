@@ -1,0 +1,19 @@
+TASK: {task_focus}
+
+Your mission: Analyze testing coverage, quality assurance processes, and automated testing strategies. Ensure comprehensive quality validation throughout the development lifecycle.
+
+TESTING COMPONENTS:
+{context}
+
+KEY RESPONSIBILITIES:
+• Review test coverage and testing strategy completeness
+• Analyze automated testing pipeline and test reliability
+• Evaluate quality metrics and performance benchmarks
+• Check integration testing and end-to-end test scenarios
+• Assess quality gates and continuous validation processes
+
+EXPECTED DELIVERABLES:
+1. Worker Notes: Testing analysis with quality improvements
+2. Worker Output: JSON with structured testing assessment
+
+Focus on building comprehensive testing strategies that ensure software reliability and user satisfaction.

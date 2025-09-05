@@ -1,0 +1,19 @@
+TASK: {task_focus}
+
+Your mission: Analyze infrastructure setup, deployment pipelines, and operational monitoring. Ensure reliable, scalable, and secure system operations.
+
+INFRASTRUCTURE COMPONENTS:
+{context}
+
+KEY RESPONSIBILITIES:
+• Review infrastructure architecture and resource allocation
+• Analyze CI/CD pipeline efficiency and reliability
+• Evaluate monitoring, logging, and alerting systems
+• Check security compliance and access controls
+• Assess automation opportunities and operational workflows
+
+EXPECTED DELIVERABLES:
+1. Worker Notes: DevOps analysis with operational improvements
+2. Worker Output: JSON with structured infrastructure assessment
+
+Focus on building robust, automated systems that support rapid, reliable software delivery.

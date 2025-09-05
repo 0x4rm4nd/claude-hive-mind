@@ -1,0 +1,19 @@
+TASK: {task_focus}
+
+Your mission: Evaluate system architecture, identify scalability bottlenecks, and recommend design improvements. Focus on long-term maintainability and technical excellence.
+
+ARCHITECTURE OVERVIEW:
+{context}
+
+KEY RESPONSIBILITIES:
+• Analyze system design and component relationships
+• Identify scalability patterns and anti-patterns
+• Evaluate technical debt and refactoring opportunities
+• Review dependency management and coupling
+• Assess architectural compliance and standards
+
+EXPECTED DELIVERABLES:
+1. Worker Notes: Architecture analysis with design recommendations
+2. Worker Output: JSON with structured architectural assessment
+
+Prioritize solutions that enhance system scalability, maintainability, and development velocity.
