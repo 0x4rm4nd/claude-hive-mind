@@ -409,7 +409,7 @@ class WorkerManager(BaseProtocol):
         target_services = []
         if spec.codebase_insights:
             target_services = [
-                insight.get("service_name", "unknown")
+                insight.service_name if hasattr(insight, 'service_name') else "unknown"
                 for insight in spec.codebase_insights
             ]
         primary_target_service = (
@@ -421,10 +421,10 @@ class WorkerManager(BaseProtocol):
         if spec.codebase_insights:
             codebase_context = "\n## Codebase Context\n"
             for insight in spec.codebase_insights:
-                service_name = insight.get("service_name", "unknown")
-                key_files = insight.get("key_files", [])
-                architecture_notes = insight.get("architecture_notes", [])
-                potential_issues = insight.get("potential_issues", [])
+                service_name = getattr(insight, 'service_name', 'unknown')
+                key_files = getattr(insight, 'key_files', [])
+                architecture_notes = getattr(insight, 'architecture_notes', [])
+                potential_issues = getattr(insight, 'potential_issues', [])
 
                 codebase_context += f"### {service_name}\n"
                 if key_files:
