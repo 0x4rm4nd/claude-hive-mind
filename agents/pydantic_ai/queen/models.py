@@ -38,13 +38,18 @@ class WorkerAssignment(BaseModel):
 
 
 class CodebaseInsight(BaseModel):
-    """Codebase exploration insight"""
+    """Service context for orchestration - factual mapping, no analysis"""
 
     service_name: str = Field(description="Service/component name")
-    key_files: List[str] = Field(description="Important files found")
-    architecture_notes: List[str] = Field(description="Architecture observations")
-    potential_issues: List[str] = Field(description="Potential areas of concern")
-    confidence: float = Field(ge=0.0, le=1.0, description="Confidence in assessment")
+    key_files: List[str] = Field(description="Files that need engineering attention")
+    service_description: str = Field(description="What this service does (high-level)")
+    technology_stack: List[str] = Field(
+        default_factory=list,
+        description="Technologies used (React, FastAPI, Redis, etc.)",
+    )
+    interaction_points: List[str] = Field(
+        default_factory=list, description="How this service interacts with others"
+    )
 
 
 class QueenOrchestrationPlan(BaseModel):
@@ -56,15 +61,16 @@ class QueenOrchestrationPlan(BaseModel):
         default="completed", description="Orchestration status"
     )
 
-    # Strategic task analysis
-    strategic_assessment: Dict[str, Any] = Field(
-        default_factory=dict, description="Multi-dimensional strategic task assessment"
+    # Orchestration understanding
+    task_summary: str = Field(
+        default="",
+        description="Orchestrator's understanding of what needs to be accomplished",
     )
-    complexity_assessment: int = Field(
-        ge=1, le=10, description="Overall complexity rating (1-10, guidance only)"
+    coordination_complexity: int = Field(
+        ge=1, le=5, description="Coordination complexity (not technical complexity)"
     )
-    strategic_rationale: str = Field(
-        default="", description="Queen's reasoning for worker selection and approach"
+    orchestration_rationale: str = Field(
+        default="", description="Why these workers were selected for coordination"
     )
     estimated_total_duration: str = Field(
         default="2-4h", description="Total estimated time for all workers"
@@ -78,21 +84,13 @@ class QueenOrchestrationPlan(BaseModel):
         default="parallel", description="How workers should be executed"
     )
 
-    # Coordination details
+    # Coordination details (orchestrator focus)
     coordination_notes: List[str] = Field(
-        default_factory=list, description="Important coordination considerations"
+        default_factory=list,
+        description="How workers should coordinate and handoff results",
     )
-    identified_risks: List[str] = Field(
-        default_factory=list, description="Potential risks and blockers identified"
-    )
-    mitigation_strategies: List[str] = Field(
-        default_factory=list, description="Risk mitigation approaches"
-    )
-    success_metrics: List[str] = Field(
-        default_factory=list, description="How to measure success"
-    )
-    quality_gates: List[str] = Field(
-        default_factory=list, description="Quality checkpoints before proceeding"
+    success_criteria: List[str] = Field(
+        default_factory=list, description="High-level criteria for task completion"
     )
 
     # Optional codebase insights
