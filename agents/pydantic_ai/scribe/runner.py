@@ -124,6 +124,9 @@ class ScribeWorker(BaseWorker[ScribeOutput]):
         self, session_id: str, task_description: str
     ) -> Any:
         """Create completion result for session creation"""
+        # Update session config before any logging
+        self.update_session_config(session_id)
+        
         # Log session creation event
         self.log_event(
             "session_created",
@@ -133,7 +136,7 @@ class ScribeWorker(BaseWorker[ScribeOutput]):
                 "session_path": f"Docs/hive-mind/sessions/{session_id}",
                 "generated_by": "scribe",
             },
-            "INFO"
+            "INFO",
         )
 
         # Log scribe spawn event
@@ -144,7 +147,7 @@ class ScribeWorker(BaseWorker[ScribeOutput]):
                 "mode": "create",
                 "purpose": "session_creation",
             },
-            "INFO"
+            "INFO",
         )
 
         # Use the complexity level calculated during session ID generation
@@ -451,7 +454,6 @@ Session ready for Queen orchestration.
                 notes_file.write_text(output.notes_markdown)
                 relative_path = notes_file.relative_to(project_root)
                 self.log_debug(
-                    session_id,
                     f"Created {file_prefix} notes file",
                     {"path": str(relative_path)},
                 )
@@ -461,7 +463,6 @@ Session ready for Queen orchestration.
             output_file.write_text(output.model_dump_json(indent=2))
             relative_path = output_file.relative_to(project_root)
             self.log_debug(
-                session_id,
                 f"Created {file_prefix} output JSON",
                 {"path": str(relative_path)},
             )
@@ -471,7 +472,9 @@ Session ready for Queen orchestration.
 
         except Exception as e:
             self.log_debug(
-                session_id, "File creation failed", {"error": str(e)}, "ERROR"
+                "File creation failed",
+                {"error": str(e)},
+                "ERROR",
             )
             raise
 
@@ -492,9 +495,10 @@ Session ready for Queen orchestration.
                 f.write(output.synthesis_markdown)
 
             self.log_debug(
-                session_id,
                 "Created synthesis markdown file",
-                {"path": f"Docs/hive-mind/sessions/{session_id}/SYNTHESIS.md"},
+                {
+                    "path": f"Docs/hive-mind/sessions/{session_id}/SYNTHESIS.md",
+                },
             )
 
 

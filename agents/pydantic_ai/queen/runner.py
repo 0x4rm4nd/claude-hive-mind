@@ -54,6 +54,9 @@ class QueenWorker(BaseWorker[QueenOutput]):
         self, session_id: str, task_description: str, model: str
     ) -> Any:
         """Execute orchestration analysis using Pydantic AI agent"""
+        # Update session config before any logging
+        self.update_session_config(session_id)
+
         # Log queen spawned event
         self.log_event(
             "queen_spawned",
@@ -62,34 +65,34 @@ class QueenWorker(BaseWorker[QueenOutput]):
                 "mode": "orchestration",
                 "purpose": "Task AI Analysis",
             },
-            "INFO"
+            "INFO",
         )
 
         # Log analysis started event after queen spawned
         self.log_event(
             "analysis_started",
             self.get_analysis_event_details(task_description),
-            "INFO"
+            "INFO",
         )
 
-        monitoring_mode = "--monitor" in task_description
-        clean_task = task_description.replace(" --monitor", "").strip()
+        monitoring_mode = False  # Disable monitoring mode by default
+        clean_task = task_description.strip()
 
         queen_prompt = f"Using the Queen Agent, analyze task and create orchestration plan.\nTask: {clean_task}\nSession: {session_id}"
 
         # Handle custom models with system prompt override
         if model.startswith("custom:"):
             system_prompt = (
-                "You are a JSON generator. "
-                "Your ONLY job is to output valid JSON. "
+                "You are a Queen Orchestrator - a JSON generator that delegates work to engineering teams. "
+                "Your ONLY job is to output valid JSON for orchestration. "
                 "NEVER write explanatory text. "
                 "NEVER write 'The Queen Agent has completed...' "
                 "NEVER use ```json blocks. "
                 "DO NOT explain what you are doing. "
                 "OUTPUT FORMAT: Start immediately with { and end with } "
-                "REQUIRED FIELDS: session_id, timestamp, status (completed/failed/planning), strategic_assessment (object), complexity_assessment (number), strategic_rationale (string), estimated_total_duration (string), worker_assignments (array), execution_strategy (parallel/sequential/hybrid), coordination_notes (string array), identified_risks (string array), mitigation_strategies (string array), success_metrics (string array), quality_gates (string array), codebase_insights (array of objects with service_name string, key_files string array, architecture_notes string array, potential_issues string array, confidence float). "
+                "REQUIRED FIELDS: session_id, timestamp, status (completed/failed/planning), task_summary (string), coordination_complexity (number 1-5), orchestration_rationale (string), estimated_total_duration (string), worker_assignments (array), execution_strategy (parallel/sequential/hybrid), coordination_notes (string array), success_criteria (string array), codebase_insights (array of objects with service_name string, key_files string array, service_description string, technology_stack string array, interaction_points string array). "
                 "worker_assignments items need: worker_type (analyzer-worker/architect-worker/backend-worker/frontend-worker/designer-worker/devops-worker/researcher-worker/test-worker), priority (critical/high/medium/low), task_focus (string), dependencies (string array), estimated_duration (string), strategic_value (critical/high/medium/low), rationale (string). "
-                'RESPOND ONLY WITH: {"session_id": "2025-09-03-11-10-queen-orchestration-test", "timestamp": "2025-09-03T11:10:00Z", "status": "completed", "strategic_assessment": {}, "complexity_assessment": 3, "strategic_rationale": "Analysis complete", "estimated_total_duration": "2h", "worker_assignments": [{"worker_type": "test-worker", "priority": "high", "task_focus": "test focus", "dependencies": [], "estimated_duration": "1h", "strategic_value": "high", "rationale": "test rationale"}], "execution_strategy": "sequential", "coordination_notes": ["test note"], "identified_risks": ["test risk"], "mitigation_strategies": ["test strategy"], "success_metrics": ["test metric"], "quality_gates": ["test gate"], "codebase_insights": [{"service_name": "test-service", "key_files": ["test.py"], "architecture_notes": ["note"], "potential_issues": ["issue"], "confidence": 0.8}]}'
+                'RESPOND ONLY WITH: {"session_id": "2025-09-03-11-10-queen-orchestration-test", "timestamp": "2025-09-03T11:10:00Z", "status": "completed", "task_summary": "Orchestration task understanding", "coordination_complexity": 3, "orchestration_rationale": "Selected teams for optimal coordination", "estimated_total_duration": "2h", "worker_assignments": [{"worker_type": "test-worker", "priority": "high", "task_focus": "test focus", "dependencies": [], "estimated_duration": "1h", "strategic_value": "high", "rationale": "test rationale"}], "execution_strategy": "parallel", "coordination_notes": ["team coordination note"], "success_criteria": ["completion criteria"], "codebase_insights": [{"service_name": "test-service", "key_files": ["test.py"], "service_description": "Test service for example", "technology_stack": ["Python"], "interaction_points": ["connects to API"]}]}'
             )
 
             model_settings = ModelSettings(
@@ -112,7 +115,7 @@ class QueenWorker(BaseWorker[QueenOutput]):
 
         orchestration_plan = orchestration_result.output
         session_path = SessionManagement.get_session_path(session_id)
-        
+
         # Convert to relative path for logging
         try:
             project_root = Path(SessionManagement.detect_project_root())
@@ -123,31 +126,16 @@ class QueenWorker(BaseWorker[QueenOutput]):
 
         # Generate worker-specific prompts from orchestration plan
         try:
-            created_prompt_files = create_worker_prompts_from_plan(
-                session_id, orchestration_plan
-            )
-
-            # Log prompt generation success
-            self.log_event(
-                "worker_prompts_generated",
-                {
-                    "total_workers": len(orchestration_plan.worker_assignments),
-                    "prompt_files": list(created_prompt_files.values()),
-                    "worker_types": list(created_prompt_files.keys()),
-                    "orchestration_complexity": orchestration_plan.complexity_assessment,
-                },
-                "INFO"
-            )
-
+            create_worker_prompts_from_plan(session_id, orchestration_plan)
         except Exception as e:
             self.log_debug(
-                session_id,
                 "worker_prompts_generation_failed",
                 {
                     "exception_type": str(type(e)),
                     "error": str(e),
                     "worker_count": len(orchestration_plan.worker_assignments),
                 },
+                "WARNING",
             )
 
         queen_output = QueenOutput(
@@ -284,13 +272,13 @@ class QueenWorker(BaseWorker[QueenOutput]):
             orchestration_section = [
                 "",
                 "## Queen Orchestration Summary",
-                f"**Complexity Assessment:** {orchestration_plan.complexity_assessment}/10",
+                f"**Coordination Complexity:** {orchestration_plan.coordination_complexity}/5",
                 f"**Execution Strategy:** {orchestration_plan.execution_strategy}",
                 f"**Estimated Duration:** {orchestration_plan.estimated_total_duration}",
                 f"**Workers Deployed:** {len(orchestration_plan.worker_assignments)}",
                 "",
                 "### Strategic Assessment",
-                orchestration_plan.strategic_rationale,
+                orchestration_plan.orchestration_rationale,
                 "",
                 "### Worker Assignments",
             ]
@@ -301,17 +289,7 @@ class QueenWorker(BaseWorker[QueenOutput]):
                     f"- **{assignment.worker_type}** ({assignment.priority}) - {assignment.task_focus}"
                 )
 
-            # Add risks and coordination notes
-            if orchestration_plan.identified_risks:
-                orchestration_section.extend(
-                    [
-                        "",
-                        "### Key Risks Identified",
-                    ]
-                )
-                for risk in orchestration_plan.identified_risks[:3]:  # Top 3 risks
-                    orchestration_section.append(f"- {risk}")
-
+            # Add coordination notes
             if orchestration_plan.coordination_notes:
                 orchestration_section.extend(
                     [
@@ -343,10 +321,10 @@ class QueenWorker(BaseWorker[QueenOutput]):
 
         except Exception as e:
             # Log error but don't fail the operation
-            self.log_error(
-                output.session_id,
+            self.log_debug(
                 "session_md_update_failed",
                 {"error": str(e), "session_path": str(session_md_path)},
+                "ERROR",
             )
 
 
