@@ -51,7 +51,7 @@ class BaseWorker(BaseProtocol, ABC, Generic[T]):
         """
         # Initialize BaseProtocol with dummy config (session_id will be set at runtime)
         super().__init__({"session_id": "temp", "agent_name": worker_type})
-        
+
         self.worker_type = worker_type
         self.worker_config = worker_config
         self.output_model = output_model
@@ -60,60 +60,53 @@ class BaseWorker(BaseProtocol, ABC, Generic[T]):
 
     def update_session_config(self, session_id: str) -> None:
         """Update the protocol configuration with actual session ID"""
-        self.config = ProtocolConfig({
-            "session_id": session_id, 
-            "agent_name": self.worker_type
-        })
-
-    def log_worker_debug(
-        self, session_id: str, message: str, details: Any = {}, level: str = "DEBUG"
-    ) -> None:
-        """Framework-enforced debug logging with session update"""
-        self.update_session_config(session_id)
-        self.log_debug(message, details, level)
+        self.config = ProtocolConfig(
+            {"session_id": session_id, "agent_name": self.worker_type}
+        )
 
     def read_worker_prompt(self, session_id: str) -> Dict[str, Any]:
         """
         Read and parse worker-specific prompt file with rich contextual information.
-        
+
         Returns structured data including:
         - YAML frontmatter (task_focus, dependencies, priority, complexity_level, etc.)
         - Parsed markdown sections (success_criteria, available_tools, etc.)
         - Codebase context and strategic insights from Queen orchestration
-        
+
         Args:
             session_id: Session identifier
-            
+
         Returns:
             Dictionary containing structured prompt data
         """
         if not self._prompt_data:
             try:
-                cfg = ProtocolConfig({
-                    "session_id": session_id, 
-                    "agent_name": self.worker_type
-                })
-                
+                cfg = ProtocolConfig(
+                    {"session_id": session_id, "agent_name": self.worker_type}
+                )
+
                 self._prompt_protocol = WorkerManager(cfg.to_dict())
-                self._prompt_data = self._prompt_protocol.read_prompt_file(self.worker_type)
-                
-                self.log_worker_debug(
-                    session_id, 
+                self._prompt_data = self._prompt_protocol.read_prompt_file(
+                    self.worker_type
+                )
+
+                self.log_debug(
                     f"Successfully loaded prompt data for {self.worker_type}",
                     {
                         "focus_areas": self._prompt_data.get("focus_areas", []),
-                        "complexity_level": self._prompt_data.get("complexity_level", 1),
+                        "complexity_level": self._prompt_data.get(
+                            "complexity_level", 1
+                        ),
                         "priority": self._prompt_data.get("priority", "medium"),
-                        "dependencies": self._prompt_data.get("dependencies", [])
-                    }
+                        "dependencies": self._prompt_data.get("dependencies", []),
+                    },
                 )
-                
+
             except Exception as e:
-                self.log_worker_debug(
-                    session_id,
+                self.log_debug(
                     f"Failed to read prompt file for {self.worker_type}",
                     {"error": str(e)},
-                    "WARNING"
+                    "WARNING",
                 )
                 # Fallback to basic task description
                 self._prompt_data = {
@@ -124,18 +117,18 @@ class BaseWorker(BaseProtocol, ABC, Generic[T]):
                     "complexity_level": 1,
                     "success_criteria": [],
                     "available_tools": [],
-                    "output_requirements": {}
+                    "output_requirements": {},
                 }
-        
+
         return self._prompt_data
-    
+
     def get_task_context(self, session_id: str) -> Dict[str, Any]:
         """
         Get rich task context from parsed prompt data.
         Convenience method that returns key contextual information.
         """
         prompt_data = self.read_worker_prompt(session_id)
-        
+
         return {
             "task_description": prompt_data.get("task_description", ""),
             "focus_areas": prompt_data.get("focus_areas", []),
@@ -153,11 +146,9 @@ class BaseWorker(BaseProtocol, ABC, Generic[T]):
         try:
             if not SessionManagement.ensure_session_exists(session_id):
                 raise ValueError(f"Session {session_id} does not exist or is invalid")
-            self.log_worker_debug(session_id, "Session validation successful")
+            self.log_debug("Session validation successful")
         except Exception as e:
-            self.log_worker_debug(
-                session_id, "Session validation failed", {"error": str(e)}, "ERROR"
-            )
+            self.log_debug("Session validation failed", {"error": str(e)}, "ERROR")
             raise
 
     def validate_and_enrich_output(
@@ -207,8 +198,7 @@ class BaseWorker(BaseProtocol, ABC, Generic[T]):
                 except ValueError:
                     # File is outside project root, use absolute path
                     path_str = str(notes_file)
-                self.log_worker_debug(
-                    session_id,
+                self.log_debug(
                     f"Created {file_prefix} notes file",
                     {"path": path_str},
                 )
@@ -222,8 +212,7 @@ class BaseWorker(BaseProtocol, ABC, Generic[T]):
             except ValueError:
                 # File is outside project root, use absolute path
                 path_str = str(output_file)
-            self.log_worker_debug(
-                session_id,
+            self.log_debug(
                 f"Created {file_prefix} output JSON",
                 {"path": path_str},
             )
@@ -232,9 +221,7 @@ class BaseWorker(BaseProtocol, ABC, Generic[T]):
             self.create_worker_specific_files(session_id, output, session_path)
 
         except Exception as e:
-            self.log_worker_debug(
-                session_id, "File creation failed", {"error": str(e)}, "ERROR"
-            )
+            self.log_debug("File creation failed", {"error": str(e)}, "ERROR")
             raise
 
     def run_analysis(self, session_id: str, task_description: str, model: str) -> T:
@@ -244,6 +231,9 @@ class BaseWorker(BaseProtocol, ABC, Generic[T]):
         This method orchestrates the entire worker execution with protocol compliance
         while delegating worker-specific logic to abstract methods.
         """
+
+        # Update session config IMMEDIATELY before validation so all logging uses correct session_id
+        self.update_session_config(session_id)
 
         # Framework-enforced session validation
         self.validate_session(session_id)
@@ -262,16 +252,14 @@ class BaseWorker(BaseProtocol, ABC, Generic[T]):
             file_prefix = self.get_file_prefix()
             self.create_output_files_base(session_id, output, file_prefix)
 
-            # Update session config and log completion with worker-specific details
-            self.update_session_config(session_id)
+            # Log completion with worker-specific details (session config already updated early)
             completion_details = self.get_completion_event_details(output)
             self.log_event("analysis_completed", completion_details)
 
             return output
 
         except Exception as e:
-            self.log_worker_debug(
-                session_id,
+            self.log_debug(
                 f"{self.worker_type} analysis failed",
                 {"error": str(e), "task": task_description},
                 "ERROR",

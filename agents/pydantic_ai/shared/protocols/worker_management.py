@@ -19,8 +19,6 @@ from .worker_templates import load_template, format_template
 from .worker_templates.worker_configs import WORKER_CONFIGS
 
 
-
-
 @dataclass
 class WorkerSpec:
     """Unified specification for worker prompt generation and parsing"""
@@ -37,8 +35,6 @@ class WorkerSpec:
     focus_areas: List[str] = field(default_factory=list)
     # Enhanced context from orchestration
     codebase_insights: List[Dict] = field(default_factory=list)
-    success_metrics: List[str] = field(default_factory=list)
-    identified_risks: List[str] = field(default_factory=list)
     coordination_notes: List[str] = field(default_factory=list)
     orchestration_plan: Any = None
 
@@ -46,26 +42,26 @@ class WorkerSpec:
 class WorkerManager(BaseProtocol):
     """
     Unified worker prompt creation and parsing with proper protocol compliance.
-    
+
     The WorkerManager handles the complete lifecycle of worker prompts:
     - Generation from WorkerSpec configurations
     - Template creation with strategic context
     - File parsing and validation
     - Task instruction extraction
-    
+
     Example Usage:
-    
+
     Basic Worker Prompt Creation:
     ```python
     from shared.protocols import WorkerManager, WorkerSpec
-    
+
     # Initialize manager
     manager = WorkerManager({"session_id": "my-session", "agent_name": "orchestrator"})
-    
+
     # Create worker specification
     spec = WorkerSpec(
         worker_type="backend-worker",
-        task_focus="API endpoint implementation", 
+        task_focus="API endpoint implementation",
         priority="high",
         estimated_duration="2-4 hours",
         rationale="Critical user authentication endpoints needed",
@@ -73,30 +69,30 @@ class WorkerManager(BaseProtocol):
         session_id="my-session",
         target_service="api-service"
     )
-    
+
     # Generate prompts
     created_files = manager.create_worker_prompts([spec])
     print(f"Created: {list(created_files.keys())}")  # ['backend-worker']
     ```
-    
+
     Reading and Parsing Worker Prompts:
     ```python
     # Parse existing prompt file
     prompt_data = manager.read_prompt_file("backend-worker")
-    
+
     # Extract task instructions
     instructions = manager.get_task_instructions("backend-worker")
-    
+
     # Access parsed components
     print(f"Worker expertise: {instructions['worker_expertise']}")
     print(f"Success criteria: {instructions['success_criteria']}")
     print(f"Available tools: {instructions['available_tools']}")
     ```
-    
+
     Queen Orchestration Integration:
     ```python
     from shared.protocols import create_worker_prompts_from_plan
-    
+
     # Create prompts from orchestration plan (advanced usage)
     created_files = create_worker_prompts_from_plan(
         session_id="orchestration-session",
@@ -107,10 +103,16 @@ class WorkerManager(BaseProtocol):
 
     # Protocol metadata - unique to WorkerManager
     _metadata = ProtocolMetadata(
-        name="WorkerManager", 
+        name="WorkerManager",
         version="2.0.0",
         description="Framework-enforced worker prompt lifecycle management with strategic orchestration",
-        capabilities=["logging", "session_aware", "worker_prompts", "template_generation", "prompt_parsing"]
+        capabilities=[
+            "logging",
+            "session_aware",
+            "worker_prompts",
+            "template_generation",
+            "prompt_parsing",
+        ],
     )
 
     def __init__(self, config: Dict[str, Any] = None):
@@ -252,24 +254,27 @@ class WorkerManager(BaseProtocol):
         try:
             # Load template from external file
             template_content = load_template(spec.worker_type)
-            
+
             # Get relevant context for the worker
             context = self._get_relevant_context(spec)
-            
+
             # Format template with task-specific content
             return format_template(template_content, spec.task_focus, context)
-            
+
         except FileNotFoundError:
             # Fallback for unknown worker types
             return self._create_generic_prompt(spec)
 
     def _create_generic_prompt(self, spec: WorkerSpec) -> str:
         """Create generic prompt for unknown worker types"""
-        config = WORKER_CONFIGS.get("generic", {
-            "expertise": "General analysis and assessment",
-            "focus_areas": ["code quality", "best practices"],
-        })
-        
+        config = WORKER_CONFIGS.get(
+            "generic",
+            {
+                "expertise": "General analysis and assessment",
+                "focus_areas": ["code quality", "best practices"],
+            },
+        )
+
         context = self._get_relevant_context(spec)
         return f"""You are a Technical Specialist with expertise in: {config.get('expertise', 'general analysis')}.
 
@@ -286,25 +291,35 @@ EXPECTED DELIVERABLES:
 
 Focus on actionable insights within your area of expertise."""
 
-
     def _get_relevant_context(self, spec: WorkerSpec) -> str:
-        """Extract and format relevant context for the worker"""
+        """Extract and format factual context for the worker (no analysis from Queen)"""
         context_parts = []
-        
+
         if spec.codebase_insights:
             for insight in spec.codebase_insights:
-                service = getattr(insight, 'service_name', 'Unknown Service')
-                files = getattr(insight, 'key_files', [])
-                issues = getattr(insight, 'potential_issues', [])
-                
-                context_parts.append(f"• {service}: {', '.join(files[:3]) if files else 'Core components'}")
-                if issues:
-                    context_parts.append(f"  Issues: {', '.join(issues[:2])}")
-        
-        if spec.identified_risks:
-            context_parts.append(f"\nKey Risks: {', '.join(spec.identified_risks[:3])}")
-            
-        return '\n'.join(context_parts) if context_parts else "General system analysis required"
+                service = getattr(insight, "service_name", "Unknown Service")
+                files = getattr(insight, "key_files", [])
+                description = getattr(insight, "service_description", "")
+                tech_stack = getattr(insight, "technology_stack", [])
+                interactions = getattr(insight, "interaction_points", [])
+
+                context_parts.append(
+                    f"• {service}: {', '.join(files[:5]) if files else 'Core components'}"
+                )
+                if description:
+                    context_parts.append(f"  Description: {description}")
+                if tech_stack:
+                    context_parts.append(f"  Tech Stack: {', '.join(tech_stack)}")
+                if interactions:
+                    context_parts.append(
+                        f"  Interactions: {', '.join(interactions[:2])}"
+                    )
+
+        return (
+            "\n".join(context_parts)
+            if context_parts
+            else "General system analysis required"
+        )
 
     def _parse_prompt_content(self, file_path: str) -> Dict[str, Any]:
         """
@@ -508,8 +523,6 @@ def create_worker_prompts_from_plan(
     # Extract orchestration context
     target_service = getattr(orchestration_plan, "target_service", "unknown")
     codebase_insights = getattr(orchestration_plan, "codebase_insights", [])
-    success_metrics = getattr(orchestration_plan, "success_metrics", [])
-    identified_risks = getattr(orchestration_plan, "identified_risks", [])
     coordination_notes = getattr(orchestration_plan, "coordination_notes", [])
 
     # Convert orchestration plan to enhanced worker specs
@@ -521,15 +534,13 @@ def create_worker_prompts_from_plan(
             priority=assignment.priority,
             estimated_duration=assignment.estimated_duration,
             rationale=assignment.rationale,
-            complexity_level=orchestration_plan.complexity_assessment,
+            complexity_level=orchestration_plan.coordination_complexity,
             session_id=session_id,
             target_service=target_service,
             dependencies=getattr(assignment, "dependencies", []),
             focus_areas=getattr(assignment, "focus_areas", []),
             # Enhanced strategic context
             codebase_insights=codebase_insights,
-            success_metrics=success_metrics,
-            identified_risks=identified_risks,
             coordination_notes=coordination_notes,
             orchestration_plan=orchestration_plan,
         )

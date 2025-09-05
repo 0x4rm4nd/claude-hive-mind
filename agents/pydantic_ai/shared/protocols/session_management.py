@@ -55,7 +55,7 @@ class SessionManagement:
                 "timestamp": iso_now(),
                 "level": "ERROR",
                 "agent": "session_management",
-                "message": "Failed to detect SmartWalletFX project root",
+                "message": "Failed to detect project root",
                 "details": {
                     "current_working_dir": str(Path.cwd()),
                     "search_paths_checked": str(current_path),
