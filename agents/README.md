@@ -52,7 +52,7 @@ python cli.py [agent] [options]
 python cli.py scribe create --task "Analyze crypto-data architecture focusing on security"
 
 # Run Queen orchestrator with continuous monitoring
-python cli.py queen --session SESSION_ID --task "..." --monitor
+python cli.py queen --session SESSION_ID --task "..." 
 
 # Generate final synthesis from completed workers
 python cli.py scribe synthesis --session SESSION_ID

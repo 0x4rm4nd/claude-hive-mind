@@ -92,7 +92,7 @@ This structure is designed for **easy expansion**. Adding a new agent is straigh
 python cli.py queen --session SESSION_ID --task "Analyze application security"
 
 # With continuous monitoring
-python cli.py queen --session SESSION_ID --task "..." --monitor --monitor-interval 30
+python cli.py queen --session SESSION_ID --task "..."  
 ```
 
 **Schema Output**:
@@ -163,7 +163,7 @@ python cli.py scribe create --task "Analyze application architecture focusing on
 # Output: session_id: "2024-01-15-14-30-architecture-security-analysis"
 
 # 2. Run Queen orchestrator with monitoring
-python cli.py queen --session 2024-01-15-14-30-architecture-security-analysis --task "..." --monitor
+python cli.py queen --session 2024-01-15-14-30-architecture-security-analysis --task "..." 
 
 # 3. Queen monitors workers continuously (every 30s)
 # ✅ Workers spawn and complete their analysis
@@ -177,7 +177,7 @@ python cli.py scribe synthesis --session 2024-01-15-14-30-architecture-security-
 
 ```bash
 # Custom monitoring interval (every 60 seconds)
-python cli.py queen --session SESSION_ID --task "..." --monitor --monitor-interval 60
+python cli.py queen --session SESSION_ID --task "..."  
 
 # The Queen will:
 # ✅ Log "monitoring_started" event

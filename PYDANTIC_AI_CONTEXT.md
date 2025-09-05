@@ -28,7 +28,7 @@ python cli.py scribe synthesis --session SESSION_ID
 #### **Queen (Orchestration)**
 ```bash
 # Complex multi-worker coordination (Level 3+ tasks)
-python cli.py queen --session SESSION_ID --task "TASK" --monitor
+python cli.py queen --session SESSION_ID --task "TASK" 
 ```
 
 #### **Specialist Workers**
@@ -117,14 +117,14 @@ python cli.py frontend --session SESSION_ID --task "TASK_DESCRIPTION"
 **Use Queen orchestrator** for automatic worker coordination:
 ```bash
 python cli.py scribe create --task "Add portfolio rebalancing feature with real-time notifications"
-python cli.py queen --session SESSION_ID --task "TASK_DESCRIPTION" --monitor
+python cli.py queen --session SESSION_ID --task "TASK_DESCRIPTION" 
 ```
 
 ### **Level 4** - Architecture/Security Reviews
 **Use Queen with specific worker focus**:
 ```bash
 python cli.py scribe create --task "Security audit of crypto-data service focusing on API vulnerabilities"
-python cli.py queen --session SESSION_ID --task "TASK_DESCRIPTION" --monitor
+python cli.py queen --session SESSION_ID --task "TASK_DESCRIPTION" 
 ```
 
 ## ✅ Expected Outputs (PRELOADED)
@@ -198,14 +198,14 @@ python cli.py scribe synthesis --session $SESSION_ID
 cd /workspace/.claude/agents/pydantic_ai/  
 python cli.py scribe create --task "Comprehensive crypto-data service analysis"
 SESSION_ID="crypto-service-analysis"
-python cli.py queen --session $SESSION_ID --task "Full analysis including security, performance, scalability" --monitor
+python cli.py queen --session $SESSION_ID --task "Full analysis including security, performance, scalability" 
 python cli.py scribe synthesis --session $SESSION_ID
 ```
 
 ### **With Fallback Models**:
 ```bash
 # If custom models fail, use fallback
-python cli.py queen --session $SESSION_ID --task "TASK" --monitor --model custom:max-subscription
+python cli.py queen --session $SESSION_ID --task "TASK"  --model custom:max-subscription
 ```
 
 ---

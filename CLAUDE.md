@@ -70,7 +70,7 @@ The spawned Claude Agent will run:
 2. **Use Queen for Orchestration:**
 
    ```bash
-   python cli.py queen --session SESSION_ID --task "TASK_DESCRIPTION" --monitor
+   python cli.py queen --session SESSION_ID --task "TASK_DESCRIPTION"
    ```
 
 3. **Generate Final Report:**
@@ -112,7 +112,7 @@ python cli.py [worker] --session SESSION_ID --task "SPECIFIC_TASK"
 
 ```bash
 # Queen with Pro model (default)
-python cli.py queen --session SESSION_ID --task "TASK" --monitor
+python cli.py queen --session SESSION_ID --task "TASK"
 
 # Workers with Flash model (default)
 python cli.py backend --session SESSION_ID --task "TASK"
@@ -121,7 +121,7 @@ python cli.py backend --session SESSION_ID --task "TASK"
 python cli.py scribe create --task "TASK"
 
 # Fallback to OpenAI if needed
-python cli.py queen --session SESSION_ID --task "TASK" --monitor --model openai:gpt-5-mini
+python cli.py queen --session SESSION_ID --task "TASK" --model openai:gpt-5-mini
 ```
 
 ## 🛠️ Task Complexity Decision Tree
@@ -153,7 +153,7 @@ python cli.py frontend --session SESSION_ID --task "TASK_DESCRIPTION"
 ```bash
 # Example: Feature requiring API + frontend + database changes
 python cli.py scribe create --task "Add portfolio rebalancing feature with real-time notifications"
-python cli.py queen --session SESSION_ID --task "TASK_DESCRIPTION" --monitor
+python cli.py queen --session SESSION_ID --task "TASK_DESCRIPTION" 
 ```
 
 ### **Level 4 - Architecture/Security Reviews**
@@ -163,7 +163,7 @@ python cli.py queen --session SESSION_ID --task "TASK_DESCRIPTION" --monitor
 ```bash
 # Example: Comprehensive system analysis
 python cli.py scribe create --task "Security audit of crypto-data service focusing on API vulnerabilities and database security"
-python cli.py queen --session SESSION_ID --task "TASK_DESCRIPTION" --monitor
+python cli.py queen --session SESSION_ID --task "TASK_DESCRIPTION" 
 ```
 
 ## 📋 Mandatory Workflow for Claude Code Agents
@@ -185,7 +185,7 @@ cd .claude/agents/pydantic_ai/
 python cli.py scribe create --task "DETAILED_TASK_DESCRIPTION"
 
 # Use Queen for complex orchestration (Level 3+)
-python cli.py queen --session SESSION_ID --task "TASK" --monitor
+python cli.py queen --session SESSION_ID --task "TASK"
 
 # Use individual worker for focused tasks
 python cli.py [worker] --session SESSION_ID --task "TASK"
@@ -273,7 +273,7 @@ Use Task tool:
 subagent_type: general-purpose
 prompt: "Navigate to .claude/agents/pydantic_ai/ and run:
 1. python cli.py scribe create --task 'Implement portfolio rebalancing across services'
-2. python cli.py queen --session SESSION_ID --task 'TASK' --monitor
+2. python cli.py queen --session SESSION_ID --task 'TASK' 
 3. python cli.py scribe synthesis --session SESSION_ID
 4. Use --model google-gla:gemini-2.5-flash if GPT-5 unavailable"
 ```

@@ -53,7 +53,7 @@ python cli.py [agent] [options]
 2. **Execute Work**:
 
    - **Simple tasks**: `python cli.py [worker] --session SESSION_ID --task "TASK"`
-   - **Complex coordination**: `python cli.py queen --session SESSION_ID --task "TASK" --monitor`
+   - **Complex coordination**: `python cli.py queen --session SESSION_ID --task "TASK"`
 
 3. **Generate Reports**:
    ```bash
