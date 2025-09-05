@@ -28,12 +28,7 @@ def run_queen(args):
     """
     from queen.runner import QueenWorker
 
-    # Build task description with monitoring flag if needed
     task_description = args.task
-    if args.monitor:
-        task_description += " --monitor"
-    if args.monitor_interval:
-        task_description += f" --monitor-interval {args.monitor_interval}"
 
     # Use BaseWorker pattern consistently
     worker = QueenWorker()
@@ -108,8 +103,8 @@ Examples:
   # Create new session
   python cli.py scribe create --task "Analyze crypto-data security"
   
-  # Run Queen orchestrator with monitoring
-  python cli.py queen --session 2024-01-15-14-30-crypto-security-audit --task "..." --monitor
+  # Run Queen orchestrator  
+  python cli.py queen --session 2024-01-15-14-30-crypto-security-audit --task "..."
   
   # Run synthesis
   python cli.py scribe synthesis --session 2024-01-15-14-30-crypto-security-audit
@@ -128,15 +123,6 @@ Examples:
     queen_parser.add_argument("--session", required=True, help="Session ID")
     queen_parser.add_argument("--task", required=True, help="Task description")
     queen_parser.add_argument("--model", help="AI model to use")
-    queen_parser.add_argument(
-        "--monitor", action="store_true", help="Enable continuous monitoring"
-    )
-    queen_parser.add_argument(
-        "--monitor-interval",
-        type=int,
-        default=0,
-        help="Monitoring interval in seconds",
-    )
 
     # Scribe agent
     scribe_parser = subparsers.add_parser("scribe", help="Scribe agent")
