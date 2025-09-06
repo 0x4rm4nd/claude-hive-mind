@@ -2,105 +2,282 @@
 
 ## 1. Executive Summary
 
-**Objective**: Build an automated execution pipeline that takes Queen orchestration plans and executes specialized workers to completion, with intelligent conflict resolution and context preservation.
+**Objective**: Complete the automated execution pipeline by implementing structured workflows for Worker Agents with timeout immunity and standardized outputs.
 
-**Current State**: Queen generates excellent orchestration plans, but workers must be manually spawned. No automated execution or conflict resolution.
+**Current State**: 
+- ✅ Scribe and Queen are fully functional and structured
+- ✅ `/summon-queen` command works properly - initializes Scribe and spawns workers correctly
+- ❌ Worker Agents (8 workers) have no structured workflow - behavior is unstructured
+- ❌ No standardized output files from workers (prevents Scribe synthesis testing)
+- ✅ Claude Code agents have timeout immunity (confirmed)
 
-**Target State**: Claude Code manages complete workflow from task → orchestration → worker execution → conflict resolution → synthesis → completion report.
+**Target State**: End-to-end structured workflow where Claude Code agents execute 3-phase worker processes (setup → creative analysis → output) with standardized file outputs and timeout immunity.
 
-### 1.1 Always-Delegate Architecture Decision
+### 1.1 Core Problem: Worker Agent Structure Gap
 
-**Core Strategic Decision**: **Always delegate to Claude Code agents** for optimal reliability and performance.
+**Current Working Components**:
+- ✅ **Scribe**: Structured session creation and synthesis
+- ✅ **Queen**: Structured orchestration with worker assignments
+- ✅ **Basic CLI**: `python cli.py [worker] --session --task` executes
 
-**Key Insights**:
-- **Parallelization**: Claude Code agent spawning enables 6+ concurrent workers vs 3 Task tool limit
-- **Timeout Immunity**: Claude Code agents have no execution time limits vs Docker-Claude timeout risk  
-- **Hybrid Execution**: Pydantic AI provides structured setup/logging, Claude Code provides creative analysis
-- **Output Flexibility**: Adaptive markdown + dynamic JSON schemas that evolve with discoveries
+**Critical Gap**: Worker Agents Have No Structure
+- **Problem 1**: Workers have no standardized workflow (setup → analysis → output)
+- **Problem 2**: No control over worker behavior - they do "anything"
+- **Problem 3**: No structured output files preventing Scribe synthesis testing
+- **Problem 4**: Cannot test end-to-end workflow without structured outputs
 
-### 1.2 Workflow Architecture Overview
+**Solution Architecture**:
+- **Timeout Immunity**: Claude Code agents confirmed to have no execution time limits
+- **Task Tool Integration**: Use Claude Code's Task tool to spawn worker agents  
+- **3-Phase Structure**: Each worker follows setup → creative analysis → structured output
+- **Standardized Outputs**: Predictable file formats enabling Scribe synthesis testing
+
+### 1.2 Simplified Architecture (MVP Implementation)
 
 ```mermaid
 graph TD
-    A["/summon-queen &lt;task&gt;"] --> B[Scribe: Create Session]
-    B --> C[Queen: Generate Orchestration Plan + Shared Contracts]
-    C --> CC[Claude Code: Parse Orchestration Plan]
-    CC --> D{Analysis Phase}
-    D --> DD[Claude Code: Spawn Workers via Task Tool]
-    DD --> E[Worker 1: Analysis]
-    DD --> F[Worker 2: Analysis] 
-    DD --> G[Worker N: Analysis]
-    E --> H[Scribe: Global Synthesis]
-    F --> H
-    G --> H
-    H --> I{Implementation Required?}
-    I -->|Analysis Only| J[Return Analysis Report]
-    I -->|Implementation| II[Claude Code: Spawn Implementation Workers]
-    II --> K{Implementation Phase}
-    K --> L[Worker 1: Code Implementation]
-    K --> M[Worker 2: Code Implementation]
-    K --> N[Worker N: Code Implementation]
-    L --> Q{Conflicts Detected?}
-    M --> Q
-    N --> Q
-    Q -->|No Conflicts| O[Scribe: Final Synthesis]
-    Q -->|Conflicts Found| R[Queen: Resolve Conflicts]
-    R --> S[Update Worker Context]
-    S --> SS[Claude Code: Re-spawn Affected Workers]
-    SS --> T[Re-execute Affected Workers]
-    T --> Q
-    O --> P[Complete Implementation]
+    A["summon-queen task"] --> B[Scribe: Create Session]
+    B --> C[Queen: Generate Orchestration Plan]
+    C --> D[Claude Code: Parse Orchestration Plan] 
+    D --> E[Spawn Claude Code Worker Agents]
+    
+    E --> F[Agent 1: 3-Phase Workflow]
+    E --> G[Agent 2: 3-Phase Workflow] 
+    E --> H[Agent N: 3-Phase Workflow]
+    
+    F --> F1[Phase 1: Setup & Context Loading]
+    F1 --> F2[Phase 2: Creative Analysis - NO TIMEOUT]
+    F2 --> F3[Phase 3: Structured Output Files]
+    
+    G --> G1[Phase 1: Setup]
+    G1 --> G2[Phase 2: Creative Analysis]
+    G2 --> G3[Phase 3: Output Files]
+    
+    H --> H1[Phase 1: Setup]
+    H1 --> H2[Phase 2: Creative Analysis]
+    H2 --> H3[Phase 3: Output Files]
+    
+    F3 --> I[Structured Output Directory]
+    G3 --> I
+    H3 --> I
+    
+    I --> K[Scribe Synthesis]
+    K --> J[MVP Complete - Phase 1]
     
     style A fill:#ffeb3b
-    style CC fill:#4caf50
-    style DD fill:#4caf50
-    style II fill:#4caf50
-    style SS fill:#4caf50
-    style D fill:#e1f5fe
-    style K fill:#f3e5f5
-    style I fill:#fff3e0
-    style H fill:#e8f5e8
-    style O fill:#e8f5e8
-    style Q fill:#ffcdd2
-    style R fill:#f8bbd9
-    style S fill:#f8bbd9
-    style T fill:#f8bbd9
+    style D fill:#4caf50
+    style E fill:#4caf50
+    style F2 fill:#e3f2fd
+    style G2 fill:#e3f2fd
+    style H2 fill:#e3f2fd
+    style I fill:#e8f5e8
+    style K fill:#fff3e0
+    style J fill:#c8e6c9
 ```
 
-**Legend:**
-- 🟡 **Entry Point**: `/summon-queen` command triggers complete hive-mind workflow
-- 🔵 **Analysis Phase**: Workers analyze codebase, identify concerns, locate implementation points
-- 🟣 **Implementation Phase**: Workers write actual code based on global synthesis (conditional)
-- 🟠 **Decision Points**: Automatic detection of analysis-only vs implementation tasks
-- 🟢 **Synthesis Points**: Scribe consolidates worker outputs into coherent reports
+**Key Simplifications**:
+- 🟡 **Entry Point**: `/summon-queen` (already working)  
+- 🔵 **Session & Orchestration**: Scribe + Queen (already working)
+- 🟢 **NEW: Claude Code Worker Spawning**: Parse Queen plan → spawn agents
+- 🔵 **NEW: 3-Phase Worker Structure**: Each worker follows structured workflow
+- 🟢 **NEW: Structured Outputs**: Standardized files enable Scribe synthesis
+- 🟠 **NEW: Scribe Synthesis**: Final synthesis report using structured worker outputs
 
-### 1.2 Command Interface
+## 2. Current System State - What Already Works
 
-The `/summon-queen` command is the primary interface for triggering hive-mind workflows:
+### 2.1 Existing Functionalities (DO NOT RE-IMPLEMENT)
 
+**✅ FULLY WORKING - No Changes Needed**:
+
+1. **`/summon-queen` Command Interface**:
+   - Command exists and works correctly
+   - Properly invokes Scribe for session creation
+   - Successfully triggers Queen orchestration
+   - Correctly spawns Claude Code worker agents
+
+2. **Scribe Agent (Session Management)**:
+   - Creates sessions with proper directory structure
+   - Generates session files in `Docs/hive-mind/sessions/{session_id}/`
+   - Creates `SESSION.md`, `EVENTS.jsonl`, `DEBUG.jsonl`, `BACKLOG.jsonl`
+   - Session creation workflow is complete and functional
+
+3. **Queen Agent (Orchestration)**:
+   - Generates orchestration plans correctly
+   - Creates worker assignments and shared contracts
+   - Coordinates multi-worker task distribution
+   - Orchestration logic is complete and functional
+
+4. **Claude Code Agent Spawning**:
+   - Claude Code correctly invokes the appropriate workers
+   - Worker spawning mechanism works properly
+   - Can successfully launch multiple concurrent workers
+   - Agent communication infrastructure is functional
+
+5. **Session Directory Structure**:
+   - `Docs/hive-mind/sessions/{session_id}/` structure exists
+   - Sub-folders and basic files are created correctly
+   - Event logging system (`EVENTS.jsonl`, `DEBUG.jsonl`) works
+   - File system integration is complete
+
+### 2.2 The ONLY Gap - Worker Behavior Control
+
+**❌ WHAT NEEDS TO BE IMPLEMENTED**:
+
+**Single Problem**: Worker agents have unstructured behavior
+- Workers execute but don't follow standardized 3-phase workflow
+- Workers don't generate standardized output files
+- Workers behavior is uncontrolled - they do "anything"
+- This prevents Scribe synthesis testing (cannot parse unstructured outputs)
+
+**❌ WHAT IS MISSING**:
+- 3-phase workflow structure for the 8 worker agents  
+- Standardized output file formats from workers
+- Structured worker outputs that enable Scribe synthesis
+
+## 3. What Actually Needs to Be Implemented
+
+### 3.1 3-Phase Worker Structure (Core Requirement)
+
+Each existing worker agent (8 files in `.claude/agents/`) must follow this exact workflow:
+
+**Phase 1: Invoke Pydantic AI Agent**
 ```bash
-# Analysis-only examples
-/summon-queen "Analyze the crypto-data service for security vulnerabilities"
-/summon-queen "Review the API architecture for scalability concerns"
-/summon-queen "Audit the frontend components for accessibility compliance"
-
-# Implementation examples  
-/summon-queen "Implement portfolio rebalancing feature with automated execution"
-/summon-queen "Add real-time notifications to the trading dashboard"
-/summon-queen "Fix memory leaks in the data processing pipeline"
+# Context loading and Pydantic AI delegation
+1. Read session context from: Docs/hive-mind/sessions/{session_id}/workers/orchestration/orchestration_plan.json
+2. Read worker-specific prompt from: Docs/hive-mind/sessions/{session_id}/workers/prompts/{worker_type}_prompt.txt
+3. Navigate to .claude/agents/pydantic_ai/
+4. Execute: python cli.py {worker_type} --session {session_id} --task "{prompt_content}"
+5. Let Pydantic AI complete framework-enforced analysis
 ```
 
-**Command Flow:**
-1. User/Agent calls `/summon-queen <task_description>`
-2. Command triggers `execute_hive_mind_task(task_description)`
-3. Automated workflow executes through both phases
-4. Results returned to caller
+**Phase 2: Claude Code Creative Analysis**
+```bash  
+# Claude Code takes control for extended analysis
+- Perform additional creative analysis beyond Pydantic AI capabilities
+- Use Claude Code's unlimited analysis time and broader context
+- Explore codebase thoroughly and identify implementation points
+- Generate enhanced insights and recommendations
+```
 
-## 2. Delta Updates Explained
+**Phase 3: Delegate Back to Pydantic AI for Structured Output** (Only 2 Files)
+```bash
+# Pass combined analysis back to Pydantic AI for structured output generation
+1. Prepare combined analysis prompt with Claude Code findings
+2. Execute: python cli.py {worker_type} --session {session_id} --task "{combined_analysis}"
+3. Pydantic AI generates output files:
+   - workers/notes/{worker_type}_notes.md (creative, no template)
+   - workers/json/{worker_type}_output.json (structured, based on notes)
+```
 
-**Delta Updates** = Instead of re-running entire worker analysis, send only the **changes/additions** needed.
+### 3.2 Standardized Output Structure
 
-### Example Scenario:
+**Current Session Directory Structure** (Already exists after Queen orchestration):
+```
+Docs/hive-mind/sessions/{session_id}/
+└── workers/
+    ├── json/                        # Location for {worker_type}_output.json files
+    ├── notes/                       # Location for {worker_type}_notes.md files
+    ├── orchestration/               # Contains orchestration_plan.json from Queen
+    └── prompts/                     # Contains worker-specific prompts
+```
+
+**Required Output Files per Worker** (2 Files, created by Pydantic AI agents):
+```
+workers/notes/{worker_type}_notes.md     # Creative analysis, findings, recommendations (no template)
+workers/json/{worker_type}_output.json   # Structured data based on notes (no template)
+```
+
+**Example for Backend Worker**:
+```
+backend_notes.md     → "API security analysis, database optimization recommendations, implementation roadmap"
+backend_output.json  → {
+  "findings": {"vulnerabilities": [...], "optimizations": [...]},
+  "context": {"session_id": "...", "execution_time": "...", "status": "complete"},
+  "roadmap": ["Step 1: Fix SQL injection", "Step 2: Add caching layer"]
+}
+```
+
+## 4. Three-Phase Implementation Roadmap
+
+### 4.1 Phase 1: MVP - Structured Worker Execution (Current Focus)
+
+**Goal**: Complete the basic structured workflow with standardized outputs
+
+**Why Start Here**:
+- Enable Scribe synthesis testing by providing structured worker outputs
+- Focus on core 3-phase structure before adding conflict resolution complexity  
+- Validate end-to-end workflow from `/summon-queen` to synthesis
+- Build foundation for future conflict resolution features (Phase 2)
+
+**Phase 1 Workflow**:
+```
+/summon-queen → Scribe → Queen → Claude Code Worker Spawning → 3-Phase Execution → Structured Outputs → Scribe Synthesis → DONE
+```
+
+**Phase 1 Success Criteria**:
+- All 8 worker types execute 3-phase workflow consistently
+- Standardized output files generated for every worker  
+- Scribe synthesis testing enabled with structured worker outputs
+- End-to-end workflow completes from `/summon-queen` to synthesis
+
+### 4.2 Phase 2: Analysis Implementation + Intelligent Conflict Resolution
+
+**Goal**: Implement the analysis from Phase 1 and handle cross-worker conflicts during implementation
+
+**What Gets Added in Phase 2**:
+After Phase 1 analysis and synthesis is complete, Phase 2 adds:
+- **Implementation Execution**: Implement the files modifications and features identified in Phase 1 analysis
+- **Implementation Conflict Detection**: Analyze conflicts that arise during actual implementation 
+- **Queen-Based Resolution**: Use Queen to resolve implementation conflicts and update coordination strategies  
+- **Context Preservation**: Maintain worker analysis state during implementation and conflict resolution cycles
+- **Iterative Implementation**: Re-execute implementation steps with updated context and constraints
+
+**Phase 2 Workflow Enhancement**:
+```
+Phase 1 Analysis & Synthesis → Implementation Execution → Implementation Conflict Detection → Queen Resolution → Context Updates → Iterative Implementation → Final Implementation Complete
+```
+
+**Implementation Conflict Resolution Examples**:
+- **File Modification Conflicts**: Security worker wants to modify auth.py, Backend worker also modifying auth.py → Queen coordinates sequential or merged modifications
+- **Implementation Dependencies**: Frontend implementation requires API endpoint that Backend implementation deprecates → Queen coordinates implementation order and API evolution
+- **Resource Implementation Conflicts**: DevOps implementation allocates memory that Backend implementation also needs → Queen balances resource allocation during implementation
+
+**Phase 2 Architecture**:
+```mermaid
+graph TD
+    A[Phase 1 Analysis & Synthesis Complete] --> B[Implementation Execution]
+    B --> C[Implementation Conflict Detection]
+    C --> D{Implementation Conflicts Found?}
+    D -->|No Conflicts| E[Implementation Complete]
+    D -->|Conflicts Detected| F[Queen Implementation Resolution]
+    F --> G[Update Implementation Context]
+    G --> H[Iterative Implementation Steps]
+    H --> C
+    E --> I[Phase 2 Complete]
+    
+    style A fill:#c8e6c9
+    style B fill:#e3f2fd
+    style F fill:#ffcdd2
+    style G fill:#f8bbd9
+    style H fill:#f8bbd9
+    style E fill:#c8e6c9
+    style I fill:#c8e6c9
+```
+
+### 4.3 Phase 3: Delta Updates & Optimization  
+
+**Goal**: Eliminate context loss and minimize re-execution costs
+
+**What Gets Added in Phase 3**:
+- **Delta Update System**: Send only changes/additions instead of full re-execution
+- **Smart Context Preservation**: Maintain 98%+ of previous analysis when updating
+- **Incremental Prompt Building**: Build minimal update prompts that preserve context
+- **Performance Optimization**: Reduce conflict resolution time significantly
+
+**Delta Updates Explained**:
+Instead of re-running entire worker analysis, send only the **changes/additions** needed.
+
+**Example Scenario**:
 ```
 1. Backend Worker completes analysis (30 minutes of work)
 2. Finds: "API needs caching layer, database optimization required"  
@@ -108,7 +285,7 @@ The `/summon-queen` command is the primary interface for triggering hive-mind wo
 4. Queen resolves: "Use encrypted cache with PII filtering"
 ```
 
-**Without Delta Updates (Current):**
+**Without Delta Updates (Phase 2)**:
 ```
 ❌ Re-run entire Backend Worker from scratch
 ❌ Loses 30 minutes of previous analysis
@@ -116,7 +293,7 @@ The `/summon-queen` command is the primary interface for triggering hive-mind wo
 ❌ Inefficient and potentially inconsistent
 ```
 
-**With Delta Updates:**
+**With Delta Updates (Phase 3)**:
 ```
 ✅ Send to Backend Worker: "Apply this change to your existing analysis:
    - Change: Replace simple caching with encrypted cache
@@ -127,733 +304,601 @@ The `/summon-queen` command is the primary interface for triggering hive-mind wo
 ✅ 5 minutes instead of 30 minutes
 ```
 
-### Delta Update Structure:
-```python
-class DeltaUpdate:
-    affected_sections: List[str]  # ["caching", "security"]
-    changes_required: List[str]   # ["Replace cache with encrypted version"]  
-    new_constraints: List[str]    # ["PII filtering required"]
-    related_findings: Dict[str, str]  # {"architect": "Redis recommendation"}
-```
-
-## 3. Architecture Strategy
-
-### 3.1 Phased Implementation Approach
-
-**Why Incremental?**
-- Risk mitigation: Each phase delivers working value
-- Learning: Real-world conflict patterns inform advanced features  
-- Complexity management: Avoid building unused sophisticated features
-- Task Master integration: Need MVP working to provide feedback
-
-### 3.2 Phase Definitions
-
-#### **MVP (Phase 1): Two-Phase Analysis & Implementation Pipeline** 
-- **Goal**: Analysis-first approach with conditional implementation
-- **Assumption**: Queen orchestration plans are sufficient, workers don't need coordination
-- **Workflow**: Task → Scribe → Queen → **Analysis Phase** → Global Synthesis → **Implementation Phase** (conditional) → Done
-- **Risk**: Some conflicts unresolved, but system completes tasks
-
-**Two-Phase Breakdown:**
-- **Phase A (Analysis)**: Workers analyze codebase, identify concerns, locate implementation points
-- **Phase B (Implementation)**: Workers write actual code based on global synthesis (only if task requires implementation)
-
-#### **Phase 2: Conflict Resolution Loop**
-- **Goal**: Handle cross-worker conflicts intelligently  
-- **Addition**: Conflict detection + Queen re-coordination + worker re-execution
-- **Context Handling**: File-based context preservation
-- **Workflow**: MVP + [Conflict Detection → Queen Resolution → Worker Updates] loop
-
-#### **Phase 3: Delta Updates Optimization**
-- **Goal**: Eliminate context loss and reduce re-execution cost
-- **Addition**: Incremental worker updates instead of full re-runs
-- **Context Handling**: Smart prompt building with accumulated context
-
-## 4. Technical Implementation Plan
-
-### 4.1 MVP (Phase 1): Core Execution Pipeline
-
-#### **4.1.1 `/summon-queen` Command Integration**
-
-**Three-Phase Workflow Architecture**:
-
-1. **Phase 1**: Scribe session creation (Pydantic AI)
-2. **Phase 2**: Queen orchestration with shared contracts (Pydantic AI) 
-3. **Phase 3**: Claude Code worker deployment via Task tool
-
-```bash
-# Phase 1: Session Creation
-cd .claude
-python agents/pydantic_ai/cli.py scribe create --task "TASK" --model openai:gpt-5-mini
-
-# Phase 2: Queen Orchestration  
-python agents/pydantic_ai/cli.py queen --session SESSION_ID --task "TASK" --model google-gla:gemini-2.5-pro
-
-# Phase 3: Claude Code Worker Deployment
-# Parse Queen's orchestration plan and spawn workers via Task tool
-```
-
-#### **4.1.2 Claude Code Worker Deployment Architecture**
-
-**After Queen orchestration, Claude Code regains control and spawns Claude Code workers:**
-
-```javascript
-// For each worker in Queen's orchestration plan:
-Use Task tool with:
-- subagent_type: [worker-type] (e.g., "analyzer-worker", "backend-worker", "frontend-worker")
-- prompt: "You are a Claude Code worker assigned to session [SESSION_ID].
-
-ORCHESTRATION_CONTEXT:
-- Task: [WORKER_SPECIFIC_TASK_FROM_QUEEN]
-- Shared Contracts: [PRE_ESTABLISHED_DATA_CONTRACTS]  
-- Dependencies: [WORKER_DEPENDENCIES]
-
-Your execution steps:
-1. Navigate to .claude/agents/pydantic_ai/
-2. Execute: python cli.py [your-pydantic-worker-type] --session [SESSION_ID] --task '[TASK]'
-3. Use shared contracts from Queen's orchestration plan
-4. Follow coordination protocols and report progress
-5. Use --model google-gla:gemini-2.5-flash if defaults fail"
-```
-
-**Claude Code → Pydantic AI Worker Architecture**:
-```
-Claude Code Worker        Pydantic AI Worker
-├── analyzer-worker    → python cli.py analyzer     (Security, performance analysis)
-├── architect-worker   → python cli.py architect    (System design, architecture)
-├── backend-worker     → python cli.py backend      (API, database implementation)
-├── frontend-worker    → python cli.py frontend     (UI/UX, component development)
-├── designer-worker    → python cli.py designer     (Design systems, accessibility)
-├── devops-worker      → python cli.py devops       (Infrastructure, deployment)
-├── researcher-worker  → python cli.py researcher   (Technical research, standards)
-└── test-worker        → python cli.py test         (Testing strategy, quality assurance)
-```
-
-**Key Innovation**: Two-tier architecture where Claude Code workers provide timeout immunity and creative flexibility, while Pydantic AI workers provide structured setup and logging.
-
-#### **4.1.3 Always-Delegate Architecture: Optimal Reliability Strategy**
-
-**Core Principle**: Pydantic AI provides structured foundation, Claude Code handles all analysis execution.
-
-**Strategic Advantages**:
-
-**1. Parallelization Benefits**:
-- **Task Tool Limitation**: ~3 parallel tasks maximum per Claude Code session
-- **Agent Spawning Advantage**: 6+ parallel Claude Code agents possible  
-- **Performance Gain**: ~2x faster execution for complex orchestrations
-- **Scalability**: More workers = more parallelization (no bottlenecks)
-
-**2. Timeout Immunity**:
-- **Docker-Claude Risk**: Complex tasks timeout unpredictably
-- **Claude Code Advantage**: No execution time limits on agent sessions
-- **Deep Analysis Support**: Persistent context for extensive codebase exploration
-- **Creative Synthesis**: Unlimited time for iterative thinking and novel insights
-
-**3. Hybrid Rigor + Creativity**:
-```javascript
-Each Claude Code Agent Workflow:
-├── Phase 1: python cli.py [worker] --phase setup
-│   ├── ✅ Structured session integration & logging (Pydantic AI rigor)
-│   ├── ✅ Progress event tracking and validation
-│   ├── ✅ Context loading and baseline analysis
-│   └── ✅ Systematic methodology foundation
-│
-├── Phase 2: Claude Code Creative Analysis  
-│   ├── 🎨 Takes structured foundation as starting point
-│   ├── 🔍 Performs adaptive analysis (no schema constraints)
-│   ├── 💡 Generates novel insights and discoveries
-│   └── 📝 Creates task-specific markdown (format follows findings)
-│
-└── Phase 3: python cli.py [worker] --phase output
-    ├── 🔧 Structures creative findings into adaptive JSON schemas
-    ├── ✅ Validates discoveries against integration requirements
-    ├── 📊 Ensures downstream compatibility
-    └── ✅ Complete progress logging and session cleanup
-```
-
-**4. Output Flexibility**:
-- **Markdown Output**: Completely adaptive format that varies by task and findings
-- **JSON Output**: Dynamic schemas that adapt to analytical discoveries (not predefined)
-- **Schema Evolution**: JSON structure follows insights, not rigid templates
-- **Integration Ready**: Structured validation when needed, creative freedom when beneficial
-
-**Why This Design**:
-- **Analysis-first approach** prevents premature implementation
-- **Conditional implementation** supports both analysis-only and full implementation tasks  
-- **Timeout immunity** enables complex analytical workflows
-- **Maximum parallelization** through agent spawning architecture
-- **Rigorous creativity** combines structured foundation with flexible execution
-- **Global synthesis** provides comprehensive context before code changes
-- **Clear phase separation** enables better quality control and progress tracking
-- **Session-based** tracking maintains all state across both phases
-
-#### **4.1.4 Detailed Implementation Specifications**
-
-**Worker Assignment Strategy**:
-- **1:1 Mapping**: Each Queen worker assignment = one Claude Code agent spawn
-- **No Worker Duplication**: Single backend agent handles all backend tasks (regardless of quantity)
-- **Direct Delegation**: Queen's `worker_assignments` array directly drives Claude Code spawning decisions
-
-**Orchestration Plan Distribution**:
-- **Self-Service Model**: Each Claude Code agent reads full orchestration plan from session files
-- **Context Extraction**: Agents extract their specific tasks and dependencies independently
-- **Structured Foundation**: Queen's organization enables easy self-extraction by agents
-
-**3-Phase CLI Implementation**:
-```bash
-# Phase 1: Structured Setup & Logging
-python cli.py [worker] --phase setup --session SESSION_ID
-
-# Phase 2: Claude Code Creative Analysis (pure Claude Code execution)
-# Agent performs adaptive analysis using Phase 1 foundation
-
-# Phase 3: Structured Output & Integration  
-python cli.py [worker] --phase output --session SESSION_ID --creative-findings "[INSIGHTS]"
-```
-
-**Shared Contract Coordination**:
-- **Direct Injection**: Claude Code includes shared contracts in agent spawn prompts
-- **Context Packaging**: Each agent receives relevant contracts as part of orchestration context
-- **Integration Ready**: Contracts ensure compatibility across worker outputs
-
-**Conflict Resolution Implementation**:
-1. **Real-time Logging**: Agents log blocking points to `EVENTS.jsonl` during execution
-2. **Post-Execution Review**: Queen analyzes event logs after all workers complete
-3. **Conflict Identification**: Blocking points indicate cross-worker conflicts or dependencies
-4. **Smart Re-spawning**:
-   - **Same Agent + Updated Context**: When existing agent has right expertise
-   - **New Agent Spawning**: When different expertise or approach needed
-5. **Iterative Resolution**: Process repeats until no blocking points remain
-
-**File Structure & Results Management**:
-- **Existing Structure**: Continue using `session_directory/workers/notes/` organization
-- **Agent Subdirectories**: Each worker creates organized output within notes structure
-- **Progressive Results**: Phase 1 → Phase 2 → Phase 3 outputs accumulated per worker
-
-**Final Synthesis Strategy**:
-- **Claude Code Synthesis**: Final synthesis handled by Claude Code agent (not Pydantic AI)
-- **Adaptive Integration**: Unstructured synthesis accommodates varied analysis outputs
-- **Creative Consolidation**: Synthesis agent can adapt format to findings rather than rigid templates
-
-**Key Implementation Philosophy**: **Structure Enables Flexibility**
-- Queen provides organized foundation for self-coordination
-- Agents operate autonomously within structured context
-- Conflict resolution is reactive based on actual (not predicted) blocking points
-- Creative work remains unstructured while maintaining integration compatibility
-
-#### **4.1.5 Initial Testing Results (Task Master Task 9)**
-
-**Test Scenario**: "Analyze security vulnerabilities in the crypto-data service API endpoints and recommend implementation improvements"
-
-**✅ Successful Components**:
-- **Session Creation**: Successfully created session `2025-09-05-16-07-crypto-api-security-audit`
-- **Worker Spawning**: 4 Claude Code agents successfully spawned in parallel
-- **Parallelization**: Confirmed 6+ agent spawning advantage over Task tool limitations
-- **Architecture Flow**: Three-phase workflow (Scribe → Queen → Claude Code agents) executed correctly
-
-**🐛 Issues Identified**:
-
-1. **Missing Backend Worker Assignment**:
-   - **Issue**: Queen did not assign backend worker for API security analysis
-   - **Expected**: Backend worker should be included for API endpoint analysis
-   - **Impact**: Potential gap in technical implementation recommendations
-
-2. **Worker Prompt Loading Problem**:
-   - **Issue**: Claude Code agents immediately spawned Pydantic AI with generic system prompts
-   - **Expected**: Agents should first read their specific prompt files before calling Pydantic AI
-   - **Current**: Generic "You are the Architect Worker, a strategic system design specialist..." 
-   - **Required**: Agents must load `.claude/agents/pydantic_ai/workers/prompts/[worker-type].prompt` first
-
-**🔧 Required Fixes**:
-
-1. **Worker Prompt Loading Sequence**:
-```javascript
-Each Claude Code Agent Must:
-├── Step 1: Read orchestration plan from session files
-├── Step 2: Load specific prompt from workers/prompts/[worker-type].prompt  
-├── Step 3: Combine orchestration context + specific prompt
-└── Step 4: Execute python cli.py [worker] with combined context
-```
-
-2. **Queen Worker Assignment Review**:
-   - Review Queen's decision logic for API security scenarios
-   - Ensure backend worker inclusion for API endpoint analysis
-   - Validate worker assignment completeness
-
-**📊 Test Results Summary**:
-- **Architecture**: ✅ Working (parallel spawning, session management)
-- **Worker Coordination**: ✅ Working (4 agents spawned correctly)
-- **Prompt Loading**: ❌ Needs Fix (agents must read specific prompts first)
-- **Worker Assignment**: ⚠️ Review Needed (backend worker missing for API task)
-
-**Overall Assessment**: Architecture fundamentals working well, minor fixes needed for complete functionality.
-
-#### **4.1.2 Worker Execution Engine - Two Phase System**  
-```python
-def execute_workers_analysis_phase(session_id: str, orchestration_plan: QueenOrchestrationPlan) -> List[WorkerResult]:
-    """Execute workers in ANALYSIS mode - no code implementation"""
-    
-    analysis_assignments = modify_assignments_for_analysis_phase(orchestration_plan.worker_assignments)
-    
-    if orchestration_plan.execution_strategy == "parallel":
-        return execute_all_workers_concurrent(session_id, analysis_assignments, mode="analysis")
-    elif orchestration_plan.execution_strategy == "sequential":  
-        return execute_workers_in_sequence(session_id, analysis_assignments, mode="analysis")
-    else:  # hybrid
-        return execute_hybrid_strategy(session_id, analysis_assignments, mode="analysis")
-
-def execute_workers_implementation_phase(session_id: str, orchestration_plan: QueenOrchestrationPlan, 
-                                       global_synthesis: SynthesisReport) -> List[WorkerResult]:
-    """Execute workers in IMPLEMENTATION mode - write actual code"""
-    
-    implementation_assignments = modify_assignments_for_implementation_phase(
-        orchestration_plan.worker_assignments, 
-        global_synthesis
-    )
-    
-    return execute_all_workers_concurrent(session_id, implementation_assignments, mode="implementation")
-
-def modify_assignments_for_analysis_phase(assignments: List[WorkerAssignment]) -> List[WorkerAssignment]:
-    """Modify worker prompts for analysis-only mode"""
-    
-    analysis_assignments = []
-    for assignment in assignments:
-        analysis_assignment = assignment.copy()
-        analysis_assignment.task_focus = f"""
-        ANALYSIS PHASE ONLY - DO NOT IMPLEMENT CODE
-        
-        Analyze the codebase for: {assignment.task_focus}
-        
-        Your tasks:
-        1. Identify existing code patterns and architecture
-        2. Locate where changes would need to be implemented  
-        3. Identify potential concerns and integration points
-        4. Assess complexity and dependencies
-        5. Document findings for implementation phase
-        
-        DO NOT write or modify any code files.
-        """
-        analysis_assignments.append(analysis_assignment)
-        
-    return analysis_assignments
-
-def requires_implementation(task_description: str) -> bool:
-    """Determine if task requires implementation or analysis-only"""
-    
-    analysis_only_keywords = [
-        "analyze", "review", "audit", "assess", "evaluate", "examine", 
-        "investigate", "understand", "document", "report"
-    ]
-    
-    implementation_keywords = [
-        "implement", "build", "create", "add", "develop", "fix", "update",
-        "refactor", "optimize", "integrate", "deploy"
-    ]
-    
-    task_lower = task_description.lower()
-    
-    # Explicit analysis-only indicators
-    if any(keyword in task_lower for keyword in analysis_only_keywords):
-        # Check if also has implementation keywords
-        if not any(keyword in task_lower for keyword in implementation_keywords):
-            return False
-    
-    # Default to implementation if ambiguous
-    return True
-```
-
-**Why This Design**:
-- **Analysis-first prevents premature implementation** - workers understand the full context before coding
-- **Conditional implementation** supports pure analysis tasks (audits, reviews) vs implementation tasks
-- **Global synthesis integration** - implementation phase receives comprehensive analysis context
-- **Clear mode separation** - explicit instructions prevent workers from coding during analysis
-- **Intelligent task detection** - automatic determination of analysis-only vs implementation-required tasks
-
-#### **4.1.3 Claude Agent Integration**
-```python 
-def spawn_worker_via_claude_agent(session_id: str, worker_assignment: WorkerAssignment) -> WorkerResult:
-    """Spawn Claude agent to execute specific worker"""
-    
-    task_prompt = f"""
-    Navigate to .claude/agents/pydantic_ai/ and execute:
-    python cli.py {worker_assignment.worker_type} --session {session_id} --task "{worker_assignment.task_focus}"
-    
-    Report back with:
-    - Worker execution success/failure
-    - Output file locations  
-    - Any errors encountered
-    """
-    
-    return claude_code_task_tool(
-        subagent_type=f"{worker_assignment.worker_type}",
-        prompt=task_prompt
-    )
-```
-
-**Why This Design**:
-- **Reuses existing Claude Code infrastructure** - no new spawning mechanisms
-- **Task tool integration** - leverages proven Claude agent spawning
-- **Error handling** built into Claude Code framework
-- **Logging integration** - all worker execution logged via Claude Code
-
-### 4.2 Phase 2: Conflict Resolution Loop
-
-#### **4.2.1 Conflict Detection System**
-```python
-class ConflictDetector:
-    def detect_cross_worker_conflicts(self, worker_results: List[WorkerResult]) -> List[Conflict]:
-        """Analyze worker outputs for conflicts requiring resolution"""
-        
-        conflicts = []
-        
-        # Check for direct contradictions
-        conflicts.extend(self._detect_contradictions(worker_results))
-        
-        # Check for dependency violations  
-        conflicts.extend(self._detect_dependency_violations(worker_results))
-        
-        # Check for resource conflicts
-        conflicts.extend(self._detect_resource_conflicts(worker_results))
-        
-        return conflicts
-        
-    def _detect_contradictions(self, results: List[WorkerResult]) -> List[Conflict]:
-        """Find workers recommending opposing solutions"""
-        # Example: Security says "disable feature X", Backend says "optimize feature X"
-        
-    def _detect_dependency_violations(self, results: List[WorkerResult]) -> List[Conflict]:  
-        """Find workers with incompatible dependencies"""
-        # Example: Frontend assumes API endpoint, Backend deprecates endpoint
-        
-    def _detect_resource_conflicts(self, results: List[WorkerResult]) -> List[Conflict]:
-        """Find workers competing for same resources"""
-        # Example: DevOps allocates CPU to caching, Backend needs CPU for processing
-```
-
-**Why This Design**:
-- **Structured conflict types** enable targeted resolution strategies
-- **Extensible** - easy to add new conflict detection patterns
-- **Evidence-based** - conflicts include specific worker outputs as proof
-- **Machine-readable** - enables automatic resolution attempts
-
-#### **4.2.2 Context Preservation System**
-```python
-class SessionContext:
-    def save_worker_context(self, session_id: str, worker_result: WorkerResult):
-        """Save worker analysis state before conflict resolution"""
-        
-        context_file = f"{session_path}/workers/context/{worker_result.worker_type}_context.json"
-        
-        context_data = {
-            "execution_round": worker_result.execution_round,
-            "findings": worker_result.key_findings,
-            "recommendations": worker_result.recommendations,
-            "analysis_sections": worker_result.analysis_sections,
-            "timestamp": iso_now()
-        }
-        
-        save_json(context_file, context_data)
-        
-    def build_context_aware_prompt(self, worker_type: str, base_prompt: str, 
-                                  conflict_resolutions: List[ConflictResolution]) -> str:
-        """Build worker prompt that includes previous context"""
-        
-        previous_context = self.load_worker_context(session_id, worker_type)
-        
-        enhanced_prompt = f"""
-        {base_prompt}
-        
-        ## Previous Analysis Context (Execution Round {previous_context.execution_round})
-        Your previous findings (still valid):
-        {previous_context.findings}
-        
-        ## Conflict Resolutions Applied  
-        {format_conflict_resolutions(conflict_resolutions)}
-        
-        ## Current Task
-        Update your analysis incorporating the conflict resolutions above.
-        Focus on affected areas only - preserve valid previous analysis.
-        """
-        
-        return enhanced_prompt
-```
-
-**Why This Design**:
-- **Session files as shared memory** - persistent across worker executions
-- **Round-based context** - clear separation between execution attempts
-- **Selective updates** - workers focus on changed areas only
-- **Audit trail** - complete history of analysis evolution
-
-### 4.3 Phase 3: Delta Updates Optimization
-
-#### **4.3.1 Smart Prompt Building** 
-```python
-class DeltaPromptBuilder:
-    def build_delta_update_prompt(self, worker_type: str, conflict_resolution: ConflictResolution,
-                                previous_context: WorkerContext) -> str:
-        """Build minimal update prompt that preserves context"""
-        
-        affected_sections = self._identify_affected_sections(conflict_resolution, previous_context)
-        
-        delta_prompt = f"""
-        ## Context Preservation
-        Your previous analysis remains completely valid. DO NOT re-analyze everything.
-        
-        Previous findings to preserve:
-        {previous_context.findings_to_preserve}
-        
-        ## Delta Update Required
-        Update ONLY these specific sections based on conflict resolution:
-        
-        Affected sections: {affected_sections}
-        Changes required: {conflict_resolution.changes_required}  
-        New constraints: {conflict_resolution.new_constraints}
-        
-        ## Integration Points
-        Related findings from other workers:
-        {self._get_related_worker_findings(worker_type, previous_context)}
-        
-        ## Output Format
-        Provide updated analysis for affected sections only.
-        Reference preserved previous findings where relevant.
-        """
-        
-        return delta_prompt
-```
-
-**Why This Design**:  
-- **Explicit instruction** to preserve previous work prevents re-analysis
-- **Targeted updates** minimize computational cost and time
-- **Cross-worker integration** ensures consistency without full re-execution
-- **Structured output** enables clean merging with previous analysis
-
-## 5. Two-Phase Workflow Examples
-
-### 5.1 Analysis-Only Task Example
-
-**Command**: `/summon-queen "Analyze the SmartWalletFX crypto-data service for security vulnerabilities"`
-
-**Phase A (Analysis)**:
-- **Analyzer Worker**: Identifies potential SQL injection points, authentication weaknesses
-- **Architect Worker**: Reviews data flow architecture, identifies exposure points  
-- **Backend Worker**: Examines API endpoints, database access patterns
-- **Global Synthesis**: "3 critical vulnerabilities found: SQL injection in query builder, weak JWT validation, exposed API keys in config files"
-
-**Phase B (Implementation)**: **SKIPPED** - Analysis-only task
-**Result**: Security audit report with findings and recommendations
-
-### 5.2 Implementation Task Example  
-
-**Command**: `/summon-queen "Implement portfolio rebalancing feature with automated execution"`
-
-**Phase A (Analysis)**:
-- **Frontend Worker**: Identifies UI integration points, state management requirements
-- **Backend Worker**: Locates trading engine, identifies database schema changes needed
-- **DevOps Worker**: Reviews infrastructure capacity, identifies deployment requirements
-- **Global Synthesis**: "Implementation requires: new portfolio_rebalancing table, 3 new API endpoints, React dashboard updates, background job processing"
-
-**Phase B (Implementation)**: 
-- **Frontend Worker**: Implements dashboard UI using global synthesis findings
-- **Backend Worker**: Creates API endpoints and database migrations based on analysis  
-- **DevOps Worker**: Sets up background job processing infrastructure
-- **Final Synthesis**: Complete implementation with testing plan and deployment guide
-
-### 5.3 Workflow Decision Logic
-
-```bash
-# Analysis-only tasks (Implementation Phase SKIPPED):
-/summon-queen "Analyze security of API endpoints"
-/summon-queen "Review code quality in backend service"  
-/summon-queen "Audit database performance"
-
-# Implementation tasks (Both Phases EXECUTED):
-/summon-queen "Implement user authentication system"
-/summon-queen "Add real-time notifications feature"
-/summon-queen "Fix memory leaks in processing pipeline"
-```
-
-## 6. Implementation Flow
-
-### 6.1 MVP Workflow Implementation
-```python
-# shared/orchestration_controller.py - Main Controller
-
-class HiveMindController:
-    """Main orchestration controller for hive-mind execution pipeline"""
-    
-    def execute_hive_mind_workflow(self, task_description: str) -> SynthesisReport:
-        """Execute complete hive-mind workflow from task to synthesis"""
-        
-        try:
-            # Phase 1: Session Creation
-            session_id = self._create_session(task_description)
-            
-            # Phase 2: Queen Orchestration  
-            orchestration_plan = self._generate_orchestration_plan(session_id, task_description)
-            
-            # Phase 3: Worker Execution
-            worker_results = self._execute_workers(session_id, orchestration_plan)
-            
-            # Phase 4: Synthesis
-            synthesis_report = self._generate_synthesis(session_id)
-            
-            return synthesis_report
-            
-        except Exception as e:
-            self._handle_workflow_failure(session_id, str(e))
-            raise
-    
-    def _create_session(self, task_description: str) -> str:
-        """Create new session via Scribe"""
-        return self.claude_agent_spawn(
-            agent_type="scribe-worker",
-            task=f"scribe create --task '{task_description}'"
-        )
-    
-    def _generate_orchestration_plan(self, session_id: str, task_description: str) -> QueenOrchestrationPlan:
-        """Generate orchestration plan via Queen"""
-        return self.claude_agent_spawn(
-            agent_type="queen-orchestrator", 
-            task=f"queen --session {session_id} --task '{task_description}'"
-        )
-    
-    def _execute_workers(self, session_id: str, orchestration_plan: QueenOrchestrationPlan) -> List[WorkerResult]:
-        """Execute all workers according to orchestration strategy"""
-        
-        if orchestration_plan.execution_strategy == "parallel":
-            return self._execute_workers_parallel(session_id, orchestration_plan.worker_assignments)
-        elif orchestration_plan.execution_strategy == "sequential":
-            return self._execute_workers_sequential(session_id, orchestration_plan.worker_assignments)
-        else:  # hybrid
-            return self._execute_workers_hybrid(session_id, orchestration_plan.worker_assignments)
-```
-
-### 6.2 Claude Code Integration Points
-
-#### **6.2.1 Entry Point for Claude Agents**
-```python
-# Add to shared/__init__.py for easy import
-from .orchestration_controller import HiveMindController
-
-# Usage in Claude Code agents:
-def handle_complex_task(task_description: str):
-    """Handle Level 3+ complexity tasks via hive-mind"""
-    
-    controller = HiveMindController()
-    synthesis_report = controller.execute_hive_mind_workflow(task_description)
-    
-    return synthesis_report
-```
-
-#### **6.2.2 Task Complexity Detection**
-```python
-# Add to Claude Code decision logic
-def should_use_hive_mind(task_description: str) -> bool:
-    """Determine if task requires hive-mind orchestration"""
-    
-    complexity_indicators = [
-        "security audit", "architecture review", "performance optimization",
-        "cross-service", "multiple domains", "comprehensive analysis"
-    ]
-    
-    return any(indicator in task_description.lower() for indicator in complexity_indicators)
-```
-
-## 7. Success Metrics
-
-### 7.1 MVP Success Criteria
-- **End-to-end automation**: Claude Code can execute complete hive-mind workflow
-- **Reliability**: >90% successful completion rate for multi-worker tasks
-- **Performance**: Complete execution within 15 minutes for 3-5 worker orchestrations
-- **Quality**: Synthesis reports integrate all worker findings coherently
-
-### 7.2 Phase 2 Success Criteria  
-- **Conflict detection accuracy**: Identify >80% of actual cross-worker conflicts
-- **Resolution effectiveness**: >90% of conflicts resolved without manual intervention
-- **Context preservation**: Workers maintain >95% of previous analysis when re-executed
-- **Loop termination**: All conflict resolution loops terminate within 3 rounds
-
-### 7.3 Phase 3 Success Criteria
+**Phase 3 Success Criteria**:
 - **Efficiency improvement**: Delta updates complete in <25% time of full re-execution
 - **Context accuracy**: >98% of previous findings preserved correctly
 - **Integration quality**: Cross-worker findings integrated without contradictions
 
-## 8. Risk Mitigation
+## 3.4 Phase Implementation Strategy & Risk Management
 
-### 8.1 Technical Risks
-- **Infinite loops**: Max 3 coordination rounds + circuit breaker
-- **Context corruption**: Versioned context files + rollback capability  
-- **Worker failures**: Graceful degradation + partial synthesis capability
-- **Session conflicts**: Session-level locking + unique session IDs
+### 3.4.1 Why Incremental Implementation?
 
-### 8.2 Product Risks
-- **Over-engineering**: Phased approach prevents building unused features
-- **Task Master integration**: Early MVP enables feedback collection
-- **User adoption**: Clear success metrics measure actual value delivery
+**Risk Mitigation Strategy**:
+- **Phase 1 Risk**: Building complex conflict resolution before basic structure works
+- **Mitigation**: Validate core workflow first, ensure timeout immunity and output standardization
+- **Learning Strategy**: Real-world usage patterns inform Phase 2 conflict detection algorithms
 
-## 9. Task Master Integration Points
+**Complexity Management**:
+- **Phase 1**: 4 core components, ~2-3 weeks development
+- **Phase 2**: 6 additional components, builds on Phase 1 foundation  
+- **Phase 3**: 4 optimization components, builds on Phase 2 stability
 
-### 9.1 Entry Point
-- Claude Code agents trigger hive-mind via `/summon-queen` command when complexity > Level 3
-- Task descriptions automatically routed through two-phase execution pipeline
-- Results formatted for Task Master subtask updates
+**Task Master Integration Strategy**:
+- **Phase 1**: Immediate value - structured worker execution for complex tasks
+- **Phase 2**: Enhanced reliability - fewer failed multi-worker tasks
+- **Phase 3**: Performance optimization - faster iteration cycles
 
-**Integration Examples:**
+### 3.4.2 Phase Dependencies & Integration Points
+
+**Phase 1 → Phase 2 Dependencies**:
+```
+Phase 1 Outputs Required for Phase 2:
+├── Standardized worker output formats
+├── Session-based context files  
+├── Event logging system (EVENTS.jsonl)
+├── Worker execution metadata
+└── Established 3-phase workflow patterns
+```
+
+**Phase 2 → Phase 3 Dependencies**:
+```
+Phase 2 Outputs Required for Phase 3:
+├── Conflict detection algorithms
+├── Context preservation patterns
+├── Worker re-execution workflows
+├── Queen resolution strategies
+└── Performance bottleneck identification
+```
+
+**Cross-Phase Integration Patterns**:
+- **File Structure Consistency**: All phases use same session directory structure
+- **Event System Evolution**: Phase 1 events → Phase 2 conflict events → Phase 3 delta events
+- **Worker Template Backward Compatibility**: Phase 3 workers still support Phase 1 basic execution
+
+## 5. Phase 1 Technical Implementation Specification (MVP)
+
+### 5.1 Core Components to Build (Phase 1)
+
+#### **5.1.1 Worker Behavior Structure (ONLY Implementation Needed)**
+
+**CRITICAL**: `/summon-queen`, Scribe, Queen, and worker spawning already work perfectly. 
+
+**ONLY Problem**: Worker agents have unstructured behavior
+
+**ONLY Solution Needed**: Modify existing 8 worker agents to follow 3-phase structured workflow
+
+#### **5.1.2 3-Phase Worker Structure**
+
+**Existing Agent Files to Modify** (8 files in `.claude/agents/`):
+- `analyzer-worker.md`
+- `architect-worker.md` 
+- `backend-worker.md`
+- `designer-worker.md`
+- `devops-worker.md`
+- `frontend-worker.md`
+- `researcher-worker.md`
+- `test-worker.md`
+
+**3-Phase Workflow Structure** (to add to each existing agent file):
+
+**Phase 1: Context Loading & Pydantic AI Invocation**
+1. Read orchestration plan: `Docs/hive-mind/sessions/{session_id}/workers/orchestration/orchestration_plan.json`
+2. Read worker prompt: `Docs/hive-mind/sessions/{session_id}/workers/prompts/{worker_type}_prompt.txt`
+3. Navigate to `.claude/agents/pydantic_ai/`
+4. Execute: `python cli.py {worker_type} --session {session_id} --task "{prompt_content}"`
+
+**Phase 2: Claude Code Creative Analysis**
+- Take control after Pydantic AI completes initial analysis
+- Perform extended creative analysis beyond Pydantic AI capabilities
+- Explore codebase thoroughly with unlimited analysis time
+
+**Phase 3: Structured Output Generation**
+1. Combine Claude Code analysis with Pydantic AI findings
+2. Execute: `python cli.py {worker_type} --session {session_id} --task "{combined_analysis}"`
+3. Pydantic AI creates files in session directory:
+   - `workers/notes/{worker_type}_notes.md` (creative, no template)
+   - `workers/json/{worker_type}_output.json` (structured, based on notes)
+
+#### **5.1.3 No Integration Changes Required**
+
+**CRITICAL**: NO modifications needed to `/summon-queen` command - it already works perfectly!
+
+**Current Workflow (Fully Working)**:
+1. `/summon-queen` invokes Scribe correctly ✅
+2. Scribe creates session with proper structure ✅  
+3. Queen generates orchestration plan with worker assignments ✅
+4. Claude Code spawns appropriate worker agents ✅
+
+**ONLY Missing**: Worker agents don't follow structured 3-phase workflow - that's the ONLY thing to implement
+
+**Key Implementation Details**:
+- **Session ID**: Available from Queen orchestration completion (passed to spawned workers)
+- **Context Files**: Workers access `orchestration_plan.json` and their `{worker_type}_prompt.txt`
+- **Output Creation**: Pydantic AI agents create the 2 output files (no templates needed - creative format)
+- **Directory Structure**: `workers/` subdirectories already exist after Queen orchestration
+
+## 6. Phase 2 Detailed Implementation Specification (Conflict Resolution)
+
+### 6.1 Problem Statement for Phase 2
+
+**Current Limitation of Phase 1**: Phase 1 provides analysis and synthesis but no implementation. After analysis is complete, implementation conflicts can arise during actual code changes.
+
+**Real-World Implementation Conflict Examples**:
+- **Security Worker** analysis recommends "modify auth.py to disable caching for sensitive endpoints"
+- **Backend Worker** analysis simultaneously recommends "modify auth.py to implement aggressive caching"
+- **Implementation Conflict**: Both workers need to modify the same file with conflicting changes
+- **Result**: Implementation deadlock requiring resolution
+
+**Phase 2 Goal**: Implement the analysis from Phase 1 and handle implementation conflicts that arise during actual code modifications.
+
+### 6.2 Core Components Overview (Phase 2)
+
+#### **6.2.1 Implementation Execution System**
+
+**Purpose**: Execute the implementation steps identified in Phase 1 analysis and synthesis.
+
+**How It Works**:
+After Phase 1 analysis completion, the system coordinates implementation of identified changes across all workers.
+
+#### **6.2.2 Implementation Conflict Detection System**
+
+**Purpose**: Automatically identify when worker implementations conflict during actual code execution, preventing implementation deadlocks.
+
+**How It Works**:
+The system monitors implementation execution and detects four specific types of implementation conflicts:
+
+**Type 1: File Modification Conflicts**
+- **What It Detects**: Multiple workers attempting to modify the same file simultaneously
+- **Real Example**: 
+  - Security: "Modify auth.py lines 45-50 to remove session persistence"
+  - Frontend: "Modify auth.py lines 48-52 to implement persistent user sessions"
+- **Detection Method**: Track file modification targets and detect overlapping changes
+- **Severity**: High (blocks implementation execution)
+
+**Type 2: Implementation Dependency Violations**
+- **What It Detects**: Worker implementation steps that create or break dependencies
+- **Real Example**:
+  - Frontend: "Implement WebSocket connection to `/api/realtime` in dashboard.js"  
+  - Backend: "Remove `/api/realtime` endpoint from routes.py due to scaling issues"
+- **Detection Method**: Track API endpoints, function calls, and imports being added/removed during implementation
+- **Severity**: High (causes runtime failures during implementation)
+
+**Type 3: Implementation Resource Conflicts** 
+- **What It Detects**: Workers implementing changes that compete for the same system resources
+- **Real Example**:
+  - DevOps: "Implement Redis caching with 4GB memory allocation in docker-compose.yml"
+  - Backend: "Implement heap size increase to 4GB in application.properties"  
+  - Conflict: Total requirement exceeds available 6GB RAM
+- **Detection Method**: Parse resource allocation changes during implementation and check for conflicts
+- **Severity**: High (causes implementation failures)
+
+**Type 4: Implementation Architecture Inconsistencies**
+- **What It Detects**: Workers implementing conflicting architectural patterns
+- **Real Example**:
+  - Architect: "Implement service separation by creating user-service/ and auth-service/ directories"
+  - DevOps: "Implement monolithic deployment by consolidating all services into single container"
+- **Detection Method**: Monitor directory structure changes and deployment configuration implementations
+- **Severity**: High (fundamental implementation conflicts)
+
+**Output Format**: Each detected implementation conflict includes:
+- Implementation conflict type and severity level
+- Affected workers and specific implementation steps
+- File modification conflicts and overlapping changes
+- Suggested implementation resolution approach  
+- Impact assessment on overall implementation timeline
+
+#### **6.2.3 Queen-Powered Implementation Conflict Resolution Engine**
+
+**Purpose**: Use the Queen agent to intelligently resolve detected implementation conflicts by coordinating file modifications and implementation order.
+
+**How Queen Resolves Implementation Conflicts**:
+
+**Resolution Strategy 1: Sequential Implementation Coordination**
+- **When Used**: Multiple workers need to modify the same file
+- **Example Conflict**: Security and Backend both modifying auth.py
+- **Queen Resolution**: "Security implements session changes first (lines 45-50), then Backend implements caching (lines 51-60)"  
+- **Result**: Both implementations completed without file conflicts
+
+**Resolution Strategy 2: Implementation Merge Coordination**  
+- **When Used**: Conflicting implementation approaches can be merged
+- **Example Conflict**: Frontend implementing WebSocket while Backend removes endpoint
+- **Queen Analysis**: Evaluates implementation dependencies and coordination requirements
+- **Queen Resolution**: "Backend implements new WebSocket endpoint before Frontend connects to it"
+- **Result**: Coordinated implementation order preventing runtime failures
+
+**Resolution Strategy 3: Phased Implementation**
+- **When Used**: Conflicts involve trade-offs between short-term and long-term solutions
+- **Example Conflict**: Monolithic vs microservices architecture
+- **Queen Resolution**: "Phase 1: Monolithic for rapid deployment, Phase 2: Gradual decomposition to microservices"
+- **Result**: Practical implementation timeline that satisfies both approaches
+
+**Resolution Strategy 4: Additional Worker Assignment**
+- **When Used**: Conflicts reveal missing expertise or analysis
+- **Example Conflict**: Frontend and Backend disagree on API design
+- **Queen Resolution**: "Assign API Architect specialist to design optimal contract"  
+- **Result**: New worker spawned with specific expertise to resolve the conflict
+
+**Queen's Decision Process**:
+1. **Context Analysis**: Review full session history and business requirements
+2. **Stakeholder Impact Assessment**: Evaluate impact on users, developers, and operations
+3. **Technical Feasibility Check**: Assess implementation complexity and risks
+4. **Strategic Alignment**: Ensure resolution aligns with overall system goals
+5. **Implementation Guidance**: Provide specific, actionable resolution steps
+
+#### **5.2.3 Context Preservation System**
+
+**Purpose**: Maintain all worker analysis state during conflict resolution cycles, preventing loss of valuable insights and avoiding duplicate work.
+
+**Location**: `.claude/agents/pydantic_ai/shared/context_preservation.py`
+
+**Why Context Preservation is Critical**:
+- **Time Investment**: Workers may spend 20-30 minutes on deep analysis
+- **Insight Value**: Discoveries about codebase architecture and issues must not be lost
+- **Efficiency Goal**: Conflict resolution should take 5-10 minutes, not restart from zero
+
+**What Gets Preserved**:
+
+**Analysis State Preservation**:
+- All identified code locations and file references
+- Discovered patterns and architectural insights  
+- Security vulnerabilities and performance bottlenecks found
+- Integration points and dependency mappings
+- Confidence scores and uncertainty areas
+
+**Relationship Preservation**:
+- Cross-worker references and shared findings
+- Dependency chains identified by multiple workers
+- Shared data contracts and API specifications
+- Integration requirements and constraints
+
+**Execution Metadata Preservation**:
+- Time spent analyzing specific code sections
+- Files examined and depth of analysis performed
+- Insights generated and validation performed
+- Worker-specific methodology and approach used
+
+**How Context is Applied During Updates**:
+
+**Selective Update Instructions**: When a worker needs re-execution due to conflict resolution, they receive:
+- **Complete preserved context**: "Your previous 25-minute analysis identified these 12 security issues..."
+- **Specific conflict updates**: "Only update your caching recommendation based on this Queen resolution..."
+- **Integration requirements**: "Ensure your updated approach aligns with Backend Worker's database optimization..."
+- **Preservation instructions**: "Do not re-analyze the authentication system - reference your previous findings..."
+
+**Context File Structure**:
+```
+session_id/workers/context/
+├── backend_context_round_1.json     # Initial analysis state
+├── backend_context_round_2.json     # Post-conflict resolution state  
+├── security_context_round_1.json    # Preserved security findings
+└── integration_context.json         # Cross-worker shared findings
+```
+
+#### **5.2.4 Iterative Resolution Management System**
+
+**Purpose**: Manage multiple rounds of conflict resolution while preventing infinite loops and ensuring convergence toward implementable solutions.
+
+**Location**: `.claude/agents/pydantic_ai/shared/iterative_execution.py`
+
+**Why Iterative Resolution is Needed**:
+- **Cascade Effects**: Resolving one conflict may create new conflicts
+- **Complex Dependencies**: Some conflicts only become apparent after initial resolutions
+- **Refinement Process**: First resolution attempts may need adjustment based on implementation feasibility
+
+**Iterative Process Flow**:
+
+**Round 1: Initial Conflict Resolution**
+- Detect all obvious conflicts between worker outputs
+- Apply Queen resolutions to most critical conflicts first
+- Re-execute affected workers with updated context
+- Generate updated output files with resolved recommendations
+
+**Round 2: Secondary Conflict Detection**
+- Analyze updated outputs for new conflicts or cascade effects
+- Identify any unresolved dependencies or integration issues  
+- Apply refined Queen resolutions based on Round 1 learnings
+- Focus on edge cases and implementation details
+
+**Round 3: Final Validation and Edge Cases** 
+- Final conflict sweep for any remaining inconsistencies
+- Validate that all resolutions are implementable together
+- Address any remaining technical feasibility concerns
+- Generate final consolidated implementation guidance
+
+**Circuit Breaker Mechanisms**:
+
+**Maximum Rounds Limit**: 3 rounds maximum to prevent infinite loops
+- **Reasoning**: 95% of conflicts should resolve in 1-2 rounds
+- **Fallback**: If conflicts persist after 3 rounds, escalate to human review with detailed conflict analysis
+
+**Convergence Detection**: System recognizes when conflicts are diminishing
+- **Success Metric**: <5% of original conflicts remain unresolved
+- **Early Termination**: Stop iteration if no new conflicts detected and existing conflicts are low-severity
+
+**Quality Gates**: Each round must meet minimum quality thresholds
+- **Context Preservation**: >90% of previous analysis preserved during updates
+- **Resolution Consistency**: New resolutions don't contradict previous resolutions  
+- **Implementation Feasibility**: All resolutions have clear implementation paths
+
+**Monitoring and Reporting**:
+- Track resolution time per round (target: <10 minutes per round)
+- Monitor context preservation accuracy (target: >95%)
+- Report conflict types and resolution strategies for system improvement
+- Generate detailed resolution history for audit and learning
+
+### 5.3 Phase 2 Integration and Testing Strategy
+
+**End-to-End Conflict Resolution Workflow**:
+1. **Phase 1 Completion**: All workers have generated their initial analysis and output files
+2. **Conflict Scanning**: System automatically scans for the 4 types of conflicts described above
+3. **Queen Resolution**: Conflicts are sent to Queen for strategic resolution with business context
+4. **Selective Re-execution**: Only affected workers are re-run with preserved context and new constraints
+5. **Validation**: System verifies that resolutions are implementable and don't create new conflicts
+6. **Final Synthesis**: Consolidated implementation guidance is generated
+
+**Success Metrics for Phase 2**:
+- **Conflict Detection Accuracy**: >80% of real conflicts identified without false positives
+- **Resolution Quality**: >90% of conflicts resolved without manual intervention
+- **Context Preservation**: >95% of original analysis preserved during re-execution
+- **Performance**: Complete conflict resolution cycle in <30 minutes for typical 3-5 worker scenarios
+- **Convergence Rate**: >95% of conflicts resolved within 3 iterative rounds
+
+## 6. Phase 3 Detailed Implementation Specification (Delta Updates & Optimization)
+
+### 6.1 Problem Statement for Phase 3
+
+**Current Limitation of Phase 2**: While Phase 2 successfully resolves conflicts, it still requires significant re-execution time (10-20 minutes per affected worker) even when changes are minimal.
+
+**Real-World Efficiency Problem**:
+- **Backend Worker** spends 25 minutes analyzing entire API architecture
+- **Conflict Detected**: Caching strategy needs adjustment due to security requirements
+- **Phase 2 Solution**: Re-run entire Backend Worker analysis (another 25 minutes)
+- **Actual Need**: Only update the 2-3 sections related to caching (should take 3-5 minutes)
+
+**Phase 3 Goal**: Implement intelligent delta updates that preserve 98%+ of previous analysis while making targeted updates in minimal time.
+
+### 6.2 Core Components Overview (Phase 3)
+
+#### **6.2.1 Intelligent Delta Update Generation System**
+
+**Purpose**: Analyze conflict resolutions and generate minimal update instructions that preserve maximum context while addressing specific changes.
+
+**Location**: `.claude/agents/pydantic_ai/shared/delta_updates.py`
+
+**How Delta Updates Work**:
+
+**Step 1: Semantic Impact Analysis**
+The system analyzes the conflict resolution to understand exactly which parts of the previous analysis are affected:
+
+**Example Conflict Resolution**: "Replace simple caching with encrypted caching + PII filtering"
+
+**Impact Analysis Results**:
+- **Affected Sections**: "API Performance Optimization", "Data Security Implementation"
+- **Unaffected Sections**: "Database Schema Analysis", "Authentication System Review", "Error Handling Patterns"
+- **Dependent Sections**: "Session Management" (references caching), "Audit Logging" (references data handling)
+
+**Step 2: Context Preservation Mapping**
+The system identifies exactly what previous analysis to preserve:
+
+**Preserved Context (95% of original work)**:
+- All database optimization recommendations (15 minutes of analysis)
+- Complete authentication security audit (8 minutes of analysis)  
+- Error handling and logging analysis (5 minutes of analysis)
+- API endpoint documentation and validation (7 minutes of analysis)
+
+**Update Requirements (5% of original work)**:
+- Caching strategy implementation approach (2 sections)
+- Data filtering and encryption requirements (1 section)
+- Integration points with session management (dependency update)
+
+**Step 3: Targeted Update Prompt Generation**
+The system creates a highly specific prompt that tells the worker exactly what to preserve and what to update:
+
+**Delta Prompt Structure**:
+```
+## Context Preservation Mode - CRITICAL
+
+Your previous 25-minute analysis is FULLY PRESERVED except for specific updates below.
+
+## PRESERVED ANALYSIS (DO NOT RE-ANALYZE):
+- Database Optimization: [Specific findings from previous analysis]
+- Authentication Security: [Specific findings from previous analysis]  
+- Error Handling: [Specific findings from previous analysis]
+- API Documentation: [Specific findings from previous analysis]
+
+## TARGETED UPDATES REQUIRED (UPDATE ONLY THESE):
+
+### Section 1: API Performance Optimization
+Previous Finding: "Implement Redis caching for API responses"
+Required Update: "Replace with encrypted Redis caching + automatic PII detection"
+Integration Point: Must align with session management approach
+
+### Section 2: Data Security Implementation  
+Previous Finding: "Standard data validation on API inputs"
+Required Update: "Add PII filtering layer before any caching operations"
+Constraint: Must maintain API response time requirements
+
+## OUTPUT REQUIREMENTS:
+- Reference preserved findings as-is
+- Provide updated analysis for ONLY the 2 sections above
+- Maintain integration consistency with preserved sections
+- Estimated update time: 3-5 minutes
+```
+
+#### **6.2.2 Smart Context Compression and Optimization**
+
+**Purpose**: Optimize prompt efficiency by intelligently compressing preserved context while maintaining all critical information for accurate updates.
+
+**Location**: `.claude/agents/pydantic_ai/shared/smart_context.py`
+
+**Why Context Compression is Needed**:
+- **Token Limitations**: Full previous analysis may exceed context window
+- **Efficiency Goal**: Focus worker attention on relevant preserved context  
+- **Quality Maintenance**: Ensure compressed context maintains update accuracy
+
+**Compression Strategies**:
+
+**Strategy 1: Hierarchical Summarization**
+- **Executive Summary**: High-level overview of preserved analysis (200 tokens)
+- **Critical Findings**: Key discoveries that might affect updates (500 tokens)
+- **Reference Architecture**: System structure context for integration (300 tokens)
+- **Detailed Context**: Full context for sections related to updates (remaining tokens)
+
+**Strategy 2: Semantic Relevance Filtering**
+The system analyzes which preserved findings are most relevant to the required updates:
+
+**High Relevance** (Include full detail):
+- Findings that directly interact with update sections
+- Architecture decisions that constrain update approaches
+- Performance or security requirements that affect updates
+
+**Medium Relevance** (Include summary):
+- Related system components that might be affected
+- Dependencies that should be considered during updates
+- Previous decisions that provide useful context
+
+**Low Relevance** (Include reference only):
+- Independent system analysis unrelated to updates
+- Standalone recommendations with no integration points
+- Complete analysis sections that won't be modified
+
+**Strategy 3: Dynamic Context Window Management**
+- **Target Token Budget**: 8,000 tokens for context (leaving room for response)
+- **Priority Allocation**: Critical findings get guaranteed token allocation
+- **Adaptive Compression**: Increase compression for lower-priority content as needed
+- **Quality Threshold**: Maintain >95% context completeness for update-relevant information
+
+#### **6.2.3 Delta Update Validation and Quality Assurance**
+
+**Purpose**: Ensure that delta updates maintain analysis quality and properly preserve context while making required changes.
+
+**Location**: `.claude/agents/pydantic_ai/shared/delta_validation.py`
+
+**Validation Dimensions**:
+
+**Context Preservation Accuracy**:
+- **Measurement**: Compare preserved references in delta update to original analysis
+- **Target**: >98% accuracy in preserved context references
+- **Validation Method**: Semantic similarity analysis between original and referenced content
+- **Failure Response**: If <95% accuracy, fall back to full re-execution
+
+**Integration Consistency**:
+- **Measurement**: Check that updated sections align with preserved sections
+- **Target**: No contradictions between updated and preserved recommendations
+- **Validation Method**: Cross-reference analysis for logical consistency
+- **Failure Response**: Flag inconsistencies for Queen review and resolution
+
+**Update Completeness**:
+- **Measurement**: Verify that all required changes from conflict resolution are addressed
+- **Target**: 100% of conflict resolution requirements implemented
+- **Validation Method**: Compare delta update output against conflict resolution requirements
+- **Failure Response**: Re-run delta update with enhanced conflict resolution context
+
+**Time and Efficiency Gains**:
+- **Measurement**: Track actual time savings compared to full re-execution
+- **Target**: <25% of full re-execution time while maintaining >95% quality
+- **Validation Method**: Compare delta update time and quality metrics to baseline
+- **Improvement**: Use metrics to optimize delta generation for future updates
+
+### 6.3 Phase 3 Performance and Efficiency Goals
+
+**Dramatic Time Reduction Examples**:
+
+**Scenario 1: Security Compliance Update**
+- **Full Re-execution**: 20 minutes to re-analyze entire security posture
+- **Delta Update**: 4 minutes to update compliance requirements in 3 affected sections
+- **Time Savings**: 80% reduction while maintaining comprehensive security analysis
+
+**Scenario 2: API Integration Change**
+- **Full Re-execution**: 15 minutes to re-analyze complete API architecture
+- **Delta Update**: 3 minutes to update specific endpoint requirements and data contracts
+- **Time Savings**: 80% reduction while preserving all architectural insights
+
+**Scenario 3: Performance Optimization Adjustment**
+- **Full Re-execution**: 30 minutes to re-analyze complete system performance
+- **Delta Update**: 6 minutes to adjust caching strategy and resource allocation
+- **Time Savings**: 80% reduction while maintaining performance optimization analysis
+
+**System-Wide Efficiency Impact**:
+- **Phase 2 Conflict Resolution**: 10-20 minutes per affected worker
+- **Phase 3 Delta Updates**: 3-5 minutes per affected worker  
+- **Overall Improvement**: 5-7x faster conflict resolution cycles
+- **Quality Maintenance**: >98% context preservation ensures no analysis quality loss
+
+### 6.4 Phase 3 Integration and Testing Strategy
+
+**Progressive Rollout Approach**:
+1. **Pilot Testing**: Enable delta updates for low-risk, single-section changes
+2. **Validation Phase**: Monitor preservation accuracy and time savings metrics
+3. **Gradual Expansion**: Enable for more complex, multi-section updates
+4. **Full Integration**: Replace Phase 2 full re-execution with Phase 3 delta updates
+
+**Success Metrics for Phase 3**:
+- **Time Efficiency**: <25% of Phase 2 re-execution time for equivalent updates
+- **Context Preservation**: >98% accuracy in preserving non-affected analysis
+- **Quality Maintenance**: No reduction in update quality compared to full re-execution
+- **Integration Consistency**: Zero conflicts between updated and preserved sections
+- **System Reliability**: >95% success rate for delta updates without fallback to full re-execution
+
+## 7. Implementation Summary
+
+### 7.1 What NOT to Touch (Already Working)
+
+**DO NOT MODIFY - These work perfectly**:
+1. `/summon-queen` command ✅
+2. Scribe agent and session creation ✅
+3. Queen agent and orchestration ✅  
+4. Claude Code worker spawning ✅
+5. Session directory structure ✅
+6. Event logging system ✅
+
+### 7.2 ONLY Required Implementation
+
+**ONLY Modify These 8 Existing Files**:
+- `analyzer-worker.md`
+- `architect-worker.md`
+- `backend-worker.md`  
+- `designer-worker.md`
+- `devops-worker.md`
+- `frontend-worker.md`
+- `researcher-worker.md`
+- `test-worker.md`
+
+**Add 3-Phase Structure to Each**:
+1. **Phase 1**: Read context files → invoke Pydantic AI agent (`python cli.py {worker_type}`)
+2. **Phase 2**: Claude Code takes control for creative analysis  
+3. **Phase 3**: Combine findings → delegate back to Pydantic AI for output generation
+
+**Implementation Instructions for Each Worker**:
+- Modify prompts to ensure workers execute all 3 phases without deviation
+- Workers must read `orchestration_plan.json` and `{worker_type}_prompt.txt` during Phase 1
+- Output files created by Pydantic AI in `workers/notes/` and `workers/json/` directories
+- No templates required - creative format based on task requirements
+
+**Result**: Scribe synthesis testing automatically enabled - no other modifications needed
+
+### 7.3 Integration Testing
+
+**Test End-to-End Workflow** (Only to verify worker behavior changes):
 ```bash
-# In Claude Code agents responding to complex Task Master tasks:
-if task_complexity > 3:
-    result = execute_command("/summon-queen", task_description)
-    update_task_master_subtask(task_id, result)
+/summon-queen "Analyze the crypto-data service for security vulnerabilities"
 ```
 
-### 9.2 Progress Tracking
-- Session events logged to Task Master backlog system
-- Real-time progress updates during worker execution
-- Final synthesis mapped to Task Master task completion
+**Expected Results After Implementation**:
+- Session created by Scribe ✅ (already works)
+- Orchestration plan generated by Queen ✅ (already works)
+- Claude Code workers spawned for each assignment ✅ (already works)
+- **NEW**: Structured output files created by each worker (3-phase workflow)
+- **NEW**: Scribe synthesis completes successfully using structured outputs
 
-### 9.3 Quality Assurance
-- Synthesis reports include confidence scores for Task Master review
-- Conflict resolution trails provide audit capability  
-- Worker-specific outputs available for detailed investigation
+## 8. Phase 1 Success Criteria
 
-## 10. File Structure
-
-### 10.1 New Files to Create
-```
-.claude/agents/pydantic_ai/
-├── shared/
-│   ├── orchestration_controller.py     # Main workflow controller
-│   ├── worker_executor.py             # Worker execution engine  
-│   └── conflict_detector.py           # Conflict detection system
-├── scripts/
-│   └── hive_mind_cli.py               # CLI interface for testing
-```
-
-### 10.2 Modified Files
-```
-shared/__init__.py                      # Export HiveMindController
-shared/models.py                       # Add workflow result models
-```
-
-## 11. Development Roadmap
-
-### 11.1 Phase 1 Development (MVP)
-**Week 1-2**: Core orchestration controller
-**Week 3**: Worker execution engine with parallel/sequential support
-**Week 4**: Claude Code integration and testing
-**Week 5**: End-to-end testing and bug fixes
-
-### 11.2 Phase 2 Development (Conflict Resolution)
-**Week 6-7**: Conflict detection system
-**Week 8**: Context preservation system
-**Week 9**: Conflict resolution loop integration
-**Week 10**: Testing and optimization
-
-### 11.3 Phase 3 Development (Delta Updates)
-**Week 11-12**: Delta prompt building system
-**Week 13**: Performance optimization
-**Week 14**: Final testing and documentation
+- ✅ All 8 worker types execute structured 3-phase workflow
+- ✅ Standardized output files generated consistently  
+- ✅ Scribe synthesis testing enabled and working
+- ✅ End-to-end workflow from `/summon-queen` to synthesis complete
+- ✅ No changes to existing working components (`/summon-queen`, Scribe, Queen, spawning)
 
 ---
 
-**This PRD prioritizes practical implementation over theoretical perfection. Each phase delivers working value while building toward sophisticated multi-agent coordination capabilities.**
+**This updated PRD focuses on Phase 1 MVP: structured worker execution with standardized outputs to enable Scribe synthesis testing. Phase 2 (conflict resolution) and Phase 3 (delta updates) are clearly defined for future implementation.**
