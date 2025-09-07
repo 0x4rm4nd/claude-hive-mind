@@ -194,44 +194,41 @@ class WorkerManager(BaseProtocol):
 
         return created_files
 
-    def read_prompt_file(self, worker_type: str) -> Dict[str, Any]:
+    def read_prompt_file(self, worker_type: str) -> str:
         """
-        Read and parse worker-specific prompt file.
+        Read worker-specific prompt file as plain text.
 
         Returns:
-            Dict containing parsed prompt data including task instructions,
-            focus areas, dependencies, success criteria, and output requirements.
+            String containing the Queen-generated prompt content.
         """
         try:
             # Get session path using unified session management
             session_path = SessionManagement.get_session_path(self.config.session_id)
             prompt_file_path = f"{session_path}/workers/prompts/{worker_type}.prompt"
 
-            # Parse standard format
-            prompt_data = self._parse_prompt_content(prompt_file_path)
-
-            # Validate required fields
-            self._validate_prompt_data(prompt_data)
+            # Read plain text prompt
+            prompt_content = self._parse_prompt_content(prompt_file_path)
 
             # Store for later reference
-            self.prompt_data = prompt_data
+            self.prompt_data = prompt_content
 
-            # Log successful prompt reading
-            SessionManagement.append_to_events(
-                self.config.session_id,
+            # Log successful prompt reading with relative path
+            try:
+                project_root = SessionManagement.detect_project_root()
+                relative_path = prompt_file_path.replace(f"{project_root}/", "") if prompt_file_path.startswith(project_root) else prompt_file_path
+            except:
+                relative_path = prompt_file_path
+                
+            self.log_event(
+                "prompt_file_read",
                 {
-                    "type": "prompt_file_read",
-                    "agent": self.config.agent_name or worker_type,
-                    "details": {
-                        "status": "success",
-                        "file": prompt_file_path,
-                        "worker": worker_type,
-                    },
-                    "timestamp": iso_now(),
+                    "status": "success",
+                    "file": relative_path,
+                    "worker": worker_type,
                 },
             )
 
-            return prompt_data
+            return prompt_content
 
         except FileNotFoundError as e:
             # CRITICAL: Prompt file must exist - protocol violation
@@ -240,7 +237,7 @@ class WorkerManager(BaseProtocol):
             ) from e
 
         except Exception as e:
-            raise
+            raise e
 
     def get_task_instructions(self, worker_type: str = None) -> Dict[str, Any]:
         """Get parsed task instructions for the worker"""
@@ -321,73 +318,21 @@ Focus on actionable insights within your area of expertise."""
             else "General system analysis required"
         )
 
-    def _parse_prompt_content(self, file_path: str) -> Dict[str, Any]:
+    def _parse_prompt_content(self, file_path: str) -> str:
         """
-        Parse prompt file content into structured data.
+        Read prompt file content as plain text.
 
-        Expected format:
-        - YAML frontmatter with metadata
-        - Markdown sections for different instruction types
+        Queen-generated prompts are plain text format, not YAML frontmatter.
         """
         try:
             with open(file_path, "r", encoding="utf-8") as f:
-                content = f.read()
-
-            # Split YAML frontmatter and markdown content
-            if not content.startswith("---"):
-                raise ValueError("Prompt file must start with YAML frontmatter")
-
-            # Find the end of frontmatter
-            parts = content.split("---", 2)
-            if len(parts) < 3:
-                raise ValueError("Invalid YAML frontmatter format")
-
-            frontmatter_text = parts[1].strip()
-            markdown_content = parts[2].strip()
-
-            # Parse YAML frontmatter
-            frontmatter = yaml.safe_load(frontmatter_text) or {}
-
-            # Parse markdown sections
-            markdown_sections = self._parse_markdown_sections(markdown_content)
-
-            # Combine into structured data
-            return {
-                # From YAML frontmatter
-                "worker_type": frontmatter.get("worker_type", ""),
-                "session_id": frontmatter.get("session_id", ""),
-                "task_description": frontmatter.get("task_focus", ""),
-                "priority": frontmatter.get("priority", "medium"),
-                "estimated_duration": frontmatter.get("estimated_duration", "1-2h"),
-                "complexity_level": frontmatter.get("complexity_level", 1),
-                "target_services": frontmatter.get("target_services", []),
-                "primary_target": frontmatter.get("primary_target", "unknown"),
-                "dependencies": frontmatter.get("dependencies", []),
-                "focus_areas": frontmatter.get("focus_areas", []),
-                "created_by": frontmatter.get("created_by", "unknown"),
-                # From markdown sections
-                "worker_expertise": markdown_sections.get("worker_expertise", ""),
-                "rationale": markdown_sections.get("strategic_rationale", ""),
-                "success_criteria": markdown_sections.get("success_criteria", []),
-                "output_requirements": markdown_sections.get("output_requirements", {}),
-                "available_tools": markdown_sections.get("available_tools", []),
-                "codebase_context": markdown_sections.get("codebase_context", {}),
-                "risk_context": markdown_sections.get("critical_risk_context", []),
-                "coordination_strategy": markdown_sections.get(
-                    "strategic_coordination", []
-                ),
-                # Combined metadata
-                "timeout": 3600,  # Default timeout
-                "full_content": content,
-                "parsed_sections": list(markdown_sections.keys()),
-            }
+                content = f.read().strip()
+            return content
 
         except FileNotFoundError:
             raise FileNotFoundError(f"Prompt file not found: {file_path}")
-        except yaml.YAMLError as e:
-            raise ValueError(f"Invalid YAML frontmatter in prompt file: {e}")
         except Exception as e:
-            raise RuntimeError(f"Error parsing prompt file {file_path}: {e}")
+            raise RuntimeError(f"Error reading prompt file {file_path}: {e}")
 
     def _parse_markdown_sections(self, markdown_content: str) -> Dict[str, Any]:
         """Parse markdown sections into structured data"""
@@ -490,23 +435,6 @@ Focus on actionable insights within your area of expertise."""
             # Default: return as string
             return content
 
-    def _validate_prompt_data(self, data: Dict[str, Any]) -> None:
-        """Validate that prompt data contains required fields"""
-        required_fields = ["task_description", "focus_areas", "success_criteria"]
-
-        for field in required_fields:
-            if field not in data or not data[field]:
-                self.log_debug(
-                    "Prompt validation failed - missing required field",
-                    {
-                        "missing_field": field,
-                        "required_fields": required_fields,
-                        "available_fields": list(data.keys()),
-                        "validation_failure": True,
-                    },
-                    "ERROR",
-                )
-                raise ValueError(f"Missing required field in prompt: {field}")
 
 
 def create_worker_prompts_from_plan(
