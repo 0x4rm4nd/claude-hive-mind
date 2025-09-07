@@ -1,0 +1,146 @@
+{
+  "analysis_metadata": {
+    "session_id": "{{SESSION_ID}}",
+    "timestamp": "{{TIMESTAMP}}",
+    "components_analyzed": 0,
+    "analysis_duration": "{{DURATION}}",
+    "worker_type": "architect"
+  },
+  
+  "current_architecture_assessment": "Template - Assessment of current architectural state",
+  
+  "scores": {
+    "architectural_maturity_score": 0,
+    "architecture_quality_score": 0,
+    "maintainability_score": 0,
+    "extensibility_score": 0,
+    "overall_score": 0
+  },
+  
+  "architectural_recommendations": [
+    {
+      "id": "ARCH-REC-001-TEMPLATE",
+      "category": "Template - remove if no architectural recommendations",
+      "recommendation": "Specific architectural recommendation",
+      "rationale": "Why this recommendation is important",
+      "implementation_effort": "low|medium|high",
+      "priority": "critical|high|medium|low",
+      "dependencies": ["Other components this depends on"],
+      "risks": ["Potential risks or trade-offs"]
+    }
+  ],
+  
+  "technology_decisions": [
+    {
+      "id": "TECH-001-TEMPLATE",
+      "decision_type": "Template - remove if no technology decisions",
+      "recommended_technology": "Recommended technology or approach",
+      "alternatives_considered": ["Alternative technologies evaluated"],
+      "selection_criteria": ["Key factors in decision making"],
+      "pros": ["Advantages of recommended choice"],
+      "cons": ["Disadvantages or limitations"],
+      "migration_complexity": "trivial|moderate|complex|major"
+    }
+  ],
+  
+  "scalability_issues": [
+    {
+      "id": "SCALE-001-TEMPLATE",
+      "issue": "Template - remove if no scalability issues",
+      "category": "horizontal|vertical|load_distribution|resource_limits|database|caching",
+      "severity": "critical|high|medium|low",
+      "location": "/path/to/component:context",
+      "current_limitation": "Current scalability constraint",
+      "projected_impact": "Impact at increased scale",
+      "bottleneck_description": "Description of scalability bottleneck",
+      "scaling_solution": "Specific scalability recommendations",
+      "estimated_capacity": "Expected capacity improvement"
+    }
+  ],
+  
+  "design_quality_metrics": [
+    {
+      "id": "DESIGN-001-TEMPLATE",
+      "metric": "Template - remove if no design quality issues",
+      "category": "solid_principles|design_patterns|coupling|cohesion|abstraction|tech_debt",
+      "current_assessment": "Current design quality measurement",
+      "target_standard": "Target design quality goal",
+      "severity": "critical|high|medium|low",
+      "component_path": "/path/to/component",
+      "description": "Description of design quality issue",
+      "improvement_action": "Specific design improvement recommendations",
+      "priority": "immediate|next_sprint|backlog"
+    }
+  ],
+  
+  "priority_actions": [
+    {
+      "id": "ACTION-001-TEMPLATE",
+      "action": "Template - remove if no priority actions",
+      "category": "architecture|scalability|design_quality",
+      "priority": "immediate|next_sprint|backlog",
+      "effort_estimate": "Time/complexity estimate",
+      "description": "Detailed action description",
+      "related_findings": ["ARCH-001", "SCALE-001", "DESIGN-001"]
+    }
+  ],
+  
+  "critical_issues": [
+    {
+      "id": "CRIT-001-TEMPLATE",
+      "issue": "Template - remove if no critical issues",
+      "type": "architecture|scalability|design_quality",
+      "severity": "critical",
+      "immediate_action_required": true,
+      "description": "Critical architectural issue requiring immediate attention",
+      "business_impact": "Potential business/operational impact"
+    }
+  ],
+  
+  "implementation_roadmap": [
+    {
+      "phase": "Phase 1: Critical Architecture Fixes",
+      "timeline": "Week 1-2",
+      "items": ["Template - remove phase if empty"],
+      "dependencies": [],
+      "success_metrics": []
+    }
+  ],
+  
+  "architecture_patterns": [
+    {
+      "pattern_name": "Template - remove if no patterns recommended",
+      "pattern_type": "structural|behavioral|creational|integration",
+      "rationale": "Why this pattern is recommended",
+      "implementation_guidance": "How to implement this pattern",
+      "benefits": ["Expected benefits"],
+      "considerations": ["Implementation considerations"]
+    }
+  ],
+  
+  "scalability_assessment": {
+    "current_architecture_pattern": "Template - current pattern in use",
+    "scalability_bottlenecks": ["Template - identified limitations"],
+    "recommended_scaling_approach": "Template - scaling strategy",
+    "horizontal_scaling_readiness": 0,
+    "vertical_scaling_headroom": 0,
+    "capacity_projections": {}
+  },
+  
+  "integration_strategy": {
+    "approach": "Template - integration approach description",
+    "integration_points": ["Template - key integration points"],
+    "data_flow_optimization": ["Template - data flow improvements"],
+    "communication_patterns": ["Template - recommended patterns"],
+    "migration_strategy": "Template - migration approach"
+  },
+  
+  "statistics": {
+    "total_components_analyzed": 0,
+    "total_modules_reviewed": 0,
+    "architecture_findings_count": 0,
+    "scalability_issues_count": 0,
+    "design_quality_issues_count": 0,
+    "critical_issues_count": 0
+  }
+}
