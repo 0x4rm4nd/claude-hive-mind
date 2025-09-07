@@ -85,11 +85,13 @@ def run_worker(worker_name: str, args):
         worker_runner,
         "--session",
         args.session,
-        "--task",
-        args.task,
         "--model",
         args.model or "custom:max-subscription",
     ]
+
+    # Add task only if provided
+    if args.task is not None:
+        cmd.extend(["--task", args.task])
 
     # Add phase flags if specified
     if hasattr(args, "setup") and args.setup:
