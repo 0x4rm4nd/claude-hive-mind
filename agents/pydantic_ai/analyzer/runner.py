@@ -170,6 +170,7 @@ Provide specific, actionable findings with clear priorities and effort estimates
         import os
         from pathlib import Path
         from datetime import datetime
+        from shared.protocols.session_management import SessionManagement
 
         # Read the Queen-generated specific task prompt for this session
         worker_prompt = self.read_worker_prompt(session_id)
@@ -268,7 +269,7 @@ Provide specific, actionable findings with clear priorities and effort estimates
             quality_score=0,
             priority_actions=[],
             technical_debt_estimate="N/A",
-            notes_markdown=f"# Analyzer Worker Validation Phase\n\nOutput validation completed for: {task_description}\n\nAnalysis files validated and confirmed complete.",
+            notes_markdown=f"# Analyzer Worker Validation Phase\n\nOutput validation completed.\n\nAnalysis files validated and confirmed complete.",
             config={},
         )
 
