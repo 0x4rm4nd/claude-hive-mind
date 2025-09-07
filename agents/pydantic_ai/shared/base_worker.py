@@ -7,6 +7,7 @@ with protocol compliance, session management, and extensible worker-specific beh
 
 import argparse
 import json
+import traceback
 from datetime import datetime
 from pathlib import Path
 from typing import TypeVar, Generic, Dict, Any, Optional, Type, Union
@@ -297,6 +298,8 @@ class BaseWorker(BaseProtocol, ABC, Generic[T]):
             return 0
         except Exception as e:
             print(f"{self.get_worker_display_name()} failed: {e}")
+            print("Full traceback:")
+            traceback.print_exc()
             return 1
 
     # Abstract methods for worker-specific behavior
@@ -370,7 +373,7 @@ class BaseWorker(BaseProtocol, ABC, Generic[T]):
         self.log_event(
             "setup_completed",
             {
-                "task": task_description,
+                "task": "Phase 1: Setup & Context Loading",
                 "worker": self.worker_type,
             },
         )
