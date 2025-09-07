@@ -10,18 +10,15 @@ from datetime import datetime
 from pathlib import Path
 from typing import Dict, Any
 
+# Minimal path setup to enable shared imports
+sys.path.insert(0, str(Path(__file__).parent.parent))
+
 from shared.base_worker import BaseWorker
 from shared.models import WorkerSummary  
 from shared.tools import iso_now
 from shared.protocols.session_management import SessionManagement
 from analyzer.models import AnalyzerOutput
 from analyzer.agent import analyzer_agent, AnalyzerAgentConfig
-
-# Ensure imports work when run directly or from CLI
-current_dir = Path(__file__).parent
-pydantic_ai_root = current_dir.parent
-if str(pydantic_ai_root) not in sys.path:
-    sys.path.insert(0, str(pydantic_ai_root))
 
 
 class AnalyzerWorker(BaseWorker[AnalyzerOutput]):

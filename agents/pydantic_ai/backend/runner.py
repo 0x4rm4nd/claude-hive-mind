@@ -4,17 +4,13 @@ Backend Worker Runner
 Execution runner for the Backend Worker - provides API development and database design analysis.
 """
 
-import sys
 import os
+import sys
 from pathlib import Path
-
-# Ensure imports work when run directly or from CLI
-current_dir = Path(__file__).parent
-pydantic_ai_root = current_dir.parent
-if str(pydantic_ai_root) not in sys.path:
-    sys.path.insert(0, str(pydantic_ai_root))
-
 from typing import Dict, Any
+
+# Minimal path setup to enable shared imports
+sys.path.insert(0, str(Path(__file__).parent.parent))
 
 from shared.base_worker import BaseWorker
 from backend.models import BackendOutput
@@ -24,7 +20,7 @@ from backend.agent import backend_agent, BackendAgentConfig
 class BackendWorker(BaseWorker[BackendOutput]):
     """
     Backend API development and database design worker.
-    
+
     Provides comprehensive analysis for API design, database schema, business logic,
     security implementation, and performance optimization guidance.
     """
@@ -38,12 +34,12 @@ class BackendWorker(BaseWorker[BackendOutput]):
 
     def run(self, session_id: str, task_description: str, model: str) -> BackendOutput:
         """Execute backend analysis with API design and database architecture guidance.
-        
+
         Args:
             session_id: Session identifier for tracking analysis
             task_description: Specific backend requirements and focus areas
             model: AI model to use for analysis execution
-            
+
         Returns:
             BackendOutput: Structured backend analysis with API and database recommendations
         """
@@ -57,12 +53,12 @@ class BackendWorker(BaseWorker[BackendOutput]):
         self, session_id: str, task_description: str, model: str
     ) -> Any:
         """Execute AI-powered backend development and architecture analysis.
-        
+
         Args:
             session_id: Session identifier for analysis tracking
             task_description: Detailed backend requirements
             model: AI model for analysis execution
-            
+
         Returns:
             Backend analysis results from AI agent processing
         """
@@ -83,7 +79,7 @@ Focus on production-ready backend solutions with specific implementation guidanc
 
     def get_file_prefix(self) -> str:
         """Return file prefix for backend output files.
-        
+
         Returns:
             File prefix for backend output files
         """
@@ -91,7 +87,7 @@ Focus on production-ready backend solutions with specific implementation guidanc
 
     def get_worker_display_name(self) -> str:
         """Return human-readable name for CLI display.
-        
+
         Returns:
             Display name for the backend worker
         """
@@ -99,7 +95,7 @@ Focus on production-ready backend solutions with specific implementation guidanc
 
     def get_worker_description(self) -> str:
         """Return description for CLI help and documentation.
-        
+
         Returns:
             Brief description of backend capabilities
         """
@@ -107,10 +103,10 @@ Focus on production-ready backend solutions with specific implementation guidanc
 
     def get_analysis_event_details(self, task_description: str) -> Dict[str, Any]:
         """Return event details when backend analysis starts.
-        
+
         Args:
             task_description: Backend analysis task description
-            
+
         Returns:
             Event details for analysis started logging
         """
@@ -122,10 +118,10 @@ Focus on production-ready backend solutions with specific implementation guidanc
 
     def get_completion_event_details(self, output: BackendOutput) -> Dict[str, Any]:
         """Return event details when backend analysis completes.
-        
+
         Args:
             output: Backend analysis output with API and database designs
-            
+
         Returns:
             Event details for analysis completion logging
         """
@@ -139,10 +135,10 @@ Focus on production-ready backend solutions with specific implementation guidanc
 
     def get_success_message(self, output: BackendOutput) -> str:
         """Return success message with backend analysis summary.
-        
+
         Args:
             output: Backend analysis output with API and database metrics
-            
+
         Returns:
             Success message with key backend analysis results
         """
@@ -156,7 +152,7 @@ Focus on production-ready backend solutions with specific implementation guidanc
         self, session_id: str, output: BackendOutput, session_path: Path
     ) -> None:
         """Create additional backend-specific output files.
-        
+
         Args:
             session_id: Session identifier
             output: Backend analysis output data
@@ -168,7 +164,7 @@ Focus on production-ready backend solutions with specific implementation guidanc
 
 def main():
     """CLI entry point for backend worker execution.
-    
+
     Returns:
         Exit code from worker execution
     """

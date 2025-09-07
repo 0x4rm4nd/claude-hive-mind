@@ -6,18 +6,14 @@ Execution runner for the Researcher Worker - provides technical research and ind
 
 import sys
 from pathlib import Path
-
 from typing import Dict, Any
+
+# Minimal path setup to enable shared imports
+sys.path.insert(0, str(Path(__file__).parent.parent))
 
 from shared.base_worker import BaseWorker
 from researcher.models import ResearcherOutput
 from researcher.agent import researcher_agent, ResearcherAgentConfig
-
-# Ensure imports work when run directly or from CLI
-current_dir = Path(__file__).parent
-pydantic_ai_root = current_dir.parent
-if str(pydantic_ai_root) not in sys.path:
-    sys.path.insert(0, str(pydantic_ai_root))
 
 
 class ResearcherWorker(BaseWorker[ResearcherOutput]):
