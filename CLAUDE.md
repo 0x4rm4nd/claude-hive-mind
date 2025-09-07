@@ -303,10 +303,4 @@ prompt: "Navigate to .claude/agents/pydantic_ai/ and execute:
 
 ---
 
-**These instructions ensure Claude Code agents use the framework-enforced Pydantic AI system for reliable, structured coordination on differents tasks.** ⚡
-
-## 📖 Additional Context
-
-For comprehensive Pydantic AI agent context including preloaded commands, model configurations, and common patterns, see: `PYDANTIC_AI_CONTEXT.md`
-
-This eliminates the need for spawned agents to analyze structure and enables direct execution.
+**These instructions ensure Claude Code agents use the framework-enforced Pydantic AI system for reliable, structured coordination on different tasks.** ⚡
