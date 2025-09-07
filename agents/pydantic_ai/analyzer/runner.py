@@ -4,14 +4,16 @@ Analyzer Worker Runner
 Execution runner for the Analyzer Worker - provides security, performance, and code quality analysis.
 """
 
+import os
 import sys
+from datetime import datetime
 from pathlib import Path
-
 from typing import Dict, Any
 
 from shared.base_worker import BaseWorker
-from shared.models import WorkerSummary
+from shared.models import WorkerSummary  
 from shared.tools import iso_now
+from shared.protocols.session_management import SessionManagement
 from analyzer.models import AnalyzerOutput
 from analyzer.agent import analyzer_agent, AnalyzerAgentConfig
 
@@ -167,11 +169,6 @@ Provide specific, actionable findings with clear priorities and effort estimates
         self, session_id: str
     ) -> AnalyzerOutput:
         """Create minimal output object for setup phase and initialize template files."""
-        import os
-        from pathlib import Path
-        from datetime import datetime
-        from shared.protocols.session_management import SessionManagement
-
         # Read the Queen-generated specific task prompt for this session
         worker_prompt = self.read_worker_prompt(session_id)
 
