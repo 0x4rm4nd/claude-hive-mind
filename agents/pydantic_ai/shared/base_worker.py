@@ -234,7 +234,10 @@ class BaseWorker(BaseProtocol, ABC, Generic[T]):
             description=f"{self.get_worker_display_name()} - {self.get_worker_description()}"
         )
         parser.add_argument("--session", required=True, help="Session ID")
-        parser.add_argument("--task", help="Analysis task description (not needed for --setup/--output phases)")
+        parser.add_argument(
+            "--task",
+            help="Analysis task description (not needed for --setup/--output phases)",
+        )
         parser.add_argument(
             "--model", default="custom:max-subscription", help="AI model to use"
         )
@@ -262,39 +265,37 @@ class BaseWorker(BaseProtocol, ABC, Generic[T]):
         try:
             # Validate task parameter based on execution mode
             if not (args.setup or args.output) and not args.task:
-                print("❌ Error: --task is required when not using --setup or --output phases")
+                print(
+                    "❌ Error: --task is required when not using --setup or --output phases"
+                )
                 return 1
 
             # Update session config for logging context
             self.update_session_config(args.session)
 
-            # Log worker spawned event (single entry point for all phases)
-            spawn_details = self.get_analysis_event_details(args.task or "phase-based-execution")
-
-            # Determine which phase to execute and add phase info
+            # Determine which phase to execute
             if args.setup:
+                # Log worker spawned event only phase 1
+                spawn_details = self.get_analysis_event_details(
+                    args.task or "phase-based-execution"
+                )
                 spawn_details["phase"] = "setup"
                 self.log_event("worker_spawned", spawn_details)
                 output = self.run_setup_phase(args.session, args.model)
                 success_message = self.get_setup_success_message(output)
             elif args.output:
-                spawn_details["phase"] = "output"
-                self.log_event("worker_spawned", spawn_details)
                 output = self.run_output_phase(args.session, args.model)
                 success_message = self.get_output_success_message(output)
             else:
-                # Default behavior - requires task
-                spawn_details["phase"] = "analysis"
-                self.log_event("worker_spawned", spawn_details)
                 output = self.run_analysis(args.session, args.task, args.model)
                 success_message = self.get_success_message(output)
 
             print(success_message)
-            
+
             # Print output as JSON for CC Agent to parse
             print("WORKER_OUTPUT_JSON:")
             print(output.model_dump_json(indent=2))
-            
+
             return 0
         except Exception as e:
             print(f"{self.get_worker_display_name()} failed: {e}")
