@@ -1,0 +1,119 @@
+{
+  "analysis_metadata": {
+    "session_id": "{{SESSION_ID}}",
+    "timestamp": "{{TIMESTAMP}}",
+    "files_analyzed": 0,
+    "analysis_duration": "{{DURATION}}",
+    "worker_type": "analyzer"
+  },
+  
+  "scores": {
+    "security_score": 0,
+    "performance_score": 0,
+    "quality_score": 0,
+    "overall_score": 0
+  },
+  
+  "security_findings": [
+    {
+      "id": "SEC-001-TEMPLATE",
+      "vulnerability": "Template - remove if no security findings",
+      "category": "authentication|authorization|injection|data_exposure|misconfiguration|dependency",
+      "severity": "critical|high|medium|low",
+      "file_path": "/path/to/file.ext",
+      "line_number": 0,
+      "code_snippet": "vulnerable code snippet",
+      "description": "Detailed description of the security issue",
+      "impact": "Potential impact and risk assessment",
+      "remediation": "Specific steps to fix the issue",
+      "references": ["OWASP reference", "CWE reference"]
+    }
+  ],
+  
+  "performance_issues": [
+    {
+      "id": "PERF-001-TEMPLATE",
+      "issue": "Template - remove if no performance issues",
+      "category": "database|memory|cpu|frontend|caching|algorithm",
+      "severity": "critical|high|medium|low",
+      "location": "/path/to/file.ext:line_number",
+      "current_metric": "Current performance measurement",
+      "target_metric": "Target performance goal",
+      "impact_description": "Description of performance impact",
+      "optimization_suggestion": "Specific optimization recommendations",
+      "estimated_improvement": "Expected performance gain"
+    }
+  ],
+  
+  "quality_metrics": [
+    {
+      "id": "QUAL-001-TEMPLATE",
+      "metric": "Template - remove if no quality issues",
+      "category": "complexity|duplication|coverage|documentation|architecture",
+      "current_value": "Current measurement",
+      "target_value": "Target goal",
+      "severity": "critical|high|medium|low",
+      "file_path": "/path/to/file.ext",
+      "description": "Description of quality issue",
+      "improvement_action": "Specific action to improve quality",
+      "priority": "immediate|next_sprint|backlog"
+    }
+  ],
+  
+  "priority_actions": [
+    {
+      "id": "ACTION-001-TEMPLATE",
+      "action": "Template - remove if no priority actions",
+      "category": "security|performance|quality",
+      "priority": "immediate|next_sprint|backlog",
+      "effort_estimate": "Time/complexity estimate",
+      "description": "Detailed action description",
+      "related_findings": ["SEC-001", "PERF-001", "QUAL-001"]
+    }
+  ],
+  
+  "critical_issues": [
+    {
+      "id": "CRIT-001-TEMPLATE",
+      "issue": "Template - remove if no critical issues",
+      "type": "security|performance|quality",
+      "severity": "critical",
+      "immediate_action_required": true,
+      "description": "Critical issue requiring immediate attention",
+      "business_impact": "Potential business/operational impact"
+    }
+  ],
+  
+  "recommendations": {
+    "security_recommendations": [
+      "Template - remove section if no security recommendations"
+    ],
+    "performance_recommendations": [
+      "Template - remove section if no performance recommendations"  
+    ],
+    "quality_recommendations": [
+      "Template - remove section if no quality recommendations"
+    ]
+  },
+  
+  "implementation_roadmap": {
+    "phase_1_critical": [
+      "Template - remove phase if empty"
+    ],
+    "phase_2_performance": [
+      "Template - remove phase if empty"
+    ],
+    "phase_3_quality": [
+      "Template - remove phase if empty"
+    ]
+  },
+  
+  "statistics": {
+    "total_files_scanned": 0,
+    "total_lines_analyzed": 0,
+    "security_findings_count": 0,
+    "performance_issues_count": 0,
+    "quality_issues_count": 0,
+    "critical_issues_count": 0
+  }
+}
