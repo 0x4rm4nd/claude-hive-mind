@@ -90,13 +90,13 @@ The spawned Claude Agent will execute:
 cd .claude/agents/pydantic_ai/
 
 # Phase 1: Setup & Context Loading
-python cli.py [worker] --setup --session SESSION_ID --task "SPECIFIC_TASK" 
+python cli.py [worker] --setup --session SESSION_ID
 
 # Phase 2: Direct Analysis (CC Agent executes directly - NO Pydantic)
 # CC Agent reads JSON output from Phase 1 and performs analysis using Read/Grep/Glob/Write tools
 
 # Phase 3: Validation & Completion  
-python cli.py [worker] --output --session SESSION_ID --task "SPECIFIC_TASK"
+python cli.py [worker] --output --session SESSION_ID
 ```
 
 ## 🔄 Model Fallback Strategy
@@ -200,7 +200,7 @@ python cli.py scribe create --task "DETAILED_TASK_DESCRIPTION"
 # === 3-PHASE WORKER EXECUTION ===
 
 # Phase 1: Setup & Context Loading
-python cli.py [worker] --setup --session SESSION_ID --task "TASK" --model custom:max-subscription
+python cli.py [worker] --setup --session SESSION_ID --model custom:max-subscription
 
 # Phase 2: Extract JSON data and perform direct analysis
 # Parse "WORKER_OUTPUT_JSON:" output from Phase 1
@@ -208,7 +208,7 @@ python cli.py [worker] --setup --session SESSION_ID --task "TASK" --model custom
 # Execute analysis using Read/Grep/Glob/Write tools DIRECTLY
 
 # Phase 3: Validation & Completion  
-python cli.py [worker] --output --session SESSION_ID --task "TASK" --model custom:max-subscription
+python cli.py [worker] --output --session SESSION_ID --model custom:max-subscription
 
 # === COMPLEX ORCHESTRATION ===
 
@@ -259,9 +259,9 @@ Use Task tool:
 subagent_type: backend-worker
 prompt: "Navigate to .claude/agents/pydantic_ai/ and run:
 1. python cli.py scribe create --task 'Design REST endpoints for crypto portfolio management'
-2. python cli.py backend --setup --session SESSION_ID --task 'TASK' --model custom:max-subscription
+2. python cli.py backend --setup --session SESSION_ID --model custom:max-subscription
 3. Parse JSON output to extract Queen's prompt, then execute direct analysis
-4. python cli.py backend --output --session SESSION_ID --task 'TASK' --model custom:max-subscription
+4. python cli.py backend --output --session SESSION_ID --model custom:max-subscription
 5. Use --model google-gla:gemini-2.5-flash if custom models unavailable"
 ```
 
@@ -272,9 +272,9 @@ Use Task tool:
 subagent_type: frontend-worker
 prompt: "Navigate to .claude/agents/pydantic_ai/ and run:
 1. python cli.py scribe create --task 'Implement responsive trading dashboard'
-2. python cli.py frontend --setup --session SESSION_ID --task 'TASK' --model custom:max-subscription
+2. python cli.py frontend --setup --session SESSION_ID --model custom:max-subscription
 3. Parse JSON output to extract Queen's prompt, then execute direct analysis
-4. python cli.py frontend --output --session SESSION_ID --task 'TASK' --model custom:max-subscription
+4. python cli.py frontend --output --session SESSION_ID --model custom:max-subscription
 5. Use --model google-gla:gemini-2.5-flash if custom models unavailable"
 ```
 
@@ -295,9 +295,9 @@ Use Task tool:
 subagent_type: analyzer-worker
 prompt: "Navigate to .claude/agents/pydantic_ai/ and execute:
 1. python cli.py scribe create --task 'Security analysis of crypto data pipeline'
-2. python cli.py analyzer --setup --session SESSION_ID --task 'TASK' --model custom:max-subscription
+2. python cli.py analyzer --setup --session SESSION_ID --model custom:max-subscription
 3. Parse JSON output to extract Queen's prompt, then execute direct analysis
-4. python cli.py analyzer --output --session SESSION_ID --task 'TASK' --model custom:max-subscription
+4. python cli.py analyzer --output --session SESSION_ID --model custom:max-subscription
 5. Use --model google-gla:gemini-2.5-flash if custom models unavailable"
 ```
 
