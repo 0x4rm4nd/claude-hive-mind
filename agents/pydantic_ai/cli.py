@@ -91,6 +91,12 @@ def run_worker(worker_name: str, args):
         args.model or "custom:max-subscription",
     ]
 
+    # Add phase flags if specified
+    if hasattr(args, "setup") and args.setup:
+        cmd.append("--setup")
+    if hasattr(args, "output") and args.output:
+        cmd.append("--output")
+
     return subprocess.run(cmd)
 
 
@@ -160,8 +166,21 @@ Examples:
     for worker_name, worker_description in workers:
         worker_parser = subparsers.add_parser(worker_name, help=worker_description)
         worker_parser.add_argument("--session", required=True, help="Session ID")
-        worker_parser.add_argument("--task", required=True, help="Task description")
+        worker_parser.add_argument("--task", help="Task description")
         worker_parser.add_argument("--model", help="AI model to use")
+
+        # Add mutually exclusive phase flags
+        phase_group = worker_parser.add_mutually_exclusive_group()
+        phase_group.add_argument(
+            "--setup",
+            action="store_true",
+            help="Execute Phase 1: Setup & Context Loading",
+        )
+        phase_group.add_argument(
+            "--output",
+            action="store_true",
+            help="Execute Phase 3: Validation & Output Generation",
+        )
 
     args = parser.parse_args()
 

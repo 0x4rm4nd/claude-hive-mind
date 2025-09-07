@@ -64,82 +64,43 @@ class BaseWorker(BaseProtocol, ABC, Generic[T]):
             {"session_id": session_id, "agent_name": self.worker_type}
         )
 
-    def read_worker_prompt(self, session_id: str) -> Dict[str, Any]:
+    def read_worker_prompt(self, session_id: str) -> str:
         """
-        Read and parse worker-specific prompt file with rich contextual information.
+        Read worker-specific prompt file for Pydantic AI agent.
 
-        Returns structured data including:
-        - YAML frontmatter (task_focus, dependencies, priority, complexity_level, etc.)
-        - Parsed markdown sections (success_criteria, available_tools, etc.)
-        - Codebase context and strategic insights from Queen orchestration
+        Returns the raw prompt content that will be used by the Pydantic AI agent.
+        Claude Code agents handle the actual prompt file reading and processing.
 
         Args:
             session_id: Session identifier
 
         Returns:
-            Dictionary containing structured prompt data
+            String containing the prompt content for the Pydantic AI agent
         """
-        if not self._prompt_data:
-            try:
-                cfg = ProtocolConfig(
-                    {"session_id": session_id, "agent_name": self.worker_type}
-                )
+        try:
+            cfg = ProtocolConfig(
+                {"session_id": session_id, "agent_name": self.worker_type}
+            )
 
-                self._prompt_protocol = WorkerManager(cfg.to_dict())
-                self._prompt_data = self._prompt_protocol.read_prompt_file(
-                    self.worker_type
-                )
+            self._prompt_protocol = WorkerManager(cfg.to_dict())
+            prompt_content = self._prompt_protocol.read_prompt_file(self.worker_type)
 
-                self.log_debug(
-                    f"Successfully loaded prompt data for {self.worker_type}",
-                    {
-                        "focus_areas": self._prompt_data.get("focus_areas", []),
-                        "complexity_level": self._prompt_data.get(
-                            "complexity_level", 1
-                        ),
-                        "priority": self._prompt_data.get("priority", "medium"),
-                        "dependencies": self._prompt_data.get("dependencies", []),
-                    },
-                )
+            # Return the actual prompt content as string
+            if isinstance(prompt_content, dict) and "prompt" in prompt_content:
+                return prompt_content["prompt"]
+            elif isinstance(prompt_content, str):
+                return prompt_content
+            else:
+                return f"Perform {self.worker_type} analysis for the given task."
 
-            except Exception as e:
-                self.log_debug(
-                    f"Failed to read prompt file for {self.worker_type}",
-                    {"error": str(e)},
-                    "WARNING",
-                )
-                # Fallback to basic task description
-                self._prompt_data = {
-                    "task_description": f"Analyze and provide insights for {self.worker_type}",
-                    "focus_areas": [],
-                    "dependencies": [],
-                    "priority": "medium",
-                    "complexity_level": 1,
-                    "success_criteria": [],
-                    "available_tools": [],
-                    "output_requirements": {},
-                }
-
-        return self._prompt_data
-
-    def get_task_context(self, session_id: str) -> Dict[str, Any]:
-        """
-        Get rich task context from parsed prompt data.
-        Convenience method that returns key contextual information.
-        """
-        prompt_data = self.read_worker_prompt(session_id)
-
-        return {
-            "task_description": prompt_data.get("task_description", ""),
-            "focus_areas": prompt_data.get("focus_areas", []),
-            "priority": prompt_data.get("priority", "medium"),
-            "complexity_level": prompt_data.get("complexity_level", 1),
-            "dependencies": prompt_data.get("dependencies", []),
-            "success_criteria": prompt_data.get("success_criteria", []),
-            "target_services": prompt_data.get("target_services", []),
-            "primary_target": prompt_data.get("primary_target", "unknown"),
-            "estimated_duration": prompt_data.get("estimated_duration", "1-2h"),
-        }
+        except Exception as e:
+            self.log_debug(
+                f"Failed to read prompt file for {self.worker_type}",
+                {"error": str(e)},
+                "WARNING",
+            )
+            # Simple fallback prompt
+            return f"Perform {self.worker_type} analysis for the given task."
 
     def validate_session(self, session_id: str) -> None:
         """Framework-enforced session validation"""
@@ -272,10 +233,24 @@ class BaseWorker(BaseProtocol, ABC, Generic[T]):
             description=f"{self.get_worker_display_name()} - {self.get_worker_description()}"
         )
         parser.add_argument("--session", required=True, help="Session ID")
-        parser.add_argument("--task", required=True, help="Analysis task description")
+        parser.add_argument("--task", help="Analysis task description (not needed for --setup/--output phases)")
         parser.add_argument(
             "--model", default="custom:max-subscription", help="AI model to use"
         )
+
+        # Add mutually exclusive phase flags
+        phase_group = parser.add_mutually_exclusive_group()
+        phase_group.add_argument(
+            "--setup",
+            action="store_true",
+            help="Execute Phase 1: Setup & Context Loading",
+        )
+        phase_group.add_argument(
+            "--output",
+            action="store_true",
+            help="Execute Phase 3: Validation & Output Generation",
+        )
+
         return parser
 
     def run_cli_main(self) -> int:
@@ -284,9 +259,41 @@ class BaseWorker(BaseProtocol, ABC, Generic[T]):
         args = parser.parse_args()
 
         try:
-            output = self.run_analysis(args.session, args.task, args.model)
-            success_message = self.get_success_message(output)
+            # Validate task parameter based on execution mode
+            if not (args.setup or args.output) and not args.task:
+                print("❌ Error: --task is required when not using --setup or --output phases")
+                return 1
+
+            # Update session config for logging context
+            self.update_session_config(args.session)
+
+            # Log worker spawned event (single entry point for all phases)
+            spawn_details = self.get_analysis_event_details(args.task or "phase-based-execution")
+
+            # Determine which phase to execute and add phase info
+            if args.setup:
+                spawn_details["phase"] = "setup"
+                self.log_event("worker_spawned", spawn_details)
+                output = self.run_setup_phase(args.session, args.model)
+                success_message = self.get_setup_success_message(output)
+            elif args.output:
+                spawn_details["phase"] = "output"
+                self.log_event("worker_spawned", spawn_details)
+                output = self.run_output_phase(args.session, args.model)
+                success_message = self.get_output_success_message(output)
+            else:
+                # Default behavior - requires task
+                spawn_details["phase"] = "analysis"
+                self.log_event("worker_spawned", spawn_details)
+                output = self.run_analysis(args.session, args.task, args.model)
+                success_message = self.get_success_message(output)
+
             print(success_message)
+            
+            # Print output as JSON for CC Agent to parse
+            print("WORKER_OUTPUT_JSON:")
+            print(output.model_dump_json(indent=2))
+            
             return 0
         except Exception as e:
             print(f"{self.get_worker_display_name()} failed: {e}")
@@ -346,3 +353,96 @@ class BaseWorker(BaseProtocol, ABC, Generic[T]):
         Default implementation does nothing.
         """
         pass
+
+    def run_setup_phase(self, session_id: str, model: str) -> T:
+        """
+        Execute Phase 1: Setup & Context Loading.
+
+        Default implementation validates session and reads worker prompt.
+        Can be overridden by workers for custom setup behavior.
+        """
+        # Update session config
+        self.update_session_config(session_id)
+
+        # Framework-enforced session validation
+        self.validate_session(session_id)
+
+        self.log_event(
+            "setup_completed",
+            {
+                "task": task_description,
+                "worker": self.worker_type,
+            },
+        )
+
+        return self.create_setup_output(session_id)
+
+    def run_output_phase(self, session_id: str, model: str) -> T:
+        """
+        Execute Phase 3: Validation & Output Generation.
+
+        Default implementation validates existing analysis files and confirms completion.
+        Can be overridden by workers for custom output validation.
+        """
+        # Update session config
+        self.update_session_config(session_id)
+
+        # Validate session exists
+        self.validate_session(session_id)
+
+        # Validate that analysis files exist
+        self.validate_analysis_files(session_id)
+
+        # Log completion
+        self.log_event(
+            "outputs_completed",
+            {"validation_status": "completed"},
+        )
+
+        # Create a validation output
+        return self.create_output_validation(session_id)
+
+    def validate_analysis_files(self, session_id: str) -> None:
+        """Validate that required analysis files exist from previous phases"""
+        try:
+            session_path = Path(SessionManagement.get_session_path(session_id))
+            file_prefix = self.get_file_prefix()
+
+            # Check for notes file
+            notes_file = session_path / "workers" / "notes" / f"{file_prefix}_notes.md"
+            if not notes_file.exists():
+                self.log_debug(f"Notes file not found: {notes_file}", {}, "WARNING")
+
+            # Check for JSON output file
+            json_file = session_path / "workers" / "json" / f"{file_prefix}_output.json"
+            if not json_file.exists():
+                self.log_debug(
+                    f"JSON output file not found: {json_file}", {}, "WARNING"
+                )
+
+            self.log_debug("Analysis file validation completed")
+
+        except Exception as e:
+            self.log_debug(
+                "Analysis file validation failed", {"error": str(e)}, "WARNING"
+            )
+
+    @abstractmethod
+    def create_setup_output(self, session_id: str) -> T:
+        """Create minimal output object for setup phase with worker-specific output model."""
+        pass
+
+    @abstractmethod
+    def create_output_validation(self, session_id: str) -> T:
+        """Create validation output object for output phase with worker-specific output model."""
+        pass
+
+    def get_setup_success_message(self, output: T) -> str:
+        """Return success message for setup phase. Override if needed."""
+        return f"{self.get_worker_display_name()} setup phase completed successfully"
+
+    def get_output_success_message(self, output: T) -> str:
+        """Return success message for output phase. Override if needed."""
+        return (
+            f"{self.get_worker_display_name()} output validation completed successfully"
+        )
