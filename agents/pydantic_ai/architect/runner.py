@@ -5,7 +5,6 @@ Execution runner for the Architect Worker - provides system design and architect
 """
 
 import sys
-from datetime import datetime
 from pathlib import Path
 from typing import Dict, Any
 
@@ -13,9 +12,7 @@ from typing import Dict, Any
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
 from shared.base_worker import BaseWorker
-from shared.models import WorkerSummary, WorkerOutput
-from shared.tools import iso_now
-from shared.protocols.session_management import SessionManagement
+from shared.models import WorkerOutput
 
 
 class ArchitectWorker(BaseWorker):
@@ -31,7 +28,6 @@ class ArchitectWorker(BaseWorker):
             worker_type="architect-worker",
             worker_config=None,
         )
-
 
     def get_file_prefix(self) -> str:
         """Return file prefix for architecture output files.
@@ -97,50 +93,6 @@ class ArchitectWorker(BaseWorker):
             Success message with key architecture metrics
         """
         return f"Architecture analysis completed successfully. Maturity score: {output.architectural_maturity_score}, Recommendations: {len(output.architectural_recommendations)}, Technology decisions: {len(output.technology_decisions)}"
-
-
-    def create_output_validation(self, session_id: str) -> WorkerOutput:
-        """Create validation output object for output phase."""
-
-        return WorkerOutput(
-            session_id=session_id,
-            worker="architect-worker",
-            timestamp=iso_now(),
-            status="completed",
-            summary=WorkerSummary(
-                key_findings=["Output validation phase completed"],
-                critical_issues=[],
-                recommendations=[
-                    "Architecture analysis workflow completed successfully"
-                ],
-            ),
-            current_architecture_assessment="Validation phase completed",
-            architectural_recommendations=[],
-            technology_decisions=[],
-            notes_markdown="# Architect Worker Validation Phase\n\nOutput validation completed.\n\nArchitecture analysis files validated and confirmed complete.",
-            config={},
-        )
-
-    def create_worker_specific_files(
-        self, session_id: str, output: WorkerOutput, session_path: Path
-    ) -> None:
-        """Create additional architect-specific output files.
-
-        Args:
-            session_id: Session identifier
-            output: Architecture analysis output data
-            session_path: Path to session directory
-        """
-        # Architect worker uses standard file creation - no additional files needed
-        pass
-
-    def get_setup_output_fields(self) -> Dict[str, Any]:
-        """Return architect-specific fields for setup output."""
-        return {
-            'current_architecture_assessment': "Setup phase - assessment pending",
-            'architectural_recommendations': [],
-            'technology_decisions': [],
-        }
 
 
 def main():
