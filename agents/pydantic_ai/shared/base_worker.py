@@ -1,16 +1,16 @@
 """
 Base Worker Class
 =================
-Abstract base class for all Pydantic AI workers providing standardized execution framework
-with protocol compliance, session management, and extensible worker-specific behavior.
+Abstract base class for all Pydantic AI workers providing standardized execution
+framework with protocol compliance, session management, and extensible
+worker-specific behavior.
 """
 
 import argparse
-import json
 import traceback
 from datetime import datetime
 from pathlib import Path
-from typing import TypeVar, Generic, Dict, Any, Optional, Type, Union
+from typing import Dict, Any, Optional
 from abc import ABC, abstractmethod
 
 from .protocols import (
@@ -20,15 +20,12 @@ from .protocols import (
     BaseProtocol,
 )
 
+from .models import WorkerSummary, WorkerOutput
 from .worker_config import WorkerConfig
 from .tools import iso_now
-from pydantic import BaseModel
-
-# Type variable for worker-specific output models
-T = TypeVar("T", bound=BaseModel)
 
 
-class BaseWorker(BaseProtocol, ABC, Generic[T]):
+class BaseWorker(BaseProtocol, ABC):
     """
     Base class for all Pydantic AI workers.
 
@@ -40,7 +37,6 @@ class BaseWorker(BaseProtocol, ABC, Generic[T]):
         self,
         worker_type: str,
         worker_config: Optional[WorkerConfig],
-        output_model: Type[T],
     ):
         """
         Initialize base worker.
@@ -48,14 +44,12 @@ class BaseWorker(BaseProtocol, ABC, Generic[T]):
         Args:
             worker_type: Worker identifier (e.g., "analyzer-worker")
             worker_config: Worker configuration instance (can be None, set at runtime)
-            output_model: Pydantic model class for worker output validation
         """
         # Initialize BaseProtocol with dummy config (session_id will be set at runtime)
         super().__init__({"session_id": "temp", "agent_name": worker_type})
 
         self.worker_type = worker_type
         self.worker_config = worker_config
-        self.output_model = output_model
         self._prompt_protocol: Optional[WorkerManager] = None
         self._prompt_data: Optional[Dict[str, Any]] = None
 
@@ -111,121 +105,6 @@ class BaseWorker(BaseProtocol, ABC, Generic[T]):
             self.log_debug("Session validation successful")
         except Exception as e:
             self.log_debug("Session validation failed", {"error": str(e)}, "ERROR")
-            raise
-
-    def validate_and_enrich_output(
-        self, output: T, session_id: str, task_description: str
-    ) -> T:
-        """Framework-enforced output validation and enrichment"""
-        timestamp = iso_now()
-
-        # Standard enrichment for all workers
-        if hasattr(output, "worker") and not output.worker:
-            output.worker = self.worker_type
-        if hasattr(output, "session_id") and not output.session_id:
-            output.session_id = session_id
-        if hasattr(output, "timestamp") and not output.timestamp:
-            output.timestamp = timestamp
-
-        # Add worker configuration to output
-        if hasattr(output, "config") and self.worker_config is not None:
-            worker_config = self.worker_config.model_copy(
-                update={"session_id": session_id, "task_description": task_description}
-            )
-            output.config = worker_config.model_dump()
-
-        return output
-
-    def create_output_files_base(
-        self, session_id: str, output: T, file_prefix: str
-    ) -> None:
-        """Framework-enforced base file creation with worker-specific prefix"""
-        try:
-            session_path = Path(SessionManagement.get_session_path(session_id))
-            notes_dir = session_path / "workers" / "notes"
-            json_dir = session_path / "workers" / "json"
-            notes_dir.mkdir(parents=True, exist_ok=True)
-            json_dir.mkdir(parents=True, exist_ok=True)
-
-            # Get project root for relative paths
-            project_root = Path(SessionManagement.detect_project_root())
-
-            # Create notes file if content provided
-            if hasattr(output, "notes_markdown") and output.notes_markdown:
-                notes_file = notes_dir / f"{file_prefix}_notes.md"
-                notes_file.write_text(output.notes_markdown)
-                try:
-                    relative_path = notes_file.relative_to(project_root)
-                    path_str = str(relative_path)
-                except ValueError:
-                    # File is outside project root, use absolute path
-                    path_str = str(notes_file)
-                self.log_debug(
-                    f"Created {file_prefix} notes file",
-                    {"path": path_str},
-                )
-
-            # Create structured output JSON
-            output_file = json_dir / f"{file_prefix}_output.json"
-            output_file.write_text(output.model_dump_json(indent=2))
-            try:
-                relative_path = output_file.relative_to(project_root)
-                path_str = str(relative_path)
-            except ValueError:
-                # File is outside project root, use absolute path
-                path_str = str(output_file)
-            self.log_debug(
-                f"Created {file_prefix} output JSON",
-                {"path": path_str},
-            )
-
-            # Allow worker-specific file creation
-            self.create_worker_specific_files(session_id, output, session_path)
-
-        except Exception as e:
-            self.log_debug("File creation failed", {"error": str(e)}, "ERROR")
-            raise
-
-    def run_analysis(self, session_id: str, task_description: str, model: str) -> T:
-        """
-        Framework-enforced main execution flow.
-
-        This method orchestrates the entire worker execution with protocol compliance
-        while delegating worker-specific logic to abstract methods.
-        """
-
-        # Update session config IMMEDIATELY before validation so all logging uses correct session_id
-        self.update_session_config(session_id)
-
-        # Framework-enforced session validation
-        self.validate_session(session_id)
-
-        try:
-            # Execute worker-specific AI logic
-            result = self.execute_ai_analysis(session_id, task_description, model)
-            output: T = result.output
-
-            # Framework-enforced output validation and enrichment
-            output = self.validate_and_enrich_output(
-                output, session_id, task_description
-            )
-
-            # Create output files
-            file_prefix = self.get_file_prefix()
-            self.create_output_files_base(session_id, output, file_prefix)
-
-            # Log completion with worker-specific details (session config already updated early)
-            completion_details = self.get_completion_event_details(output)
-            self.log_event("analysis_completed", completion_details)
-
-            return output
-
-        except Exception as e:
-            self.log_debug(
-                f"{self.worker_type} analysis failed",
-                {"error": str(e), "task": task_description},
-                "ERROR",
-            )
             raise
 
     def create_cli_parser(self) -> argparse.ArgumentParser:
@@ -287,8 +166,10 @@ class BaseWorker(BaseProtocol, ABC, Generic[T]):
                 output = self.run_output_phase(args.session, args.model)
                 success_message = self.get_output_success_message(output)
             else:
-                output = self.run_analysis(args.session, args.task, args.model)
-                success_message = self.get_success_message(output)
+                print(
+                    "❌ Error: Direct analysis mode is not supported. Use --setup or --output phases."
+                )
+                return 1
 
             print(success_message)
 
@@ -304,18 +185,6 @@ class BaseWorker(BaseProtocol, ABC, Generic[T]):
             return 1
 
     # Abstract methods for worker-specific behavior
-
-    @abstractmethod
-    def execute_ai_analysis(
-        self, session_id: str, task_description: str, model: str
-    ) -> Any:
-        """
-        Execute worker-specific AI analysis.
-
-        Must return a result object with an .output attribute containing the worker's output model.
-        This is where the worker calls its specific agent with custom prompts and logic.
-        """
-        pass
 
     @abstractmethod
     def get_file_prefix(self) -> str:
@@ -338,38 +207,91 @@ class BaseWorker(BaseProtocol, ABC, Generic[T]):
         pass
 
     @abstractmethod
-    def get_completion_event_details(self, output: T) -> Dict[str, Any]:
+    def get_completion_event_details(self, output: WorkerOutput) -> Dict[str, Any]:
         """Return worker-specific event details for worker_completed event"""
         pass
 
     @abstractmethod
-    def get_success_message(self, output: T) -> str:
+    def get_success_message(self, output: WorkerOutput) -> str:
         """Return worker-specific CLI success message"""
         pass
 
     def create_worker_specific_files(
-        self, session_id: str, output: T, session_path: Path
-    ) -> None:
-        """
-        Optional hook for worker-specific file creation beyond standard notes/JSON.
+        self, session_id: str, session_path: Path
+    ) -> Dict[str, Any]:
+        """Create template files during setup phase and return config data."""
+        # Read the Queen-generated specific task prompt for this session
+        worker_prompt = self.read_worker_prompt(session_id)
 
-        Override this method if the worker needs to create additional files.
-        Default implementation does nothing.
-        """
-        pass
+        notes_dir = session_path / "workers" / "notes"
+        json_dir = session_path / "workers" / "json"
 
-    def run_setup_phase(self, session_id: str, model: str) -> T:
+        # Ensure directories exist
+        notes_dir.mkdir(parents=True, exist_ok=True)
+        json_dir.mkdir(parents=True, exist_ok=True)
+
+        # Load templates from worker/templates/
+        template_dir = (
+            Path(__file__).parent.parent / self.get_file_prefix() / "templates"
+        )
+
+        # Read markdown template
+        markdown_template_path = (
+            template_dir / f"{self.get_file_prefix()}_notes_template.md"
+        )
+        with open(markdown_template_path, "r", encoding="utf-8") as f:
+            markdown_content = f.read()
+
+        # Read JSON template
+        json_template_path = (
+            template_dir / f"{self.get_file_prefix()}_output_template.json"
+        )
+        with open(json_template_path, "r", encoding="utf-8") as f:
+            json_content = f.read()
+
+        # Replace template variables
+        current_time = datetime.now().isoformat()
+        markdown_content = markdown_content.replace("{{TIMESTAMP}}", current_time)
+        json_content = json_content.replace("{{SESSION_ID}}", session_id)
+        json_content = json_content.replace("{{TIMESTAMP}}", current_time)
+        json_content = json_content.replace("{{DURATION}}", "TBD")
+
+        # Create the actual output files
+        notes_file = notes_dir / f"{self.get_file_prefix()}_notes.md"
+        json_file = json_dir / f"{self.get_file_prefix()}_output.json"
+
+        with open(notes_file, "w", encoding="utf-8") as f:
+            f.write(markdown_content)
+
+        with open(json_file, "w", encoding="utf-8") as f:
+            f.write(json_content)
+
+        # Store config in instance for create_setup_output to use
+        self._setup_config = {
+            "queen_prompt": worker_prompt,
+            "template_files_created": {
+                "notes_file": str(notes_file),
+                "json_file": str(json_file),
+            },
+        }
+
+        return self._setup_config
+
+    def run_setup_phase(self, session_id: str, model: str) -> WorkerOutput:
         """
         Execute Phase 1: Setup & Context Loading.
 
         Default implementation validates session and reads worker prompt.
         Can be overridden by workers for custom setup behavior.
         """
-        # Update session config
-        self.update_session_config(session_id)
-
         # Framework-enforced session validation
         self.validate_session(session_id)
+
+        session_path = Path(SessionManagement.get_session_path(session_id))
+        self.create_worker_specific_files(session_id, session_path)
+
+        # Create setup output with populated config
+        output = self.create_setup_output(session_id)
 
         self.log_event(
             "setup_completed",
@@ -379,18 +301,15 @@ class BaseWorker(BaseProtocol, ABC, Generic[T]):
             },
         )
 
-        return self.create_setup_output(session_id)
+        return output
 
-    def run_output_phase(self, session_id: str, model: str) -> T:
+    def run_output_phase(self, session_id: str, model: str) -> WorkerOutput:
         """
         Execute Phase 3: Validation & Output Generation.
 
         Default implementation validates existing analysis files and confirms completion.
         Can be overridden by workers for custom output validation.
         """
-        # Update session config
-        self.update_session_config(session_id)
-
         # Validate session exists
         self.validate_session(session_id)
 
@@ -431,21 +350,53 @@ class BaseWorker(BaseProtocol, ABC, Generic[T]):
                 "Analysis file validation failed", {"error": str(e)}, "WARNING"
             )
 
-    @abstractmethod
-    def create_setup_output(self, session_id: str) -> T:
-        """Create minimal output object for setup phase with worker-specific output model."""
-        pass
+    def create_setup_output(self, session_id: str) -> WorkerOutput:
+        """Create minimal output object for setup phase."""
+        # Get config from template creation (will be set by create_worker_specific_files)
+        config = getattr(self, "_setup_config", {})
+        worker_prompt = config.get("queen_prompt", "No prompt available")
 
-    @abstractmethod
-    def create_output_validation(self, session_id: str) -> T:
-        """Create validation output object for output phase with worker-specific output model."""
-        pass
+        return WorkerOutput(
+            session_id=session_id,
+            worker=self.worker_type,
+            timestamp=iso_now(),
+            status="completed",
+            summary=WorkerSummary(
+                key_findings=[
+                    "Setup phase completed successfully",
+                    "Queen-generated prompt loaded",
+                    f"Template files created: {self.get_file_prefix()}_notes.md and {self.get_file_prefix()}_output.json",
+                ],
+                critical_issues=[],
+                recommendations=[
+                    "Proceed to Phase 2: Modify template files with analysis findings and remove unused sections"
+                ],
+            ),
+            notes_markdown=f"# {self.get_worker_display_name()} Setup Phase\n\nTemplate files created and ready for Phase 2 modification.\n\n## Files Created\n- Markdown: {self.get_file_prefix()}_notes.md\n- JSON: {self.get_file_prefix()}_output.json\n\n## Specific Task Instructions from Queen\n\n{worker_prompt}",
+            config=config,
+        )
 
-    def get_setup_success_message(self, output: T) -> str:
+    def create_output_validation(self, session_id: str) -> WorkerOutput:
+        """Create validation output object for output phase."""
+        return WorkerOutput(
+            session_id=session_id,
+            worker=self.worker_type,
+            timestamp=iso_now(),
+            status="completed",
+            summary=WorkerSummary(
+                key_findings=["Output validation phase completed"],
+                critical_issues=[],
+                recommendations=["Analysis workflow completed successfully"],
+            ),
+            notes_markdown=f"# {self.get_worker_display_name()} Validation Phase\n\nOutput validation completed.\n\nAnalysis files validated and confirmed complete.",
+            config={},
+        )
+
+    def get_setup_success_message(self, output: WorkerOutput) -> str:
         """Return success message for setup phase. Override if needed."""
         return f"{self.get_worker_display_name()} setup phase completed successfully"
 
-    def get_output_success_message(self, output: T) -> str:
+    def get_output_success_message(self, output: WorkerOutput) -> str:
         """Return success message for output phase. Override if needed."""
         return (
             f"{self.get_worker_display_name()} output validation completed successfully"
