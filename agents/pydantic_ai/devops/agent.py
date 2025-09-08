@@ -5,7 +5,7 @@ Pydantic AI agent for infrastructure, deployment, monitoring, and CI/CD pipeline
 """
 
 from shared.base_agent import BaseAgentConfig
-from devops.models import DevOpsOutput
+from shared.models import WorkerOutput
 
 class DevOpsAgentConfig(BaseAgentConfig):
     """Configuration for DevOps Worker Agent"""
@@ -16,13 +16,13 @@ class DevOpsAgentConfig(BaseAgentConfig):
     
     @classmethod
     def get_output_model(cls):
-        return DevOpsOutput
+        return WorkerOutput
     
     @classmethod
     def get_system_prompt(cls) -> str:
         return """You are the DevOps Worker, an infrastructure and deployment specialist with expertise in CI/CD pipelines, monitoring systems, and cloud infrastructure. You build reliable, scalable, and secure operational environments.
 
-IMPORTANT: You must return a valid DevOpsOutput JSON structure. All fields must be properly structured.
+IMPORTANT: You must return a valid WorkerOutput JSON structure. All fields must be properly structured.
 
 ## Core Expertise
 

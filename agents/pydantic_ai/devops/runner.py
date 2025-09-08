@@ -14,11 +14,11 @@ sys.path.insert(0, str(Path(__file__).parent.parent))
 from typing import Dict, Any
 
 from shared.base_worker import BaseWorker
-from devops.models import DevOpsOutput
+from shared.models import WorkerOutput
 from devops.agent import devops_agent, DevOpsAgentConfig
 
 
-class DevOpsWorker(BaseWorker[DevOpsOutput]):
+class DevOpsWorker(BaseWorker):
     """
     Infrastructure, deployment, and CI/CD analysis worker.
     
@@ -28,35 +28,9 @@ class DevOpsWorker(BaseWorker[DevOpsOutput]):
 
     def __init__(self):
         super().__init__(
-            worker_type="devops-worker", worker_config=None, output_model=DevOpsOutput
+            worker_type="devops-worker", worker_config=None, output_model=WorkerOutput
         )
 
-    def run(self, session_id: str, task_description: str, model: str) -> DevOpsOutput:
-        """Run devops worker with runtime worker config"""
-        # Create worker config at runtime with actual values
-        self.worker_config = DevOpsAgentConfig.create_worker_config(
-            session_id, task_description
-        )
-        return self.run_analysis(session_id, task_description, model)
-
-    def execute_ai_analysis(
-        self, session_id: str, task_description: str, model: str
-    ) -> Any:
-        """Execute devops-specific AI analysis"""
-        return devops_agent.run_sync(
-            f"""Provide comprehensive DevOps infrastructure and deployment analysis.
-Task: {task_description}
-Session: {session_id}
-Perform thorough DevOps analysis including:
-1. Infrastructure architecture and deployment strategy
-2. CI/CD pipeline design and optimization
-3. Monitoring and observability implementation
-4. Security hardening and compliance requirements
-5. Scalability planning and reliability engineering
-6. Operational procedures and incident response
-Focus on production-ready solutions with specific implementation details.""",
-            model=model,
-        )
 
     def get_file_prefix(self) -> str:
         """Return file prefix for devops output files"""
@@ -78,7 +52,7 @@ Focus on production-ready solutions with specific implementation details.""",
             "focus_areas": ["infrastructure", "deployment", "monitoring", "automation"],
         }
 
-    def get_completion_event_details(self, output: DevOpsOutput) -> Dict[str, Any]:
+    def get_completion_event_details(self, output: WorkerOutput) -> Dict[str, Any]:
         """Return worker-specific event details for worker_completed event"""
         return {
             "worker": "devops-worker",
@@ -89,7 +63,7 @@ Focus on production-ready solutions with specific implementation details.""",
             "reliability_score": output.reliability_score,
         }
 
-    def get_success_message(self, output: DevOpsOutput) -> str:
+    def get_success_message(self, output: WorkerOutput) -> str:
         """Return worker-specific CLI success message"""
         return (
             f"DevOps analysis completed. Infrastructure recommendations: {len(output.infrastructure_recommendations)}, "
@@ -97,7 +71,7 @@ Focus on production-ready solutions with specific implementation details.""",
         )
 
     def create_worker_specific_files(
-        self, session_id: str, output: DevOpsOutput, session_path: Path
+        self, session_id: str, output: WorkerOutput, session_path: Path
     ) -> None:
         """Create devops-specific output files beyond standard notes/JSON"""
         # DevOps worker uses standard file creation - no additional files needed
