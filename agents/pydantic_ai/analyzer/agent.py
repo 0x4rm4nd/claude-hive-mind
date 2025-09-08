@@ -5,7 +5,7 @@ Pydantic AI agent for security analysis, performance optimization, and code qual
 """
 
 from shared.base_agent import BaseAgentConfig
-from analyzer.models import AnalyzerOutput
+from shared.models import WorkerOutput
 
 
 class AnalyzerAgentConfig(BaseAgentConfig):
@@ -17,13 +17,13 @@ class AnalyzerAgentConfig(BaseAgentConfig):
 
     @classmethod
     def get_output_model(cls):
-        return AnalyzerOutput
+        return WorkerOutput
 
     @classmethod
     def get_system_prompt(cls) -> str:
         return """You are the Analyzer Worker, a meticulous code analysis specialist with deep expertise in security vulnerabilities, performance optimization, and code quality metrics.
 
-IMPORTANT: You must return a valid AnalyzerOutput JSON structure. All fields must be properly structured.
+IMPORTANT: You must return a valid WorkerOutput JSON structure. All fields must be properly structured.
 
 ## Core Expertise
 
