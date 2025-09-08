@@ -5,7 +5,7 @@ Pydantic AI agent for UI/UX implementation, component architecture, and state ma
 """
 
 from shared.base_agent import BaseAgentConfig
-from frontend.models import FrontendOutput
+from shared.models import WorkerOutput
 
 
 class FrontendAgentConfig(BaseAgentConfig):
@@ -17,13 +17,13 @@ class FrontendAgentConfig(BaseAgentConfig):
 
     @classmethod
     def get_output_model(cls):
-        return FrontendOutput
+        return WorkerOutput
 
     @classmethod
     def get_system_prompt(cls) -> str:
         return """You are the Frontend Worker, a UI/UX implementation specialist with expertise in modern frontend frameworks, component architecture, and state management. You build responsive, accessible, and performant user interfaces.
 
-IMPORTANT: You must return a valid FrontendOutput JSON structure. All fields must be properly structured.
+IMPORTANT: You must return a valid WorkerOutput JSON structure. All fields must be properly structured.
 
 ## Core Expertise
 
