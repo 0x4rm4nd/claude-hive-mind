@@ -14,11 +14,11 @@ sys.path.insert(0, str(Path(__file__).parent.parent))
 from typing import Dict, Any
 
 from shared.base_worker import BaseWorker
-from test.models import TestOutput
+from shared.models import WorkerOutput
 from test.agent import test_agent, TestAgentConfig
 
 
-class TestWorker(BaseWorker[TestOutput]):
+class TestWorker(BaseWorker):
     """
     Testing strategy and quality assurance analysis worker.
     
@@ -28,35 +28,9 @@ class TestWorker(BaseWorker[TestOutput]):
 
     def __init__(self):
         super().__init__(
-            worker_type="test-worker", worker_config=None, output_model=TestOutput
+            worker_type="test-worker", worker_config=None, output_model=WorkerOutput
         )
 
-    def run(self, session_id: str, task_description: str, model: str) -> TestOutput:
-        """Run test worker with runtime worker config"""
-        # Create worker config at runtime with actual values
-        self.worker_config = TestAgentConfig.create_worker_config(
-            session_id, task_description
-        )
-        return self.run_analysis(session_id, task_description, model)
-
-    def execute_ai_analysis(
-        self, session_id: str, task_description: str, model: str
-    ) -> Any:
-        """Execute test-specific AI analysis"""
-        return test_agent.run_sync(
-            f"""Provide comprehensive testing strategy and quality assurance analysis.
-Task: {task_description}
-Session: {session_id}
-Perform thorough testing analysis including:
-1. Testing strategy design and test coverage planning
-2. Test automation framework recommendations
-3. Quality assurance process optimization
-4. Performance and security testing approaches
-5. CI/CD testing integration strategies
-6. Test metrics and quality validation procedures
-Focus on comprehensive testing solutions with specific implementation guidance.""",
-            model=model,
-        )
 
     def get_file_prefix(self) -> str:
         """Return file prefix for test output files"""
@@ -83,7 +57,7 @@ Focus on comprehensive testing solutions with specific implementation guidance."
             ],
         }
 
-    def get_completion_event_details(self, output: TestOutput) -> Dict[str, Any]:
+    def get_completion_event_details(self, output: WorkerOutput) -> Dict[str, Any]:
         """Return worker-specific event details for worker_completed event"""
         return {
             "worker": "test-worker",
@@ -92,7 +66,7 @@ Focus on comprehensive testing solutions with specific implementation guidance."
             "quality_score": output.quality_score,
         }
 
-    def get_success_message(self, output: TestOutput) -> str:
+    def get_success_message(self, output: WorkerOutput) -> str:
         """Return worker-specific CLI success message"""
         return (
             f"Test analysis completed. Test strategies: {len(output.test_strategies)}, "
@@ -100,7 +74,7 @@ Focus on comprehensive testing solutions with specific implementation guidance."
         )
 
     def create_worker_specific_files(
-        self, session_id: str, output: TestOutput, session_path: Path
+        self, session_id: str, output: WorkerOutput, session_path: Path
     ) -> None:
         """Create test-specific output files beyond standard notes/JSON"""
         # Test worker uses standard file creation - no additional files needed

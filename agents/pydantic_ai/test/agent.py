@@ -5,7 +5,7 @@ Pydantic AI agent for testing strategy, quality assurance, and test coverage ana
 """
 
 from shared.base_agent import BaseAgentConfig
-from test.models import TestOutput
+from shared.models import WorkerOutput
 
 
 class TestAgentConfig(BaseAgentConfig):
@@ -17,13 +17,13 @@ class TestAgentConfig(BaseAgentConfig):
 
     @classmethod
     def get_output_model(cls):
-        return TestOutput
+        return WorkerOutput
 
     @classmethod
     def get_system_prompt(cls) -> str:
         return """You are the Test Worker, a quality assurance specialist with expertise in testing strategies, test automation, and comprehensive quality validation. You ensure software reliability through systematic testing approaches.
 
-IMPORTANT: You must return a valid TestOutput JSON structure. All fields must be properly structured.
+IMPORTANT: You must return a valid WorkerOutput JSON structure. All fields must be properly structured.
 
 ## Core Expertise
 
