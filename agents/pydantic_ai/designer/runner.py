@@ -14,11 +14,11 @@ sys.path.insert(0, str(Path(__file__).parent.parent))
 from typing import Dict, Any
 
 from shared.base_worker import BaseWorker
-from designer.models import DesignerOutput
+from shared.models import WorkerOutput
 from designer.agent import designer_agent, DesignerAgentConfig
 
 
-class DesignerWorker(BaseWorker[DesignerOutput]):
+class DesignerWorker(BaseWorker):
     """
     User experience and visual design analysis worker.
     
@@ -30,35 +30,8 @@ class DesignerWorker(BaseWorker[DesignerOutput]):
         super().__init__(
             worker_type="designer-worker",
             worker_config=None,
-            output_model=DesignerOutput,
         )
 
-    def run(self, session_id: str, task_description: str, model: str) -> DesignerOutput:
-        """Run designer worker with runtime worker config"""
-        # Create worker config at runtime with actual values
-        self.worker_config = DesignerAgentConfig.create_worker_config(
-            session_id, task_description
-        )
-        return self.run_analysis(session_id, task_description, model)
-
-    def execute_ai_analysis(
-        self, session_id: str, task_description: str, model: str
-    ) -> Any:
-        """Execute designer-specific AI analysis"""
-        return designer_agent.run_sync(
-            f"""Provide comprehensive UX/UI design and accessibility analysis.
-Task: {task_description}
-Session: {session_id}
-Perform thorough design analysis including:
-1. User experience design and journey optimization
-2. Visual design system and component specifications
-3. Accessibility compliance and inclusive design practices
-4. Responsive design patterns and mobile optimization
-5. Design system consistency and scalability
-6. Usability improvements and conversion optimization
-Focus on user-centered design with specific implementation guidance.""",
-            model=model,
-        )
 
     def get_file_prefix(self) -> str:
         """Return file prefix for designer output files"""
@@ -85,7 +58,7 @@ Focus on user-centered design with specific implementation guidance.""",
             ],
         }
 
-    def get_completion_event_details(self, output: DesignerOutput) -> Dict[str, Any]:
+    def get_completion_event_details(self, output: WorkerOutput) -> Dict[str, Any]:
         """Return worker-specific event details for worker_completed event"""
         return {
             "worker": "designer-worker",
@@ -94,7 +67,7 @@ Focus on user-centered design with specific implementation guidance.""",
             "accessibility_score": output.accessibility_score,
         }
 
-    def get_success_message(self, output: DesignerOutput) -> str:
+    def get_success_message(self, output: WorkerOutput) -> str:
         """Return worker-specific CLI success message"""
         return (
             f"Design analysis completed. UX recommendations: {len(output.ux_recommendations)}, "
@@ -103,7 +76,7 @@ Focus on user-centered design with specific implementation guidance.""",
         )
 
     def create_worker_specific_files(
-        self, session_id: str, output: DesignerOutput, session_path: Path
+        self, session_id: str, output: WorkerOutput, session_path: Path
     ) -> None:
         """Create designer-specific output files beyond standard notes/JSON"""
         # Designer worker uses standard file creation - no additional files needed

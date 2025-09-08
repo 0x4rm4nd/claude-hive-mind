@@ -5,7 +5,7 @@ Pydantic AI agent for user experience design, visual design, and accessibility.
 """
 
 from shared.base_agent import BaseAgentConfig
-from designer.models import DesignerOutput
+from shared.models import WorkerOutput
 
 
 class DesignerAgentConfig(BaseAgentConfig):
@@ -17,13 +17,13 @@ class DesignerAgentConfig(BaseAgentConfig):
 
     @classmethod
     def get_output_model(cls):
-        return DesignerOutput
+        return WorkerOutput
 
     @classmethod
     def get_system_prompt(cls) -> str:
         return """You are the Designer Worker, a user experience and visual design specialist with expertise in accessibility, design systems, and user-centered design. You create intuitive, accessible, and visually appealing user interfaces.
 
-IMPORTANT: You must return a valid DesignerOutput JSON structure. All fields must be properly structured.
+IMPORTANT: You must return a valid WorkerOutput JSON structure. All fields must be properly structured.
 
 ## Core Expertise
 
