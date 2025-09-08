@@ -12,11 +12,11 @@ from typing import Dict, Any
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
 from shared.base_worker import BaseWorker
-from researcher.models import ResearcherOutput
+from shared.models import WorkerOutput
 from researcher.agent import researcher_agent, ResearcherAgentConfig
 
 
-class ResearcherWorker(BaseWorker[ResearcherOutput]):
+class ResearcherWorker(BaseWorker):
     """
     Technical research and industry standards analysis worker.
 
@@ -28,37 +28,8 @@ class ResearcherWorker(BaseWorker[ResearcherOutput]):
         super().__init__(
             worker_type="researcher-worker",
             worker_config=None,
-            output_model=ResearcherOutput,
         )
 
-    def run(
-        self, session_id: str, task_description: str, model: str
-    ) -> ResearcherOutput:
-        """Run researcher worker with runtime worker config"""
-        # Create worker config at runtime with actual values
-        self.worker_config = ResearcherAgentConfig.create_worker_config(
-            session_id, task_description
-        )
-        return self.run_analysis(session_id, task_description, model)
-
-    def execute_ai_analysis(
-        self, session_id: str, task_description: str, model: str
-    ) -> Any:
-        """Execute researcher-specific AI analysis"""
-        return researcher_agent.run_sync(
-            f"""Conduct comprehensive technical research and analysis.
-Task: {task_description}
-Session: {session_id}
-Perform thorough research analysis including:
-1. Technology evaluation and comparison
-2. Industry best practices and standards research
-3. Security and compliance requirements analysis
-4. Performance optimization insights and benchmarks
-5. Emerging technology trends and adoption considerations
-6. Competitive analysis and market intelligence
-Focus on evidence-based findings with credible sources and actionable recommendations.""",
-            model=model,
-        )
 
     def get_file_prefix(self) -> str:
         """Return file prefix for researcher output files"""
@@ -80,7 +51,7 @@ Focus on evidence-based findings with credible sources and actionable recommenda
             "focus_areas": ["research", "analysis", "documentation", "insights"],
         }
 
-    def get_completion_event_details(self, output: ResearcherOutput) -> Dict[str, Any]:
+    def get_completion_event_details(self, output: WorkerOutput) -> Dict[str, Any]:
         """Return worker-specific event details for worker_completed event"""
         return {
             "worker": "researcher-worker",
@@ -88,7 +59,7 @@ Focus on evidence-based findings with credible sources and actionable recommenda
             "confidence_score": output.confidence_score,
         }
 
-    def get_success_message(self, output: ResearcherOutput) -> str:
+    def get_success_message(self, output: WorkerOutput) -> str:
         """Return worker-specific CLI success message"""
         return (
             f"Research analysis completed. Research findings: {len(output.research_findings)}, "
@@ -96,7 +67,7 @@ Focus on evidence-based findings with credible sources and actionable recommenda
         )
 
     def create_worker_specific_files(
-        self, session_id: str, output: ResearcherOutput, session_path: Path
+        self, session_id: str, output: WorkerOutput, session_path: Path
     ) -> None:
         """Create researcher-specific output files beyond standard notes/JSON"""
         # Researcher worker uses standard file creation - no additional files needed

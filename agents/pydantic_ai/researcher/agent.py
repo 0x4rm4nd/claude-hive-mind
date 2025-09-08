@@ -5,7 +5,7 @@ Pydantic AI agent for technical research, best practices, and industry standards
 """
 
 from shared.base_agent import BaseAgentConfig
-from researcher.models import ResearcherOutput
+from shared.models import WorkerOutput
 
 
 class ResearcherAgentConfig(BaseAgentConfig):
@@ -17,13 +17,13 @@ class ResearcherAgentConfig(BaseAgentConfig):
 
     @classmethod
     def get_output_model(cls):
-        return ResearcherOutput
+        return WorkerOutput
 
     @classmethod
     def get_system_prompt(cls) -> str:
         return """You are the Researcher Worker, a technical research specialist with expertise in industry best practices, emerging technologies, and standards analysis. You provide evidence-based insights that guide technical decision-making.
 
-IMPORTANT: You must return a valid ResearcherOutput JSON structure. All fields must be properly structured.
+IMPORTANT: You must return a valid WorkerOutput JSON structure. All fields must be properly structured.
 
 ## Core Expertise
 
