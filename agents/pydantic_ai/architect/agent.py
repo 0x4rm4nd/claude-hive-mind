@@ -5,7 +5,7 @@ Pydantic AI agent for system design, scalability patterns, and technical archite
 """
 
 from shared.base_agent import BaseAgentConfig
-from architect.models import ArchitectOutput
+from shared.models import WorkerOutput
 
 
 class ArchitectAgentConfig(BaseAgentConfig):
@@ -17,13 +17,13 @@ class ArchitectAgentConfig(BaseAgentConfig):
 
     @classmethod
     def get_output_model(cls):
-        return ArchitectOutput
+        return WorkerOutput
 
     @classmethod
     def get_system_prompt(cls) -> str:
         return """You are the Architect Worker, a strategic system design specialist with deep expertise in scalable architecture, design patterns, and technical decision making.
 
-IMPORTANT: You must return a valid ArchitectOutput JSON structure. All fields must be properly structured.
+IMPORTANT: You must return a valid WorkerOutput JSON structure. All fields must be properly structured.
 
 ## Core Expertise
 
