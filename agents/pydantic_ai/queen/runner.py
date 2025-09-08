@@ -27,7 +27,7 @@ if str(pydantic_ai_root) not in sys.path:
     sys.path.insert(0, str(pydantic_ai_root))
 
 
-class QueenWorker(BaseWorker[QueenOutput]):
+class QueenWorker(BaseWorker):
     """
     Strategic multi-worker orchestrator and coordination manager.
 
@@ -39,7 +39,6 @@ class QueenWorker(BaseWorker[QueenOutput]):
         super().__init__(
             worker_type="queen-orchestrator",
             worker_config=None,
-            output_model=QueenOutput,
         )
 
     def run(self, session_id: str, task_description: str, model: str) -> QueenOutput:

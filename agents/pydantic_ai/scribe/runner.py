@@ -28,7 +28,7 @@ if str(pydantic_ai_root) not in sys.path:
     sys.path.insert(0, str(pydantic_ai_root))
 
 
-class ScribeWorker(BaseWorker[ScribeOutput]):
+class ScribeWorker(BaseWorker):
     """
     Scribe session lifecycle manager and synthesis coordinator.
 
@@ -40,7 +40,6 @@ class ScribeWorker(BaseWorker[ScribeOutput]):
         super().__init__(
             worker_type="scribe",
             worker_config=None,
-            output_model=ScribeOutput,
         )
         self._session_complexity = None
 
@@ -126,7 +125,7 @@ class ScribeWorker(BaseWorker[ScribeOutput]):
         """Create completion result for session creation"""
         # Update session config before any logging
         self.update_session_config(session_id)
-        
+
         # Log session creation event
         self.log_event(
             "session_created",
