@@ -1,0 +1,163 @@
+{
+  "analysis_metadata": {
+    "session_id": "{{SESSION_ID}}",
+    "timestamp": "{{TIMESTAMP}}",
+    "files_analyzed": 0,
+    "analysis_duration": "{{DURATION}}",
+    "worker_type": "backend"
+  },
+  
+  "scores": {
+    "api_design_score": 0,
+    "database_performance_score": 0,
+    "service_architecture_score": 0,
+    "overall_score": 0
+  },
+  
+  "api_specifications": [
+    {
+      "id": "API-001-TEMPLATE",
+      "endpoint": "Template - remove if no API specifications",
+      "method": "GET|POST|PUT|DELETE|PATCH",
+      "path": "/api/v1/resource",
+      "description": "Detailed endpoint description and purpose",
+      "request_format": {
+        "content_type": "application/json",
+        "body_schema": "JSON schema or example",
+        "parameters": "Query or path parameters"
+      },
+      "response_format": {
+        "success_status": 200,
+        "success_schema": "Response JSON schema",
+        "error_responses": ["400", "401", "403", "404", "500"]
+      },
+      "authentication": "JWT|OAuth2|API_KEY|None",
+      "authorization": "Role-based access control requirements",
+      "rate_limiting": "Requests per minute/hour limits",
+      "caching_strategy": "Cache headers and strategy",
+      "implementation_notes": "Specific implementation guidance"
+    }
+  ],
+  
+  "database_designs": [
+    {
+      "id": "DB-001-TEMPLATE",
+      "table_name": "Template - remove if no database designs",
+      "description": "Table purpose and data it stores",
+      "schema": {
+        "columns": [
+          {
+            "name": "column_name",
+            "type": "data_type",
+            "constraints": "PRIMARY KEY|FOREIGN KEY|NOT NULL|UNIQUE",
+            "description": "Column purpose"
+          }
+        ],
+        "indexes": [
+          {
+            "name": "index_name",
+            "columns": ["column1", "column2"],
+            "type": "BTREE|HASH|GIN|GIST",
+            "description": "Index purpose and performance impact"
+          }
+        ],
+        "relationships": [
+          {
+            "type": "ONE_TO_MANY|MANY_TO_ONE|MANY_TO_MANY",
+            "related_table": "related_table_name",
+            "foreign_key": "column_name",
+            "description": "Relationship description"
+          }
+        ]
+      },
+      "performance_considerations": "Query optimization and indexing strategy",
+      "migration_strategy": "Schema evolution and deployment approach",
+      "data_integrity": "Constraints and validation rules"
+    }
+  ],
+  
+  "service_architecture": [
+    {
+      "id": "SVC-001-TEMPLATE",
+      "service_name": "Template - remove if no service architecture recommendations",
+      "description": "Service purpose and responsibilities",
+      "type": "REST_API|GraphQL|WebSocket|Background_Service|Message_Handler",
+      "business_logic": {
+        "domain_models": "Core domain entities and value objects",
+        "service_layer": "Business logic organization",
+        "validation_patterns": "Input and business rule validation",
+        "transaction_boundaries": "ACID compliance and rollback strategies"
+      },
+      "integration_patterns": {
+        "message_queues": "Event-driven communication patterns",
+        "third_party_apis": "External service integrations",
+        "inter_service": "Microservice communication strategies",
+        "event_handling": "Domain events and CQRS patterns"
+      },
+      "performance_optimizations": {
+        "caching_strategy": "Application and distributed caching",
+        "async_processing": "Non-blocking I/O and concurrent handling",
+        "resource_optimization": "Memory and connection management",
+        "monitoring": "Performance metrics and health checks"
+      },
+      "scalability_considerations": "Horizontal scaling and load balancing",
+      "implementation_guidance": "Specific technical implementation steps"
+    }
+  ],
+  
+  "security_implementations": [
+    {
+      "id": "SEC-001-TEMPLATE",
+      "security_feature": "Template - remove if no security implementations",
+      "category": "authentication|authorization|input_validation|data_protection|audit_logging",
+      "priority": "critical|high|medium|low",
+      "description": "Security feature description and purpose",
+      "implementation": {
+        "technology_stack": "JWT|OAuth2|bcrypt|helmet|rate-limiter",
+        "configuration": "Security configuration details",
+        "code_examples": "Implementation code snippets",
+        "testing_approach": "Security testing strategies"
+      },
+      "compliance_requirements": "GDPR|SOC2|HIPAA|PCI-DSS compliance needs",
+      "monitoring_alerts": "Security monitoring and alerting setup"
+    }
+  ],
+  
+  "performance_optimizations": [
+    {
+      "id": "PERF-001-TEMPLATE",
+      "optimization": "Template - remove if no performance optimizations",
+      "category": "database|api|caching|memory|cpu",
+      "current_performance": "Current performance metrics",
+      "target_performance": "Target performance goals",
+      "implementation": {
+        "approach": "Optimization strategy and techniques",
+        "code_changes": "Specific code modifications needed",
+        "configuration": "Infrastructure or application configuration",
+        "testing_strategy": "Performance testing approach"
+      },
+      "expected_impact": "Quantified performance improvement",
+      "implementation_effort": "Development time and complexity estimate"
+    }
+  ],
+  
+  "priority_actions": [
+    {
+      "action": "Template - remove if no priority actions",
+      "category": "api_design|database|security|performance|architecture",
+      "priority": "critical|high|medium|low",
+      "effort_estimate": "hours|days|weeks",
+      "impact": "Expected business or technical impact",
+      "dependencies": "Required dependencies or prerequisites"
+    }
+  ],
+  
+  "statistics": {
+    "total_api_endpoints": 0,
+    "database_tables_analyzed": 0,
+    "security_implementations": 0,
+    "performance_optimizations": 0,
+    "critical_issues": 0,
+    "high_priority_items": 0
+  }
+}
