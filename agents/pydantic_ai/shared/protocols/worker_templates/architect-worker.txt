@@ -16,4 +16,12 @@ EXPECTED DELIVERABLES:
 1. Worker Notes: Architecture analysis with design recommendations
 2. Worker Output: JSON with structured architectural assessment
 
+CRITICAL INSTRUCTIONS:
+• ALL template sections must be completed with relevant findings
+• NEVER leave sections empty or with placeholder text  
+• If a section appears non-applicable, explain why rather than deleting it
+• Complete Architecture Recommendations, Scalability Recommendations, and Technology Recommendations with concrete suggestions
+• Replace ALL "*Remove this section*" instructions with actual analysis
+• Provide specific file references, code examples, and actionable recommendations
+
 Prioritize solutions that enhance system scalability, maintainability, and development velocity.

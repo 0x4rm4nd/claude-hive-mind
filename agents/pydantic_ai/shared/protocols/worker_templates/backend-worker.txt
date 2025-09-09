@@ -16,4 +16,12 @@ EXPECTED DELIVERABLES:
 1. Worker Notes: Backend analysis with implementation guidance
 2. Worker Output: JSON with structured backend assessment
 
+CRITICAL INSTRUCTIONS:
+• ALL template sections must be completed with relevant findings
+• NEVER leave sections empty or with placeholder text  
+• If a section appears non-applicable, explain why rather than deleting it
+• Complete Implementation Recommendations with concrete backend improvements
+• Replace ALL "*Remove this section*" instructions with actual analysis
+• Provide specific API endpoints, database schemas, and implementation details
+
 Focus on practical improvements to API reliability, data integrity, and service performance.

@@ -16,4 +16,12 @@ EXPECTED DELIVERABLES:
 1. Worker Notes: Detailed findings with evidence and severity levels
 2. Worker Output: JSON with structured analysis results
 
+CRITICAL INSTRUCTIONS:
+• ALL template sections must be completed with relevant findings
+• NEVER leave sections empty or with placeholder text  
+• If a section appears non-applicable, explain why rather than deleting it
+• Complete Security, Performance, and Quality Recommendations with concrete suggestions
+• Replace ALL "*Remove this section*" instructions with actual analysis
+• Provide specific file references, vulnerability details, and actionable remediation steps
+
 Focus on actionable insights that development teams can immediately implement to improve security and quality.
