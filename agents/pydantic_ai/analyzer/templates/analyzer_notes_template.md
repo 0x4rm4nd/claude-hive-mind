@@ -13,112 +13,112 @@
 ## Security Findings
 
 ### Critical Security Issues
-*Remove this subsection if no critical security issues found*
+*REQUIRED: Document critical security vulnerabilities. If none exist, explain security strengths and defensive measures.*
 
 ### High Priority Security Issues  
-*Remove this subsection if no high priority security issues found*
+*REQUIRED: List high-severity security concerns. If none found, detail security best practices observed.*
 
 ### Medium Priority Security Issues
-*Remove this subsection if no medium priority security issues found*
+*REQUIRED: Document medium-priority security findings. If minimal issues, highlight robust security implementation.*
 
 ### Authentication & Authorization Issues
-*Remove this subsection if no authentication issues found*
+*REQUIRED: Analyze authentication and authorization security. If well-implemented, document security patterns and controls.*
 
 ### Data Protection Issues
-*Remove this subsection if no data protection issues found*
+*REQUIRED: Review data protection and encryption. If secure, highlight encryption strategies and data handling practices.*
 
 ### Input Validation Issues
-*Remove this subsection if no input validation issues found*
+*REQUIRED: Assess input validation security. If robust, document validation patterns and sanitization techniques.*
 
 ### Configuration Security Issues
-*Remove this subsection if no configuration security issues found*
+*REQUIRED: Examine configuration security. If secure, detail configuration management and security hardening.*
 
 ### Dependency Security Issues
-*Remove this subsection if no dependency security issues found*
+*REQUIRED: Evaluate dependency security. If well-managed, document dependency hygiene and update practices.*
 
 ## Performance Analysis
 
 ### Database Performance Issues
-*Remove this subsection if no database performance issues found*
+*REQUIRED: Analyze database performance patterns. If optimized, document efficient query patterns and indexing strategies.*
 
 ### Application Performance Issues
-*Remove this subsection if no application performance issues found*
+*REQUIRED: Review application performance bottlenecks. If performant, highlight optimization techniques and efficient code patterns.*
 
 ### Frontend Performance Issues
-*Remove this subsection if no frontend performance issues found*
+*REQUIRED: Assess frontend performance characteristics. If optimized, document performance strategies and optimization techniques.*
 
 ### Memory Usage Issues
-*Remove this subsection if no memory usage issues found*
+*REQUIRED: Review memory usage patterns and leaks. If efficient, document memory management strategies and optimization techniques.*
 
 ### CPU Performance Issues
-*Remove this subsection if no CPU performance issues found*
+*REQUIRED: Analyze CPU usage and processing efficiency. If optimized, document performance patterns and optimization techniques.*
 
 ### Caching Issues
-*Remove this subsection if no caching issues found*
+*REQUIRED: Evaluate caching implementation and effectiveness. If well-implemented, document caching strategies and hit rate optimization.*
 
 ## Code Quality Assessment
 
 ### Complexity Issues
-*Remove this subsection if no complexity issues found*
+*REQUIRED: Assess code complexity and maintainability metrics. If well-managed, document clean code practices and complexity control.*
 
 ### Maintainability Issues
-*Remove this subsection if no maintainability issues found*
+*REQUIRED: Review code maintainability and documentation. If maintainable, highlight good practices and architectural decisions.*
 
 ### Test Coverage Issues
-*Remove this subsection if no test coverage issues found*
+*REQUIRED: Analyze test coverage and quality. If comprehensive, document testing strategies and coverage achievements.*
 
 ### Documentation Issues
-*Remove this subsection if no documentation issues found*
+*REQUIRED: Review code documentation and comments. If well-documented, highlight documentation standards and practices.*
 
 ### Code Duplication Issues
-*Remove this subsection if no code duplication issues found*
+*REQUIRED: Identify code duplication patterns. If minimal duplication, document code reuse strategies and refactoring practices.*
 
 ### Architectural Issues
-*Remove this subsection if no architectural issues found*
+*REQUIRED: Review architectural patterns and design decisions. If sound architecture, document design patterns and architectural strengths.*
 
 ## Priority Action Items
 
 ### Immediate Actions Required
-*Remove this section if no immediate actions required*
+*REQUIRED: List critical fixes needed within 24-48 hours. If system is stable, explain why no immediate actions are needed.*
 
 ### Next Sprint Actions
-*Remove this section if no next sprint actions required*
+*REQUIRED: Identify improvements for next sprint (1-2 weeks). Include specific implementation steps and priorities.*
 
 ### Backlog Items
-*Remove this section if no backlog items*
+*REQUIRED: Document longer-term improvements and enhancements. If backlog is minimal, highlight system maturity.*
 
 ## Detailed Findings
 
 ### Security Details
-*Remove this section if no security details*
+*REQUIRED: Provide detailed security analysis with specific findings and evidence. Include code references and vulnerability assessments.*
 
 ### Performance Details  
-*Remove this section if no performance details*
+*REQUIRED: Detail performance analysis with metrics and bottleneck identification. Include optimization opportunities and current baselines.*
 
 ### Quality Details
-*Remove this section if no quality details*
+*REQUIRED: Document code quality assessment with specific examples and metrics. Include maintainability and complexity analysis.*
 
 ## Recommendations
 
 ### Security Recommendations
-*Remove this section if no security recommendations*
+*REQUIRED: Provide specific security improvements and hardening strategies. Include implementation priorities and security best practices.*
 
 ### Performance Recommendations
-*Remove this section if no performance recommendations*
+*REQUIRED: Detail performance optimization strategies and improvements. Include specific techniques and expected impact.*
 
 ### Quality Recommendations
-*Remove this section if no quality recommendations*
+*REQUIRED: Recommend code quality improvements and maintainability enhancements. Include refactoring suggestions and standards adoption.*
 
 ## Implementation Roadmap
 
 ### Phase 1: Critical Fixes
-*Remove this section if no critical fixes needed*
+*REQUIRED: Define immediate fixes with timeline and priorities. If no critical issues, explain system stability and preventive measures.*
 
 ### Phase 2: Performance Improvements
-*Remove this section if no performance improvements needed*
+*REQUIRED: Plan performance enhancements with metrics and success criteria. Include optimization strategies and implementation approach.*
 
 ### Phase 3: Quality Enhancements
-*Remove this section if no quality enhancements needed*
+*REQUIRED: Outline quality improvements and maintenance strategies. Include long-term code health and technical debt management.*
 
 ---
 *Analysis completed by Analyzer Worker*

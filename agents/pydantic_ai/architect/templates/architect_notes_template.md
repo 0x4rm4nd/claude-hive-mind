@@ -104,7 +104,7 @@
 *Focus on SOLID principles, domain boundaries, and coupling analysis*
 
 ### Technical Debt Assessment
-*Remove this subsection if no technical debt issues found*
+*REQUIRED: Analyze technical debt in the codebase. If minimal debt exists, document this as a positive finding with specific examples of clean architecture.*
 
 ## Focus Areas Analysis
 
@@ -144,46 +144,46 @@
 ## Priority Action Items
 
 ### Immediate Actions Required
-*Remove this section if no immediate actions required*
+*REQUIRED: List critical architectural fixes needed within 24-48 hours. If none exist, explain why the architecture is stable.*
 
 ### Next Sprint Actions
-*Remove this section if no next sprint actions required*
+*REQUIRED: Identify architectural improvements for next sprint (1-2 weeks). Include specific implementation steps.*
 
 ### Backlog Items
-*Remove this section if no backlog items*
+*REQUIRED: Document longer-term architectural enhancements. If backlog is clean, highlight architectural maturity.*
 
 ## Detailed Findings
 
 ### Architecture Details
-*Remove this section if no architecture details*
+*REQUIRED: Provide detailed architectural findings with specific file references and code examples. Include pattern analysis.*
 
 ### Scalability Details  
-*Remove this section if no scalability details*
+*REQUIRED: Detail scalability analysis with current metrics and projections. Include bottleneck analysis with evidence.*
 
 ### Technology Details
-*Remove this section if no technology details*
+*REQUIRED: Document technology stack assessment with upgrade recommendations and justifications.*
 
 ## Recommendations
 
 ### Architecture Recommendations
-*Remove this section if no architecture recommendations*
+*REQUIRED: Provide specific architectural improvements based on your analysis. Include patterns, refactoring suggestions, and design enhancements. If architecture is excellent, recommend maintenance strategies.*
 
 ### Scalability Recommendations
-*Remove this section if no scalability recommendations*
+*REQUIRED: Detail scalability improvements based on identified bottlenecks. Include infrastructure, caching, and distributed system recommendations. If highly scalable, document optimization opportunities.*
 
-### Technology Recommendations
-*Remove this section if no technology recommendations*
+### Technology Recommendations  
+*REQUIRED: Recommend technology upgrades, replacements, or additions. Include justifications and migration strategies. If stack is modern, suggest future-proofing approaches.*
 
 ## Implementation Roadmap
 
 ### Phase 1: Critical Fixes
-*Remove this section if no critical fixes needed*
+*REQUIRED: Define immediate architectural fixes with timeline. If no critical issues, document why architecture is stable and list preventive measures.*
 
 ### Phase 2: Architecture Improvements
-*Remove this section if no architecture improvements needed*
+*REQUIRED: Plan medium-term architectural enhancements with success metrics. Include modernization and optimization initiatives.*
 
 ### Phase 3: Quality Enhancements
-*Remove this section if no quality enhancements needed*
+*REQUIRED: Outline long-term quality and operational excellence improvements. Include monitoring, testing, and maintenance strategies.*
 
 ---
 *Analysis completed by Architect Worker*
