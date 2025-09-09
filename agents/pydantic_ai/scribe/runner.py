@@ -55,7 +55,7 @@ class ScribeWorker(BaseWorker):
             ScribeOutput: Unified scribe output for both modes
         """
         # Check if this is session creation mode
-        is_create_mode = not session_id or "synthesis" not in task_description.lower()
+        is_create_mode = not session_id
 
         if is_create_mode:
             # For create mode, generate session_id first, then create config
@@ -66,65 +66,54 @@ class ScribeWorker(BaseWorker):
             self.worker_config = ScribeAgentConfig.create_worker_config(
                 actual_session_id, task_description
             )
-            return self.run_analysis(actual_session_id, task_description, model)
         else:
             # For synthesis mode, use provided session_id
             self.worker_config = ScribeAgentConfig.create_worker_config(
                 session_id, task_description
             )
-            return self.run_analysis(session_id, task_description, model)
 
-    def run_analysis(
-        self, session_id: str, task_description: str, model: str
+        return self.run_mode(session_id, is_create_mode, model)
+
+    def run_mode(
+        self, session_id: str, is_create_mode: bool, model: str
     ) -> ScribeOutput:
         """
-        Override to handle session creation special case.
-
-        For session creation, we need to create the session directory first
-        before the BaseWorker framework tries to log events.
+        Handle session creation and synthesis modes directly.
         """
-        # Check if this is session creation mode
-        is_create_mode = "synthesis" not in task_description.lower()
+        # Update session config first
+        self.update_session_config(session_id)
 
         if is_create_mode:
-            # For create mode, use the session_id already provided by run()
-            # and create the directory structure before calling parent
+            # For create mode, create session directory and return completion result
             self._create_session_directory(session_id)
-            self._create_session_markdown(session_id, task_description, model)
-
-            # Now call parent with the session_id
-            return super().run_analysis(session_id, task_description, model)
+            self._create_session_markdown(
+                session_id, self.worker_config.task_description, model
+            )
+            result = self._create_session_completion_result(
+                session_id, self.worker_config.task_description
+            )
         else:
-            # For synthesis mode, use normal flow
-            return super().run_analysis(session_id, task_description, model)
+            # For synthesis mode, run synthesis directly
+            result = self._run_synthesis(
+                session_id, self.worker_config.task_description, model
+            )
 
-    def execute_ai_analysis(
-        self, session_id: str, task_description: str, model: str
-    ) -> Any:
-        """Execute AI-powered session management and synthesis analysis.
-
-        Args:
-            session_id: Session identifier for analysis tracking
-            task_description: Task description or synthesis request
-            model: AI model for analysis execution
-
-        Returns:
-            Scribe analysis results from AI agent processing
-        """
-        # Determine mode from task description
-        if "synthesis" in task_description.lower():
-            return self._run_synthesis(session_id, task_description, model)
-        else:
-            # For create mode, the session is already created in run_analysis
-            # Just return the completion result
-            return self._create_session_completion_result(session_id, task_description)
+        return result.output
 
     def _create_session_completion_result(
         self, session_id: str, task_description: str
     ) -> Any:
         """Create completion result for session creation"""
-        # Update session config before any logging
-        self.update_session_config(session_id)
+        # Log scribe spawn event
+        self.log_event(
+            "worker_spawned",
+            {
+                "worker_type": "scribe",
+                "mode": "create",
+                "purpose": "session_creation",
+            },
+            "INFO",
+        )
 
         # Log session creation event
         self.log_event(
@@ -134,17 +123,6 @@ class ScribeWorker(BaseWorker):
                 "task_description": task_description,
                 "session_path": f"Docs/hive-mind/sessions/{session_id}",
                 "generated_by": "scribe",
-            },
-            "INFO",
-        )
-
-        # Log scribe spawn event
-        self.log_event(
-            "worker_spawned",
-            {
-                "worker_type": "scribe",
-                "mode": "create",
-                "purpose": "session_creation",
             },
             "INFO",
         )
