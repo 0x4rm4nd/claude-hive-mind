@@ -72,7 +72,7 @@ class ScribeWorker(BaseWorker):
                 session_id, task_description
             )
 
-        return self.run_mode(session_id, is_create_mode, model)
+        return self.run_mode(actual_session_id, is_create_mode, model)
 
     def run_mode(
         self, session_id: str, is_create_mode: bool, model: str

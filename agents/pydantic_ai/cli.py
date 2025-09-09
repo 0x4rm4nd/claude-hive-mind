@@ -52,8 +52,11 @@ def run_scribe(args):
         if not args.task:
             print("❌ Error: --task required for create mode")
             return 1
+        if args.session:
+            print("❌ Error: --session should not be provided for create mode (session ID will be auto-generated)")
+            return 1
         task_desc = args.task
-        session_id = ""  # Empty for session creation - will be generated
+        session_id = None  # None for session creation - will be generated
     elif args.mode == "synthesis":
         if not args.session:
             print("❌ Error: --session required for synthesis mode")
