@@ -5,47 +5,63 @@ Execution runner for the DevOps Worker - provides infrastructure, deployment, an
 """
 
 import sys
-import os
 from pathlib import Path
+from typing import Dict, Any
 
 # Minimal path setup to enable shared imports
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
-from typing import Dict, Any
-
 from shared.base_worker import BaseWorker
 from shared.models import WorkerOutput
-from devops.agent import devops_agent, DevOpsAgentConfig
 
 
 class DevOpsWorker(BaseWorker):
     """
     Infrastructure, deployment, and CI/CD analysis worker.
-    
+
     Provides comprehensive DevOps analysis including infrastructure design,
     deployment strategies, monitoring setup, and CI/CD pipeline optimization.
     """
 
     def __init__(self):
         super().__init__(
-            worker_type="devops-worker", worker_config=None, output_model=WorkerOutput
+            worker_type="devops-worker",
+            worker_config=None,
         )
 
-
     def get_file_prefix(self) -> str:
-        """Return file prefix for devops output files"""
+        """Return file prefix for devops output files.
+
+        Returns:
+            File prefix for devops output files
+        """
         return "devops"
 
     def get_worker_display_name(self) -> str:
-        """Return human-readable worker name for CLI and logging"""
+        """Return human-readable name for CLI display.
+
+        Returns:
+            Display name for the devops worker
+        """
         return "DevOps Worker"
 
     def get_worker_description(self) -> str:
-        """Return worker description for CLI help"""
+        """Return description for CLI help and documentation.
+
+        Returns:
+            Brief description of devops capabilities
+        """
         return "Infrastructure and Deployment Operations"
 
     def get_analysis_event_details(self, task_description: str) -> Dict[str, Any]:
-        """Return worker-specific event details for analysis_started event"""
+        """Return event details when devops analysis starts.
+
+        Args:
+            task_description: DevOps analysis task description
+
+        Returns:
+            Event details for analysis started logging
+        """
         return {
             "worker": "devops-worker",
             "task": task_description,
@@ -53,33 +69,37 @@ class DevOpsWorker(BaseWorker):
         }
 
     def get_completion_event_details(self, output: WorkerOutput) -> Dict[str, Any]:
-        """Return worker-specific event details for worker_completed event"""
+        """Return event details when devops analysis completes.
+
+        Args:
+            output: DevOps analysis output with infrastructure and automation metrics
+
+        Returns:
+            Event details for analysis completion logging
+        """
         return {
             "worker": "devops-worker",
-            "infrastructure_recommendations": len(
-                output.infrastructure_recommendations
-            ),
-            "automation_score": output.automation_score,
-            "reliability_score": output.reliability_score,
+            "status": output.status,
         }
 
     def get_success_message(self, output: WorkerOutput) -> str:
-        """Return worker-specific CLI success message"""
-        return (
-            f"DevOps analysis completed. Infrastructure recommendations: {len(output.infrastructure_recommendations)}, "
-            f"Automation score: {output.automation_score}, Reliability score: {output.reliability_score}"
-        )
+        """Return success message with devops analysis summary.
 
-    def create_worker_specific_files(
-        self, session_id: str, output: WorkerOutput, session_path: Path
-    ) -> None:
-        """Create devops-specific output files beyond standard notes/JSON"""
-        # DevOps worker uses standard file creation - no additional files needed
-        pass
+        Args:
+            output: DevOps analysis output with infrastructure and automation metrics
+
+        Returns:
+            Success message with key devops analysis results
+        """
+        return f"DevOps analysis completed successfully. Status: {output.status}"
 
 
 def main():
-    """CLI entry point for devops worker"""
+    """CLI entry point for devops worker execution.
+
+    Returns:
+        Exit code from worker execution
+    """
     worker = DevOpsWorker()
     return worker.run_cli_main()
 

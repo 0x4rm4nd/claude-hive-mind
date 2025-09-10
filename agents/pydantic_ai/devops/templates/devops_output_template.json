@@ -1,0 +1,153 @@
+{
+  "analysis_metadata": {
+    "session_id": "{{SESSION_ID}}",
+    "timestamp": "{{TIMESTAMP}}",
+    "files_analyzed": 0,
+    "analysis_duration": "{{DURATION}}",
+    "worker_type": "devops"
+  },
+  
+  "scores": {
+    "automation_score": 0,
+    "reliability_score": 0,
+    "security_score": 0,
+    "overall_score": 0
+  },
+  
+  "infrastructure_configurations": [
+    {
+      "id": "INFRA-001-TEMPLATE",
+      "configuration_name": "Template - remove if no infrastructure configurations",
+      "type": "container|networking|storage|compute|security|monitoring",
+      "description": "Infrastructure configuration purpose and scope",
+      "implementation": {
+        "technology_stack": "Docker|Kubernetes|Terraform|AWS|GCP|Azure",
+        "configuration_files": ["path/to/config1.yaml", "path/to/config2.tf"],
+        "deployment_approach": "Infrastructure deployment strategy",
+        "resource_requirements": "CPU, memory, storage requirements"
+      },
+      "automation_level": 0,
+      "rollback_strategy": "How to rollback this configuration if needed",
+      "cost_impact": "decrease|neutral|increase_low|increase_medium|increase_high",
+      "security_implications": ["Security consideration 1", "Security consideration 2"],
+      "monitoring_requirements": "Required monitoring for this infrastructure"
+    }
+  ],
+  
+  "deployment_strategies": [
+    {
+      "id": "DEPLOY-001-TEMPLATE",
+      "strategy_name": "Template - remove if no deployment strategies",
+      "deployment_type": "blue_green|rolling|canary|recreate|a_b_testing",
+      "description": "Deployment strategy description and benefits",
+      "pipeline_configuration": {
+        "stages": ["build", "test", "deploy", "verify"],
+        "automation_tools": "GitHub Actions|GitLab CI|Jenkins|Azure DevOps",
+        "quality_gates": "Code quality checks and deployment gates",
+        "rollback_mechanism": "Automated rollback configuration"
+      },
+      "automation_level": 0,
+      "deployment_time": "Expected deployment duration",
+      "rollback_time": "Expected rollback time if needed",
+      "risk_mitigation": ["Risk mitigation strategy 1", "Risk mitigation strategy 2"],
+      "success_criteria": "Metrics to determine successful deployment"
+    }
+  ],
+  
+  "monitoring_implementations": [
+    {
+      "id": "MON-001-TEMPLATE",
+      "monitoring_name": "Template - remove if no monitoring implementations",
+      "monitoring_type": "metrics|logging|tracing|alerting|health_checks",
+      "description": "Monitoring implementation purpose and scope",
+      "implementation": {
+        "tools_used": ["Prometheus", "Grafana", "ELK Stack", "Jaeger"],
+        "metrics_collected": ["metric1", "metric2", "metric3"],
+        "dashboard_configuration": "Grafana dashboard setup and visualizations",
+        "alert_configuration": "Alert rules and notification channels"
+      },
+      "alert_conditions": ["Alert condition 1", "Alert condition 2"],
+      "retention_policy": "Data retention and archival policy",
+      "integration_points": ["Integration with system 1", "Integration with system 2"],
+      "operational_impact": "How this monitoring improves operations"
+    }
+  ],
+  
+  "security_implementations": [
+    {
+      "id": "SEC-001-TEMPLATE",
+      "security_feature": "Template - remove if no security implementations",
+      "category": "secrets_management|container_security|network_policies|compliance|vulnerability_scanning",
+      "priority": "critical|high|medium|low",
+      "description": "Security feature description and purpose",
+      "implementation": {
+        "technology_stack": "Vault|AWS Secrets Manager|RBAC|Network Policies|Security Scanning",
+        "configuration": "Security configuration details",
+        "automation_approach": "Automated security implementation",
+        "testing_strategy": "Security testing and validation"
+      },
+      "compliance_requirements": "SOC2|PCI-DSS|GDPR|HIPAA compliance needs",
+      "monitoring_alerts": "Security monitoring and alerting setup",
+      "remediation_steps": "Steps to address security issues"
+    }
+  ],
+  
+  "automation_improvements": [
+    {
+      "id": "AUTO-001-TEMPLATE",
+      "improvement_name": "Template - remove if no automation improvements",
+      "category": "ci_cd|infrastructure|monitoring|security|testing",
+      "current_state": "Current manual or semi-automated process",
+      "target_state": "Desired fully automated state",
+      "implementation": {
+        "automation_tools": "Tools and technologies for automation",
+        "workflow_changes": "Changes to existing workflows",
+        "integration_requirements": "System integrations needed",
+        "testing_approach": "Automated testing strategy"
+      },
+      "expected_benefits": "Time savings, reliability improvements, cost reduction",
+      "implementation_effort": "Development time and complexity estimate",
+      "success_metrics": "How to measure automation success"
+    }
+  ],
+  
+  "infrastructure_recommendations": [
+    {
+      "id": "REC-001-TEMPLATE",
+      "recommendation": "Template - remove if no infrastructure recommendations",
+      "category": "scalability|reliability|performance|cost_optimization|security",
+      "priority": "critical|high|medium|low",
+      "description": "Infrastructure improvement description",
+      "implementation": {
+        "approach": "Implementation strategy and approach",
+        "required_resources": "Infrastructure resources needed",
+        "configuration_changes": "Specific configuration modifications",
+        "deployment_strategy": "How to deploy these changes"
+      },
+      "expected_impact": "Quantified infrastructure improvement",
+      "cost_impact": "Financial impact of the recommendation",
+      "timeline": "Implementation timeline estimate"
+    }
+  ],
+  
+  "priority_actions": [
+    {
+      "action": "Template - remove if no priority actions",
+      "category": "infrastructure|deployment|monitoring|security|automation",
+      "priority": "critical|high|medium|low",
+      "effort_estimate": "hours|days|weeks",
+      "impact": "Expected operational or business impact",
+      "dependencies": "Required dependencies or prerequisites"
+    }
+  ],
+  
+  "statistics": {
+    "infrastructure_configurations": 0,
+    "deployment_strategies": 0,
+    "monitoring_implementations": 0,
+    "security_implementations": 0,
+    "automation_improvements": 0,
+    "critical_issues": 0,
+    "high_priority_items": 0
+  }
+}
