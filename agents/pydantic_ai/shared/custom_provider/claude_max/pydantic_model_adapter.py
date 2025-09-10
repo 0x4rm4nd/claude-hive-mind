@@ -6,7 +6,6 @@ Maintains standard Pydantic AI interface while using Claude Max subscription.
 """
 
 from datetime import datetime
-from typing import Any, List
 
 from pydantic_ai.messages import ModelMessage, ModelResponse, TextPart, ToolCallPart
 from pydantic_ai.models import Model, ModelRequestParameters
