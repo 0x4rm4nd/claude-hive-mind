@@ -115,6 +115,7 @@ async def claude_request(request: Request, claude_data: ClaudeData):
 
     # Check for system prompt override in headers
     system_prompt_override = request.headers.get("X-System-Prompt-Override", None)
+    settings = request.headers.get("X-Settings", None)
 
     try:
         response = await claude_client.run_claude_command(
@@ -122,6 +123,7 @@ async def claude_request(request: Request, claude_data: ClaudeData):
             model=claude_data.model,
             timeout=claude_data.timeout,
             system_prompt_override=system_prompt_override,
+            settings=settings,
         )
 
         return {"response": response, "model": claude_data.model, "success": True}
