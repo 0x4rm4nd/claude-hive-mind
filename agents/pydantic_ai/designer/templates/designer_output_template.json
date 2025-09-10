@@ -1,0 +1,162 @@
+{
+  "analysis_metadata": {
+    "session_id": "{{SESSION_ID}}",
+    "timestamp": "{{TIMESTAMP}}",
+    "files_analyzed": 0,
+    "analysis_duration": "{{DURATION}}",
+    "worker_type": "designer"
+  },
+  
+  "scores": {
+    "ux_design_score": 0,
+    "ui_design_score": 0,
+    "accessibility_score": 0,
+    "overall_score": 0
+  },
+  
+  "ux_findings": [
+    {
+      "id": "UX-001-TEMPLATE",
+      "issue": "Template - remove if no UX findings",
+      "category": "user_journey|information_architecture|interaction_design|navigation|usability",
+      "severity": "critical|high|medium|low",
+      "file_path": "/path/to/file.ext",
+      "line_number": 0,
+      "component_reference": "ComponentName or design element",
+      "description": "Detailed description of the UX issue",
+      "user_impact": "How this affects user experience and task completion",
+      "remediation": "Specific steps to improve user experience",
+      "testing_approach": "How to validate UX improvements"
+    }
+  ],
+  
+  "ui_findings": [
+    {
+      "id": "UI-001-TEMPLATE",
+      "issue": "Template - remove if no UI findings",
+      "category": "visual_consistency|typography|layout|responsive|design_system|branding",
+      "severity": "critical|high|medium|low",
+      "location": "/path/to/file.ext:line_number",
+      "current_implementation": "Current visual design implementation",
+      "target_design": "Desired visual design state",
+      "brand_impact": "How this affects brand consistency and perception",
+      "optimization_suggestion": "Specific visual design improvements",
+      "expected_outcome": "Expected visual and user experience improvement"
+    }
+  ],
+  
+  "accessibility_findings": [
+    {
+      "id": "A11Y-001-TEMPLATE",
+      "violation": "Template - remove if no accessibility findings",
+      "category": "wcag_compliance|keyboard_navigation|screen_reader|color_contrast|motor_impairment|cognitive",
+      "severity": "critical|high|medium|low",
+      "wcag_criteria": "WCAG 2.1 success criteria reference",
+      "file_path": "/path/to/file.ext",
+      "line_number": 0,
+      "current_state": "Current accessibility implementation",
+      "barrier_description": "How this creates barriers for users with disabilities",
+      "remediation": "Specific steps to achieve accessibility compliance",
+      "testing_method": "How to test accessibility improvements",
+      "assistive_technology": "Relevant assistive technology considerations"
+    }
+  ],
+  
+  "design_system_recommendations": [
+    {
+      "id": "DS-001-TEMPLATE",
+      "component": "Template - remove if no design system recommendations",
+      "category": "components|tokens|patterns|guidelines|documentation",
+      "priority": "critical|high|medium|low",
+      "description": "Design system improvement description",
+      "implementation": {
+        "approach": "Implementation strategy and approach",
+        "required_components": "Design system components needed",
+        "token_changes": "Design token modifications required",
+        "documentation_updates": "Documentation changes needed"
+      },
+      "expected_impact": "Design consistency and development efficiency improvement",
+      "adoption_strategy": "How to roll out design system changes",
+      "timeline": "Implementation timeline estimate"
+    }
+  ],
+  
+  "responsive_design_issues": [
+    {
+      "id": "RWD-001-TEMPLATE",
+      "issue": "Template - remove if no responsive design issues",
+      "category": "mobile_optimization|breakpoints|touch_targets|layout|performance",
+      "device_types": "mobile|tablet|desktop",
+      "current_behavior": "Current responsive behavior description",
+      "expected_behavior": "Desired responsive behavior",
+      "implementation": {
+        "css_changes": "Required CSS modifications",
+        "breakpoint_adjustments": "Breakpoint strategy changes",
+        "component_updates": "Component responsive improvements",
+        "testing_devices": "Devices for responsive testing"
+      },
+      "user_impact": "Mobile and cross-device user experience impact",
+      "implementation_effort": "Development time and complexity estimate"
+    }
+  ],
+  
+  "user_research_gaps": [
+    {
+      "id": "UR-001-TEMPLATE",
+      "research_area": "Template - remove if no user research gaps",
+      "category": "user_testing|persona_validation|journey_mapping|competitive_analysis|accessibility_testing",
+      "priority": "critical|high|medium|low",
+      "current_state": "Current user research understanding",
+      "information_needed": "What user insights are missing",
+      "research_approach": {
+        "methodology": "User research methods to employ",
+        "participant_requirements": "Target user characteristics",
+        "timeline": "Research timeline and milestones",
+        "deliverables": "Expected research outputs"
+      },
+      "business_impact": "How this research will improve user outcomes",
+      "success_metrics": "How to measure research success"
+    }
+  ],
+  
+  "design_improvements": [
+    {
+      "id": "IMP-001-TEMPLATE",
+      "improvement": "Template - remove if no design improvements",
+      "category": "usability|accessibility|visual_design|interaction|performance",
+      "priority": "critical|high|medium|low",
+      "description": "Design improvement description and rationale",
+      "implementation": {
+        "design_changes": "Specific design modifications needed",
+        "development_requirements": "Technical implementation needs",
+        "testing_approach": "User testing and validation strategy",
+        "rollout_strategy": "How to deploy design improvements"
+      },
+      "expected_impact": "Quantified user experience improvement",
+      "success_criteria": "Metrics to measure improvement success",
+      "timeline": "Implementation timeline estimate"
+    }
+  ],
+  
+  "priority_actions": [
+    {
+      "action": "Template - remove if no priority actions",
+      "category": "ux_design|ui_design|accessibility|design_system|user_research",
+      "priority": "critical|high|medium|low",
+      "effort_estimate": "hours|days|weeks",
+      "user_impact": "Expected user experience and accessibility impact",
+      "dependencies": "Required dependencies or prerequisites"
+    }
+  ],
+  
+  "statistics": {
+    "ux_findings": 0,
+    "ui_findings": 0,
+    "accessibility_findings": 0,
+    "design_system_recommendations": 0,
+    "responsive_design_issues": 0,
+    "user_research_gaps": 0,
+    "critical_issues": 0,
+    "high_priority_items": 0
+  }
+}

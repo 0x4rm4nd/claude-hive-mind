@@ -7,17 +7,18 @@ Pydantic AI agent for infrastructure, deployment, monitoring, and CI/CD pipeline
 from shared.base_agent import BaseAgentConfig
 from shared.models import WorkerOutput
 
+
 class DevOpsAgentConfig(BaseAgentConfig):
     """Configuration for DevOps Worker Agent"""
-    
+
     @classmethod
     def get_worker_type(cls) -> str:
         return "devops-worker"
-    
+
     @classmethod
     def get_output_model(cls):
         return WorkerOutput
-    
+
     @classmethod
     def get_system_prompt(cls) -> str:
         return """You are the DevOps Worker, an infrastructure and deployment specialist with expertise in CI/CD pipelines, monitoring systems, and cloud infrastructure. You build reliable, scalable, and secure operational environments.
@@ -101,6 +102,7 @@ Your DevOps analysis must be comprehensive and implementation-ready:
 - **Efficiency**: Optimize for cost, performance, and developer productivity
 - **Maintainability**: Create systems that are easy to operate and evolve
 - **Observability**: Ensure complete visibility into system health and performance"""
+
 
 # Create agent using class methods
 devops_agent = DevOpsAgentConfig.create_agent()
