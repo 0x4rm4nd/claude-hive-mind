@@ -1,40 +1,41 @@
-# Architecture Analysis Report
+# System Architecture Analysis Report
 
 ## Executive Summary
-- **Architecture Maturity Score**: 0/10
-- **Architecture Quality Score**: 0/10  
-- **Maintainability Score**: 0/10
-- **Extensibility Score**: 0/10
+- **Architecture Maturity Score**: 0/10 (1-3: Critical, 4-5: Poor, 6-7: Adequate, 8-9: Good, 10: Excellent)
+- **Architecture Quality Score**: 0/10 (1-3: Critical, 4-5: Poor, 6-7: Adequate, 8-9: Good, 10: Excellent)
+- **Maintainability Score**: 0/10 (1-3: Critical, 4-5: Poor, 6-7: Adequate, 8-9: Good, 10: Excellent)
+- **Extensibility Score**: 0/10 (1-3: Critical, 4-5: Poor, 6-7: Adequate, 8-9: Good, 10: Excellent)
 - **Overall Score**: 0/10
 - **Components Analyzed**: 0
 - **Analysis Date**: {{TIMESTAMP}}
 
-## Critical Architectural Issues
-*This section will be removed if no critical issues are found*
+## Critical Issues Found
+*REQUIRED: List critical architectural issues using ARCHITECT-CRIT-XXX format. If none exist, explain why architecture is stable and well-designed.*
 
-## Current Architecture Assessment
+## Current Architecture Assessment Results
 
 ### Evidence Requirements
-*Apply throughout analysis:*
-- **Component References**: Include absolute file paths and line numbers for architectural decisions (e.g., `src/services/auth.py:45`)
-- **Pattern Evidence**: Code snippets demonstrating design patterns and architectural choices
-- **Metrics Baseline**: Current performance, capacity, and quality measurements where available
-- **Dependency Mapping**: Document integration points and service boundaries with specific examples
+*MANDATORY for all findings - apply throughout analysis:*
+- **File References**: Include absolute file paths and line numbers for architectural decisions (format: `/absolute/path/to/file.ext:line_number`)
+- **Pattern Evidence**: Code snippets demonstrating design patterns and architectural choices with specific examples
+- **Metrics Baseline**: Current performance, capacity, and quality measurements with quantified data
+- **Dependency Mapping**: Document integration points and service boundaries with specific file references
+- **Issue Format**: Use ARCHITECT-[CRIT|HIGH|MED|LOW]-XXX for all identified issues
 
 ### System Architecture Overview
-*Document existing architecture, identify components and dependencies, and map system boundaries. Examine architectural decisions, analyze design pattern usage, and identify architectural smells. Document each architectural issue with component diagrams and improvement vectors.*
+*REQUIRED: Document existing architecture with issue format ARCHITECT-[SEVERITY]-XXX. Identify components and dependencies with absolute file paths, and map system boundaries. Examine architectural decisions with code evidence, analyze design pattern usage with examples, and identify architectural smells with specific file references. Document each architectural issue with component diagrams and improvement vectors.*
 
 ### Architectural Maturity Evaluation
-*Score architectural practices against industry standards using established maturity models. Assess current state against best practices for scalability, maintainability, and operational excellence.*
+*REQUIRED: Score architectural practices against industry standards using established maturity models with issue format ARCHITECT-[SEVERITY]-XXX. Assess current state against best practices for scalability, maintainability, and operational excellence with specific file evidence.*
 
-### Gap Analysis
-*Identify areas requiring improvement or modernization by comparing current state to target architecture. Document specific gaps in capabilities, patterns, and technology alignment.*
+### Gap Analysis Assessment
+*REQUIRED: Identify areas requiring improvement or modernization with issue format ARCHITECT-[SEVERITY]-XXX by comparing current state to target architecture. Document specific gaps in capabilities, patterns, and technology alignment with file references and code examples.*
 
-### Future State Design
-*Recommend target architecture with migration paths, considering business requirements and technical constraints. Define architectural vision with clear implementation roadmap.*
+### Future State Design Recommendations
+*REQUIRED: Recommend target architecture with migration paths using issue format ARCHITECT-[SEVERITY]-XXX, considering business requirements and technical constraints. Define architectural vision with clear implementation roadmap and timeline estimates.*
 
-### Risk Assessment
-*Evaluate architectural risks and mitigation strategies, including technical debt, vendor dependencies, and scalability limitations.*
+### Risk Assessment Results
+*REQUIRED: Evaluate architectural risks and mitigation strategies with issue format ARCHITECT-[SEVERITY]-XXX, including technical debt, vendor dependencies, and scalability limitations. Provide specific risk scores and mitigation timelines.*
 
 ## Scalability Assessment
 
@@ -143,36 +144,60 @@
 
 ## Priority Action Items
 
-### Immediate Actions Required
-*REQUIRED: List critical architectural fixes needed within 24-48 hours. If none exist, explain why the architecture is stable.*
+### Immediate Actions Required (24-48 hours)
+*REQUIRED: List critical architectural fixes using ARCHITECT-CRIT-XXX format needed within 24-48 hours. Include specific file references, implementation steps, and validation criteria. If none exist, explain why the architecture is stable with evidence.*
 
-### Next Sprint Actions
-*REQUIRED: Identify architectural improvements for next sprint (1-2 weeks). Include specific implementation steps.*
+### Next Sprint Actions (1-2 weeks)
+*REQUIRED: Identify architectural improvements using ARCHITECT-HIGH-XXX format for next sprint (1-2 weeks). Include specific implementation steps, effort estimates, and success criteria with file references.*
 
-### Backlog Items
-*REQUIRED: Document longer-term architectural enhancements. If backlog is clean, highlight architectural maturity.*
+### Backlog Items (1-3 months)
+*REQUIRED: Document longer-term architectural enhancements using ARCHITECT-MED-XXX and ARCHITECT-LOW-XXX format. Include priority ranking, effort estimates, and business impact. If backlog is clean, highlight architectural maturity with specific examples.*
 
 ## Detailed Findings
 
 ### Architecture Details
-*REQUIRED: Provide detailed architectural findings with specific file references and code examples. Include pattern analysis.*
+*REQUIRED: Provide detailed architectural findings using ARCHITECT-[SEVERITY]-XXX format. Include:
+- **File References**: Absolute paths with line numbers (`/path/to/file.ext:123`)
+- **Code Examples**: Specific code snippets demonstrating architectural patterns or issues
+- **Pattern Analysis**: Design pattern usage with concrete examples
+- **Component Dependencies**: Service boundaries with integration evidence*
 
-### Scalability Details  
-*REQUIRED: Detail scalability analysis with current metrics and projections. Include bottleneck analysis with evidence.*
+### Scalability Details
+*REQUIRED: Detail scalability analysis using ARCHITECT-[SEVERITY]-XXX format. Include:
+- **Current Metrics**: Performance baselines with specific measurements
+- **Capacity Projections**: Scaling limits with quantified bottlenecks
+- **Bottleneck Analysis**: Specific components with file references and evidence
+- **Scaling Strategies**: Concrete improvements with expected capacity gains*
 
 ### Technology Details
-*REQUIRED: Document technology stack assessment with upgrade recommendations and justifications.*
+*REQUIRED: Document technology stack assessment using ARCHITECT-[SEVERITY]-XXX format. Include:
+- **Stack Analysis**: Current technologies with version information
+- **Upgrade Recommendations**: Specific technology improvements with justifications
+- **Migration Strategies**: Implementation approaches with timelines and risks
+- **Technology Debt**: Legacy components with modernization priorities*
 
-## Recommendations
+## Implementation Recommendations
 
 ### Architecture Recommendations
-*REQUIRED: Provide specific architectural improvements based on your analysis. Include patterns, refactoring suggestions, and design enhancements. If architecture is excellent, recommend maintenance strategies.*
+*REQUIRED: Provide specific architectural improvements using ARCHITECT-[SEVERITY]-XXX format. Include:
+- **Pattern Implementation**: Design patterns with concrete code examples
+- **Refactoring Strategies**: Specific architectural improvements with file references
+- **Design Enhancements**: System design improvements with implementation steps
+- **Maintenance Strategies**: Long-term architectural health with monitoring approaches*
 
 ### Scalability Recommendations
-*REQUIRED: Detail scalability improvements based on identified bottlenecks. Include infrastructure, caching, and distributed system recommendations. If highly scalable, document optimization opportunities.*
+*REQUIRED: Detail scalability improvements using ARCHITECT-[SEVERITY]-XXX format. Include:
+- **Infrastructure Improvements**: Specific scaling strategies with capacity projections
+- **Caching Strategies**: Multi-layer caching with implementation details
+- **Distributed System Enhancements**: Service architecture improvements with patterns
+- **Performance Optimization**: Concrete optimizations with expected performance gains*
 
-### Technology Recommendations  
-*REQUIRED: Recommend technology upgrades, replacements, or additions. Include justifications and migration strategies. If stack is modern, suggest future-proofing approaches.*
+### Technology Recommendations
+*REQUIRED: Recommend technology upgrades using ARCHITECT-[SEVERITY]-XXX format. Include:
+- **Technology Upgrades**: Specific upgrades with version recommendations and justifications
+- **Migration Strategies**: Step-by-step migration approaches with timelines and risks
+- **Modern Stack Adoption**: Future-proofing strategies with technology roadmaps
+- **Cost-Benefit Analysis**: Investment versus improvement analysis with ROI projections*
 
 ## Implementation Roadmap
 
@@ -184,6 +209,24 @@
 
 ### Phase 3: Quality Enhancements
 *REQUIRED: Outline long-term quality and operational excellence improvements. Include monitoring, testing, and maintenance strategies.*
+
+---
+
+## Evidence Requirements Summary
+*MANDATORY for all sections - ensure compliance:*
+- **Issue Format**: Use ARCHITECT-[CRIT|HIGH|MED|LOW]-XXX for all identified issues
+- **File References**: Include absolute paths with line numbers (`/path/to/file.ext:123`)
+- **Code Evidence**: Provide specific code snippets demonstrating architectural patterns or issues
+- **Metrics**: Include quantified data for architecture maturity, scalability projections, and capacity measurements
+- **Pattern Analysis**: Document design patterns with concrete implementation examples
+- **Implementation Steps**: Detailed architectural improvements with effort estimates and timelines
+- **Migration Strategies**: Step-by-step approaches with risk assessment and rollback plans
+
+**Severity Standards**:
+- **CRIT**: Critical architectural issues requiring immediate action (24-48 hours) - system stability risk
+- **HIGH**: High priority architectural improvements for next sprint (1-2 weeks) - significant impact on scalability/maintainability
+- **MED**: Medium priority planned architectural enhancements (1-3 months) - moderate improvement potential
+- **LOW**: Low priority long-term architectural evolution (3+ months) - future-proofing and optimization
 
 ---
 *Analysis completed by Architect Worker*
