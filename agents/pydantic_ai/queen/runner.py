@@ -77,23 +77,11 @@ class QueenWorker(BaseWorker):
 
         queen_prompt = f"Using the Queen Agent, analyze task and create orchestration plan.\nTask: {task_description}\nSession: {session_id}"
 
-        # Handle custom models with system prompt override
+        # Handle custom models with settings-based output style
         if model.startswith("custom:"):
-            system_prompt = (
-                "You are a Queen Orchestrator - a JSON generator that delegates work to engineering teams. "
-                "Your ONLY job is to output valid JSON for orchestration. "
-                "NEVER write explanatory text. "
-                "NEVER write 'The Queen Agent has completed...' "
-                "NEVER use ```json blocks. "
-                "DO NOT explain what you are doing. "
-                "OUTPUT FORMAT: Start immediately with { and end with } "
-                "REQUIRED FIELDS: session_id, timestamp, status (completed/failed/planning), task_summary (string), coordination_complexity (number 1-5), orchestration_rationale (string), estimated_total_duration (string), worker_assignments (array), execution_strategy (parallel/sequential/hybrid), coordination_notes (string array), success_criteria (string array), codebase_insights (array of objects with service_name string, key_files string array, service_description string, technology_stack string array, interaction_points string array). "
-                "worker_assignments items need: worker_type (analyzer-worker/architect-worker/backend-worker/frontend-worker/designer-worker/devops-worker/researcher-worker/test-worker), priority (critical/high/medium/low), task_focus (string), dependencies (string array), estimated_duration (string), strategic_value (critical/high/medium/low), rationale (string). "
-                'RESPOND ONLY WITH: {"session_id": "2025-09-03-11-10-queen-orchestration-test", "timestamp": "2025-09-03T11:10:00Z", "status": "completed", "task_summary": "Orchestration task understanding", "coordination_complexity": 3, "orchestration_rationale": "Selected teams for optimal coordination", "estimated_total_duration": "2h", "worker_assignments": [{"worker_type": "test-worker", "priority": "high", "task_focus": "test focus", "dependencies": [], "estimated_duration": "1h", "strategic_value": "high", "rationale": "test rationale"}], "execution_strategy": "parallel", "coordination_notes": ["team coordination note"], "success_criteria": ["completion criteria"], "codebase_insights": [{"service_name": "test-service", "key_files": ["test.py"], "service_description": "Test service for example", "technology_stack": ["Python"], "interaction_points": ["connects to API"]}]}'
-            )
-
+            # Use elegant outputStyle approach instead of heavy system prompt
             model_settings = ModelSettings(
-                extra_headers={"X-System-Prompt-Override": system_prompt}
+                extra_headers={"X-Settings": r'{"outputStyle": "queen-json"}'}
             )
 
             temp_agent = Agent(
