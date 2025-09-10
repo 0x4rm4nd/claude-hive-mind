@@ -121,31 +121,43 @@ Claude Code agent must execute all Phase 2 work directly using Read, Grep, Glob,
 
 **Systematic API Assessment:**
 
-**Input & Data Flow Analysis**: Trace API request from entry points through validation, processing, and storage. Use endpoint analysis to track data flow, examine route patterns for validation bypasses, and identify unsafe serialization patterns. Document each API design issue with code snippets and implementation vectors.
+**RESTful Services Architecture**: Examine resource modeling patterns, HTTP method semantics, and status code consistency. Analyze endpoint structure following REST principles, pagination strategies (cursor vs offset), and API versioning approaches (backward compatibility, deprecation strategies, migration paths). Focus on idempotent operations, proper HTTP verb usage, and error handling with consistent error formats, error codes, and detailed error messages. Document design improvements with concrete implementation examples and OpenAPI specifications.
 
-**Authentication & Authorization Flows**: Map authentication mechanisms from API key through session management. Examine token generation, storage, and validation. Identify privilege escalation paths and access control bypasses.
+**GraphQL Implementation & Optimization**: Review GraphQL schema design patterns, resolver efficiency, and query optimization strategies. Examine subscription implementations for real-time features, query complexity analysis, and schema evolution approaches. Analyze DataLoader patterns for N+1 query prevention, caching strategies, and schema stitching. Document performance optimization opportunities and backward compatibility approaches.
 
-**Configuration & Infrastructure Security**: Review API headers, CORS policies, environment variables, and deployment configurations. Check for exposed endpoints, debug modes in production, and insecure defaults.
+**WebSocket Services & Real-time Communication**: Examine WebSocket connection management, event broadcasting mechanisms, and room/namespace organization. Analyze connection scaling strategies, message queuing for offline clients, heartbeat/reconnection logic, and authentication for WebSocket connections. Review secure message transport and real-time data synchronization patterns.
 
-**Dependency Integration Assessment**: Analyze third-party API integrations, examine service dependencies, and identify integration risks. Focus on packages handling API-critical functions.
+**API Security & Authentication Systems**: Assess JWT token generation and validation, OAuth2 implementation, session management patterns, and multi-factor authentication flows. Review API key management, rate limiting implementations (request throttling, burst handling, abuse prevention), and input validation strategies (SQL injection prevention, XSS protection, parameterized queries). Analyze RBAC and ABAC authorization models, resource-level permissions, and policy enforcement mechanisms.
+
+**API Testing & Documentation**: Examine unit tests, integration tests, contract testing, and load testing strategies for API endpoints. Review OpenAPI/Swagger specifications, comprehensive endpoint documentation, and API testing frameworks. Assess response formatting standards (JSON standards, pagination, filtering, sorting parameters) and documentation coverage ratios.
 
 ### Database Design & Optimization
 
 **Database Performance Profiling Approach:**
 
-**Database Performance Deep Dive**: Analyze query patterns for N+1 problems using ORM query logging, examine EXPLAIN PLAN outputs for index usage, and profile connection pool metrics. Set performance baselines, identify queries >1s execution time, and document optimization opportunities with before/after metrics.
+**Schema Modeling & Entity Relationships**: Analyze entity relationship design, normalization strategies (1NF through BCNF), and constraint implementations. Examine foreign key relationships, junction tables for many-to-many relationships, and constraint validation. Review data modeling best practices, entity design patterns, value objects, and referential integrity maintenance. Focus on domain-driven design principles and aggregate root patterns.
 
-**Application Resource Analysis**: Profile memory allocation patterns, identify CPU-intensive operations, and analyze algorithm complexity. Examine caching strategies, async operations, and resource cleanup. Focus on hot paths and bottlenecks under load.
+**Query Optimization & Index Strategies**: Review query patterns for efficiency using EXPLAIN PLAN analysis, examine index usage (B-tree, Hash, GIN, GiST), and identify missing indexes. Analyze query execution plans, identify N+1 problems in ORM usage, and optimize join strategies. Review connection pooling configurations, prepared statement usage, and query caching mechanisms. Focus on slow query identification (>1s execution time) and optimization with before/after performance metrics.
 
-**Backend Performance Assessment**: Analyze service response times, throughput performance, and scaling strategies. Review load balancing implementation, resource optimization, and server-side caching. Identify processing bottlenecks and optimization opportunities.
+**Migration Management & Version Control**: Assess schema migration strategies, zero-downtime deployment approaches, and rollback procedures. Review migration scripts for safety (add before remove), data migration patterns, and blue-green deployment strategies. Examine backup and recovery procedures, point-in-time recovery capabilities, and disaster recovery planning. Document schema evolution patterns and version control strategies.
+
+**ORM Integration & Transaction Management**: Analyze ORM usage patterns, lazy vs eager loading strategies, and batch operation optimizations. Review transaction boundaries, ACID compliance implementation, and consistency models. Examine connection pool sizing, transaction isolation levels, and deadlock prevention strategies. Focus on efficient ORM usage, avoiding N+1 problems, and knowing when to use raw SQL for performance-critical operations.
+
+**Data Integrity & Performance Monitoring**: Assess data validation at database level (constraints, triggers) vs application level. Review business rule enforcement, audit logging implementation, and data quality monitoring. Examine query performance monitoring, slow query analysis, resource utilization tracking, and performance benchmarking strategies. Focus on capacity planning and bottleneck identification.
 
 ### Service Architecture & Performance Analysis
 
 **Service Architecture Assessment Methodology:**
 
-**Complexity & Maintainability Evaluation**: Measure service complexity using static analysis tools, calculate code duplication percentages, and assess cognitive load with nested complexity metrics. Analyze service/route/integration test coverage, examine API documentation coverage ratios, and identify refactoring opportunities with complexity reduction estimates.
+**Business Logic & Domain Modeling**: Examine domain-driven design implementation, entity design with value objects, and aggregate root patterns. Analyze business rule enforcement through domain services, validation patterns at service boundaries, and transaction management strategies. Assess service layer organization, dependency injection patterns, and separation of concerns. Review command/query separation (CQRS) implementation, domain event handling, and event sourcing patterns.
 
-**Architectural Structure Analysis**: Map service dependencies using dependency graph analysis, identify layer violations and circular dependencies with static analysis tools. Examine service boundaries, measure coupling metrics (afferent/efferent coupling), and assess scalability constraints. Document violations with architectural diagrams and refactoring cost estimates.
+**Microservice Architecture & Service Boundaries**: Map service boundaries using domain-driven design principles, examine inter-service communication patterns (HTTP APIs, message brokers, event-driven patterns), and assess data ownership boundaries. Review service decomposition strategies, identify bounded contexts, and analyze service coupling metrics. Examine service discovery mechanisms (dynamic service registration, health checks, load balancing), circuit breaker patterns, and fault tolerance implementations (retry logic, graceful degradation).
+
+**Integration & Communication Patterns**: Analyze message queue implementations (Redis, RabbitMQ, Apache Kafka), event-driven architecture patterns, and publish-subscribe mechanisms. Review caching strategies (Redis, memcached, application-level caching, cache invalidation), background job processing (async processing, job queues, scheduled tasks, error handling), and third-party integrations (external APIs, webhooks, data synchronization, error recovery). Focus on data consistency patterns (eventual consistency, saga patterns, distributed transactions).
+
+**Performance & Scalability Evaluation**: Profile application performance using load testing and performance benchmarking, analyze horizontal scaling strategies (database sharding, read replicas, load balancing), and examine async processing implementations (non-blocking I/O, concurrent request handling, async frameworks). Review resource optimization patterns (memory management, connection pooling, resource cleanup), monitoring implementations (performance metrics, health checks, error tracking), and auto-scaling configurations.
+
+**Cloud & Infrastructure Integration**: Review containerization strategies (Docker containerization, Kubernetes orchestration), serverless patterns, and infrastructure-as-code implementations. Analyze configuration management (environment-based config, secrets management), CI/CD integration (automated testing, deployment pipelines, environment management), and monitoring strategies (structured logging, distributed tracing, metrics collection). Focus on AWS/GCP/Azure service integration and cloud-native architecture patterns.
 
 ### Methodology Integration & Implementation Standards
 
@@ -161,13 +173,19 @@ Claude Code agent must execute all Phase 2 work directly using Read, Grep, Glob,
 
 **Priority Implementation Framework:**
 
-**Critical API Issues**: Authentication bypasses, data validation failures, performance bottlenecks affecting user experience. These require immediate attention and detailed implementation plans.
+**Critical API Development Issues**: Authentication bypasses in JWT/OAuth2 implementations, data validation failures in input processing, API versioning inconsistencies affecting backward compatibility, and performance bottlenecks in endpoint response times affecting user experience. These require immediate attention with detailed implementation plans including error handling consistency, rate limiting effectiveness, and OpenAPI documentation completeness.
 
-**Database Performance Issues**: Slow queries >1s, inefficient indexes, schema design problems, and ORM misuse. Focus on measurable performance improvements and optimization strategies.
+**Database Performance & Design Issues**: Slow queries >1s execution time, inefficient indexes missing on frequently queried columns, schema design problems violating normalization principles, and ORM misuse causing N+1 query problems. Focus on measurable performance improvements including connection pooling optimization, transaction boundary management, and migration strategy safety with rollback procedures.
 
-**Service & Integration Concerns**: Service boundary violations, poor error handling, inadequate monitoring, and scalability limitations hindering system growth.
+**Service Architecture & Integration Concerns**: Service boundary violations breaking domain-driven design principles, poor error handling lacking circuit breaker patterns, inadequate monitoring missing health checks and performance metrics, and scalability limitations hindering horizontal scaling. Address microservice communication patterns, message queue reliability, and fault tolerance implementations.
 
-**Dependency & Infrastructure Risks**: Security vulnerabilities in third-party packages, outdated dependencies with known exploits, configuration issues that expose the system.
+**Business Intelligence & Analytics Issues**: Inadequate reporting infrastructure missing real-time data aggregation, KPI calculation bottlenecks affecting business decision-making, analytics pipeline performance issues hindering data processing, and business rule enforcement gaps in domain services. Focus on event sourcing implementation, CQRS pattern optimization for read/write separation, data warehouse integration patterns, and comprehensive business metrics collection with proper abstraction layers.
+
+**Quality Standards & Testability Concerns**: Unit testable code lacking proper abstractions and dependency injection, integration test support missing comprehensive coverage of service boundaries, maintainability issues from poor code organization and unclear separation of concerns. Address clean code practices, robust error handling with graceful degradation, fault tolerance in distributed systems, and scalable architecture supporting horizontal scaling. Ensure performance under load with resource efficiency optimization and comprehensive test coverage including contract testing for API reliability.
+
+**Security & Compliance Risks**: Authentication system vulnerabilities in session management, authorization model gaps in RBAC/ABAC implementation, data protection failures in encryption strategies (at rest and in transit), input validation weaknesses allowing injection attacks, and audit logging inadequacies affecting compliance reporting. Focus on defense-in-depth strategies, secure coding practices, PII handling for GDPR compliance, and comprehensive security event logging for compliance requirements.
+
+**Cloud & Infrastructure Risks**: Container orchestration misconfigurations in Kubernetes deployments, CI/CD pipeline security gaps, configuration management exposing secrets, monitoring blind spots in distributed tracing, and resource optimization inefficiencies in auto-scaling. Address infrastructure-as-code implementations, cloud-native architecture patterns, automated testing in deployment pipelines, and environment management with proper secrets handling.
 
 ### Synthesis & Documentation Tasks
 
