@@ -19,8 +19,8 @@ class DesignerWorker(BaseWorker):
     """
     User experience and visual design analysis worker.
 
-    Provides comprehensive UX/UI analysis, design system recommendations,
-    accessibility compliance, and visual design guidance.
+    Analyzes interfaces for UX/UI design patterns, accessibility compliance, and usability.
+    Provides detailed design findings with actionable recommendations and design metrics.
     """
 
     def __init__(self):
@@ -30,57 +30,77 @@ class DesignerWorker(BaseWorker):
         )
 
     def get_file_prefix(self) -> str:
-        """Return file prefix for designer output files"""
+        """Return file prefix for design analysis output files.
+
+        Returns:
+            File prefix for designer output files
+        """
         return "designer"
 
     def get_worker_display_name(self) -> str:
-        """Return human-readable worker name for CLI and logging"""
+        """Return human-readable name for CLI display.
+
+        Returns:
+            Display name for the designer worker
+        """
         return "Designer Worker"
 
     def get_worker_description(self) -> str:
-        """Return worker description for CLI help"""
+        """Return description for CLI help and documentation.
+
+        Returns:
+            Brief description of designer capabilities
+        """
         return "UX/UI Design and Accessibility"
 
     def get_analysis_event_details(self, task_description: str) -> Dict[str, Any]:
-        """Return worker-specific event details for analysis_started event"""
+        """Return event details when design analysis starts.
+
+        Args:
+            task_description: Design analysis task description
+
+        Returns:
+            Event details for analysis started logging
+        """
         return {
-            "worker": "designer-worker",
             "task": task_description,
-            "focus_areas": [
-                "ux_design",
-                "ui_design",
-                "accessibility",
-                "responsive_design",
-            ],
+            "analysis_type": "ux_ui_accessibility_design",
         }
 
     def get_completion_event_details(self, output: WorkerOutput) -> Dict[str, Any]:
-        """Return worker-specific event details for worker_completed event"""
+        """Return event details when design analysis completes.
+
+        Args:
+            output: Design analysis output with findings and metrics
+
+        Returns:
+            Event details for analysis completion logging
+        """
         return {
-            "worker": "designer-worker",
-            "ux_recommendations": len(output.ux_recommendations),
-            "ui_improvements": len(output.ui_improvements),
-            "accessibility_score": output.accessibility_score,
+            "duration": "calculated",
+            "metrics": output.metrics.model_dump(),
+            "status": output.status,
         }
 
     def get_success_message(self, output: WorkerOutput) -> str:
-        """Return worker-specific CLI success message"""
-        return (
-            f"Design analysis completed. UX recommendations: {len(output.ux_recommendations)}, "
-            f"UI improvements: {len(output.ui_improvements)}, "
-            f"Accessibility score: {output.accessibility_score}"
-        )
+        """Return success message with design analysis summary.
 
-    def create_worker_specific_files(
-        self, session_id: str, output: WorkerOutput, session_path: Path
-    ) -> None:
-        """Create designer-specific output files beyond standard notes/JSON"""
-        # Designer worker uses standard file creation - no additional files needed
-        pass
+        Args:
+            output: Design analysis output with scores and findings
+
+        Returns:
+            Success message with key design analysis metrics
+        """
+        return f"Design analysis completed successfully. Files analyzed: {output.metrics.items_analyzed}, Issues found: {output.metrics.issues_found}"
+
 
 
 def main():
-    """CLI entry point for designer worker"""
+    """CLI entry point for designer worker execution.
+
+    Returns:
+        Exit code from worker execution
+    """
     worker = DesignerWorker()
     return worker.run_cli_main()
 
