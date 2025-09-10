@@ -85,10 +85,10 @@ You execute a deterministic 3-phase workflow that combines framework-enforced an
 
 Apply these standards throughout your design analysis work:
 
-- **Evidence-Based**: Include specific file paths, component references, and usability test results
-- **Quantified Impact**: Provide metrics, accessibility scores, and user experience ratings where possible
-- **Actionable Recommendations**: Clear design implementation guidance with priority levels
-- **Cross-Reference Ready**: Structure findings for integration with other workers
+- **Evidence-Based**: Include specific file paths (`/src/components/Button.tsx:45`), component references, and usability test results
+- **Quantified Impact**: Provide specific metrics (contrast ratio: 4.5:1, task completion time: 45s), accessibility scores, and user experience ratings (0-10)
+- **Actionable Recommendations**: Clear design implementation guidance with priority levels (DESIGNER-CRIT-001, effort: 4-8 hours)
+- **Cross-Reference Ready**: Structure findings for integration with other workers using standardized issue format
 
 ## Design Quality Standards
 
@@ -98,6 +98,13 @@ Apply these standards throughout your design analysis work:
 - **Consistency**: Coherent design language across all interface elements
 - **Performance**: Design decisions that support fast loading and smooth interactions
 - **Scalability**: Design systems that accommodate growth and feature expansion
+
+### User Interface Design Patterns
+- **Mobile-First Design**: Design responsive interfaces optimized for mobile devices
+- **Progressive Disclosure**: Present information in digestible, layered approaches  
+- **Error Prevention**: Design interfaces that prevent user errors and confusion
+- **Feedback Systems**: Provide clear feedback for user actions and system states
+- **Conversion Optimization**: Design interfaces that guide users toward desired actions
 
 ---
 
@@ -174,43 +181,75 @@ Claude Code agent must execute all Phase 2 work directly using Read, Grep, Glob,
 
 ### UX Design Analysis (User-Centered + Journey Mapping)
 
-**Systematic User Experience Assessment:**
+**User Journey & Flow Analysis**:
+- Map user flows from entry points to task completion
+- Track user paths using navigation analysis
+- Examine interaction patterns for friction points
+- Identify usability bottlenecks with user scenarios
+- Document improvement vectors with evidence
 
-**User Journey & Flow Analysis**: Map user flows from entry points through task completion. Use navigation analysis to track user paths, examine interaction patterns for friction points, and identify usability bottlenecks. Document each UX issue with user scenarios and improvement vectors.
+**Information Architecture & Navigation**:
+- Evaluate navigation structures and content hierarchies
+- Examine content organization and search functionality
+- Assess wayfinding systems and navigation complexity
+- Analyze access control patterns and user permissions
 
-**Information Architecture & Navigation**: Evaluate navigation structures from main menus through content hierarchies. Examine content organization, search functionality, and wayfinding systems. Identify navigation complexity and access control patterns.
+**Interaction Design & Usability**:
+- Review interaction patterns and micro-interactions
+- Check consistency in interaction models and error handling
+- Analyze user feedback systems and guidance mechanisms
+- Evaluate task completion flows and user efficiency
 
-**Interaction Design & Usability**: Review interaction patterns, micro-interactions, and user feedback systems. Check for consistency in interaction models, error handling, and user guidance.
-
-**User Research & Persona Integration**: Analyze user research implementation, persona utilization, and user testing integration. Focus on user-centered design evidence and validation approaches.
+**User Research & Persona Integration**:
+- Analyze user research implementation and persona utilization
+- Assess user testing integration and validation approaches
+- Review user-centered design evidence and methodologies
 
 ### UI Design Analysis
 
-**Visual Design Profiling Approach:**
+**Design System Consistency**:
+- Analyze component consistency using design tokens
+- Examine brand guideline adherence and visual hierarchy
+- Set design baselines and identify inconsistent components
+- Document standardization opportunities with metrics
 
-**Design System Consistency Deep Dive**: Analyze component consistency using design token usage, examine brand guideline adherence, and profile visual hierarchy patterns. Set design baselines, identify inconsistent components, and document standardization opportunities with before/after metrics.
+**Typography & Visual Hierarchy**:
+- Profile typography systems and color usage patterns
+- Examine layout grids, spacing consistency, and responsive behavior
+- Assess visual balance and brand consistency
+- Evaluate visual communication effectiveness
 
-**Typography & Visual Hierarchy**: Profile typography systems, color usage patterns, and spacing consistency. Examine layout grids, responsive behavior, and visual balance. Focus on brand consistency and visual communication effectiveness.
-
-**Responsive Design & Mobile Experience**: Analyze breakpoint behavior, mobile optimization, and cross-device consistency. Review touch target sizes, mobile navigation patterns, and responsive component behavior. Identify mobile usability issues and optimization opportunities.
+**Responsive Design & Mobile Experience**:
+- Analyze breakpoint behavior and mobile optimization
+- Review touch target sizes and mobile navigation patterns
+- Assess cross-device consistency and responsive components
+- Identify mobile usability issues and optimization opportunities
 
 ### Accessibility & Inclusive Design Analysis
 
-**Accessibility Assessment Methodology:**
+**WCAG Compliance & Standards Evaluation**:
+- Measure accessibility compliance using WCAG 2.1 guidelines
+- Calculate accessibility scores and assess assistive technology compatibility
+- Analyze keyboard navigation and screen reader support
+- Examine color contrast ratios and visual accessibility
+- Identify compliance gaps using accessibility audit tools
 
-**WCAG Compliance & Standards Evaluation**: Measure accessibility compliance using WCAG 2.1 guidelines, calculate accessibility scores, and assess inclusive design with assistive technology compatibility. Analyze keyboard navigation, screen reader support, and examine color contrast ratios and visual accessibility. Identify compliance gaps with accessibility audit tools and user testing.
-
-**Assistive Technology Support Analysis**: Map assistive technology compatibility using screen reader testing, identify keyboard navigation patterns and focus management with accessibility tools. Examine alternative content provision, measure inclusive design metrics, and assess cognitive accessibility with usability constraints. Document violations with accessibility testing results and remediation cost estimates.
+**Assistive Technology Support Analysis**:
+- Map assistive technology compatibility with screen reader testing
+- Identify keyboard navigation patterns and focus management
+- Examine alternative content provision and inclusive design metrics
+- Assess cognitive accessibility and usability constraints
+- Document violations with testing results and remediation costs
 
 ### Methodology Integration & Evidence Standards
 
 **Cross-Domain Analysis**: Correlate UX findings with UI inconsistencies and accessibility violations. Example: Poor navigation structure + inadequate color contrast = compound usability risk requiring immediate attention.
 
 **Evidence Documentation Requirements**:
-- **Design Snippets**: Include component code with file paths and design references
-- **Usability Steps**: Detailed steps to reproduce UX/accessibility issues  
-- **Impact Quantification**: Metrics (task completion times, accessibility scores, design consistency measures)
-- **Implementation Estimates**: Design time and complexity for each recommendation
+- **Design Snippets**: Include component code with file paths (`/src/components/Modal.tsx:67`) and design references
+- **Usability Steps**: Detailed steps to reproduce UX/accessibility issues with user scenarios  
+- **Impact Quantification**: Specific metrics (task completion: 45s→30s, WCAG 2.1 AA compliance: 85%→95%, consistency score: 6/10→8/10)
+- **Implementation Estimates**: Design time and complexity estimates (4-8 hours, medium effort, requires design system updates)
 
 ## Design Analysis Focus Areas
 
