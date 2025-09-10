@@ -7,6 +7,14 @@
 - **Files Analyzed**: 0
 - **Analysis Date**: {{TIMESTAMP}}
 
+## CRITICAL INSTRUCTIONS:
+• ALL template sections must be completed with relevant findings
+• NEVER leave sections empty or with placeholder text  
+• If a section appears non-applicable, explain why rather than deleting it
+• Complete Implementation Recommendations with concrete design improvements
+• Replace ALL "*Remove this section*" instructions with actual analysis
+• Provide specific design components, accessibility fixes, and implementation details
+
 ## Critical Issues Found
 *REQUIRED: List critical design issues using DESIGNER-CRIT-XXX format. If none exist, explain why design is user-friendly and accessible.*
 

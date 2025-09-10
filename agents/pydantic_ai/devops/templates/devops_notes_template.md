@@ -7,6 +7,14 @@
 - **Files Analyzed**: 0
 - **Analysis Date**: {{TIMESTAMP}}
 
+## CRITICAL INSTRUCTIONS:
+• ALL template sections must be completed with relevant findings
+• NEVER leave sections empty or with placeholder text  
+• If a section appears non-applicable, explain why rather than deleting it
+• Complete Implementation Recommendations with concrete infrastructure improvements
+• Replace ALL "*Remove this section*" instructions with actual analysis
+• Provide specific deployment configs, monitoring setups, and implementation details
+
 ## Critical Issues Found
 *REQUIRED: List critical infrastructure issues using DEVOPS-CRIT-XXX format. If none exist, explain why infrastructure is robust and well-designed.*
 
