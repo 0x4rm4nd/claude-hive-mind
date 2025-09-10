@@ -243,7 +243,6 @@ This is a basic synthesis report for the session. The session has been analyzed 
             return session_id, complexity_level
 
         except Exception as e:
-            # No fallback - system must work with specified model or fail
             raise RuntimeError(
                 f"CRITICAL: AI model '{model}' failed for session generation.\n"
                 f"\n"

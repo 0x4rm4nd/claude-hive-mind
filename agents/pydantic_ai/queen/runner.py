@@ -47,12 +47,6 @@ class QueenWorker(BaseWorker):
         self.worker_config = QueenAgentConfig.create_worker_config(
             session_id, task_description
         )
-        return self.run_analysis(session_id, task_description, model)
-
-    def execute_ai_analysis(
-        self, session_id: str, task_description: str, model: str
-    ) -> Any:
-        """Execute orchestration analysis using Pydantic AI agent"""
         # Update session config before any logging
         self.update_session_config(session_id)
 
@@ -67,6 +61,13 @@ class QueenWorker(BaseWorker):
             "INFO",
         )
 
+        self.validate_session(session_id)
+        return self.execute_queen_analysis(session_id, task_description, model)
+
+    def execute_queen_analysis(
+        self, session_id: str, task_description: str, model: str
+    ) -> Any:
+        """Execute orchestration analysis using Pydantic AI agent"""
         # Log analysis started event after queen spawned
         self.log_event(
             "analysis_started",
@@ -74,10 +75,7 @@ class QueenWorker(BaseWorker):
             "INFO",
         )
 
-        monitoring_mode = False  # Disable monitoring mode by default
-        clean_task = task_description.strip()
-
-        queen_prompt = f"Using the Queen Agent, analyze task and create orchestration plan.\nTask: {clean_task}\nSession: {session_id}"
+        queen_prompt = f"Using the Queen Agent, analyze task and create orchestration plan.\nTask: {task_description}\nSession: {session_id}"
 
         # Handle custom models with system prompt override
         if model.startswith("custom:"):
@@ -115,13 +113,8 @@ class QueenWorker(BaseWorker):
         orchestration_plan = orchestration_result.output
         session_path = SessionManagement.get_session_path(session_id)
 
-        # Convert to relative path for logging
-        try:
-            project_root = Path(SessionManagement.detect_project_root())
-            relative_session_path = str(Path(session_path).relative_to(project_root))
-        except ValueError:
-            # Fallback to absolute if outside project root
-            relative_session_path = session_path
+        project_root = Path(SessionManagement.detect_project_root())
+        relative_session_path = str(Path(session_path).relative_to(project_root))
 
         # Generate worker-specific prompts from orchestration plan
         try:
@@ -159,19 +152,20 @@ class QueenWorker(BaseWorker):
                 for assignment in orchestration_plan.worker_assignments
             ],
             coordination_status="planned",
-            monitoring_active=monitoring_mode,
+            monitoring_active=False,
             session_path=relative_session_path,
         )
 
         # Store orchestration_plan temporarily for file creation
         queen_output._orchestration_plan = orchestration_plan
 
-        # Return mock result object with output attribute for BaseWorker compatibility
-        class MockResult:
-            def __init__(self, output):
-                self.output = output
+        session_path = Path(SessionManagement.get_session_path(session_id))
+        self.create_worker_specific_files(session_id, queen_output, session_path)
 
-        return MockResult(queen_output)
+        completion_details = self.get_completion_event_details(queen_output)
+        self.log_event("analysis_completed", completion_details)
+
+        return queen_output
 
     def get_file_prefix(self) -> str:
         return "queen"
