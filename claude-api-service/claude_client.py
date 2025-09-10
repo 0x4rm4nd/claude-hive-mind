@@ -24,7 +24,6 @@ class ClaudeClient:
         prompt: str,
         model: str = "sonnet",
         timeout: int = 180,
-        system_prompt_override: str = None,
         settings: str = None,
     ) -> Dict[str, any]:
         """
@@ -39,11 +38,6 @@ class ClaudeClient:
             "--model",
             model,
         ]
-
-        # Add system prompt override if provided
-        if system_prompt_override:
-            cmd.extend(["--append-system-prompt", system_prompt_override])
-            logger.info("System prompt override applied")
 
         if settings:
             # Wrap JSON settings in single quotes for proper shell escaping
@@ -106,16 +100,13 @@ class ClaudeClient:
         prompt: str,
         model: str = "sonnet",
         timeout: int = 180,
-        system_prompt_override: str = None,
         settings: str = None,
     ) -> str:
         """
         Simple Claude CLI execution for generic proxy use.
         Just passes the prompt through to Claude and returns the response.
         """
-        result = await self._call_claude(
-            prompt, model, timeout, system_prompt_override, settings
-        )
+        result = await self._call_claude(prompt, model, timeout, settings)
 
         if result["success"]:
             return result["response"]
