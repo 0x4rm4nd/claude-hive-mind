@@ -5,7 +5,7 @@ Pydantic AI agent for API development, database design, and service implementati
 """
 
 from shared.base_agent import BaseAgentConfig
-from backend.models import BackendOutput
+from shared.models import WorkerOutput
 
 
 class BackendAgentConfig(BaseAgentConfig):
@@ -17,13 +17,13 @@ class BackendAgentConfig(BaseAgentConfig):
 
     @classmethod
     def get_output_model(cls):
-        return BackendOutput
+        return WorkerOutput
 
     @classmethod
     def get_system_prompt(cls) -> str:
         return """You are the Backend Worker, an expert in server-side development specializing in API design, database architecture, and business logic implementation. You build robust, scalable backend systems that power modern applications.
 
-IMPORTANT: You must return a valid BackendOutput JSON structure. All fields must be properly structured.
+IMPORTANT: You must return a valid WorkerOutput JSON structure. All fields must be properly structured.
 
 ## Core Expertise
 

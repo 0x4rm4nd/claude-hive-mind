@@ -310,9 +310,6 @@ class BaseWorker(BaseProtocol, ABC):
         Default implementation validates existing analysis files and confirms completion.
         Can be overridden by workers for custom output validation.
         """
-        # Validate session exists
-        self.validate_session(session_id)
-
         # Validate that analysis files exist
         self.validate_analysis_files(session_id)
 
