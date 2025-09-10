@@ -149,27 +149,10 @@ class ScribeWorker(BaseWorker):
         if not session_path.exists():
             raise FileNotFoundError(f"Session {session_id} not found")
 
-        # For testing, create simple synthesis without AI call
-        synthesis_content = f"""# Synthesis Report - Session {session_id}
-
-Generated: {iso_now()}
-
-## Summary
-This is a basic synthesis report for the session. The session has been analyzed and the following findings are reported:
-
-## Key Findings
-- Session completed successfully
-- No major issues identified
-- Ready for further analysis if needed
-
-## Recommendations
-- Continue with planned work
-- Monitor for any issues
-
-## Next Steps
-- Review session outputs
-- Plan follow-up activities as needed
-"""
+        # Load synthesis template
+        synthesis_content = self._load_template(
+            "synthesis_report.md", {"session_id": session_id, "timestamp": iso_now()}
+        )
 
         # Create synthesis overview
         synthesis_overview = SynthesisOverview(
@@ -267,28 +250,40 @@ This is a basic synthesis report for the session. The session has been analyzed 
         sessions_dir = project_root_path / "Docs" / "hive-mind" / "sessions"
         session_path = sessions_dir / session_id
 
-        session_md_content = f"""# Session: {session_id}
-
-**Created:** {iso_now()}  
-**Task:** {task_description}  
-**Model:** {model}  
-**Status:** Created  
-
-## Overview
-Session created for task analysis and worker coordination.
-
-## Progress
-- [x] Session initialization
-- [ ] Task analysis  
-- [ ] Worker deployment
-- [ ] Synthesis
-
-## Notes
-Session ready for Queen orchestration.
-"""
+        session_md_content = self._load_template(
+            "session.md",
+            {
+                "session_id": session_id,
+                "timestamp": iso_now(),
+                "task_description": task_description,
+                "model": model,
+            },
+        )
 
         with open(session_path / "SESSION.md", "w") as f:
             f.write(session_md_content)
+
+    def _load_template(self, template_name: str, variables: Dict[str, str]) -> str:
+        """Load template file and substitute variables.
+
+        Args:
+            template_name: Name of template file in templates directory
+            variables: Dictionary of variables to substitute in template
+
+        Returns:
+            Template content with variables substituted
+        """
+        template_path = Path(__file__).parent / "templates" / template_name
+        try:
+            with open(template_path, "r") as f:
+                template_content = f.read()
+            return template_content.format(**variables)
+        except FileNotFoundError:
+            raise FileNotFoundError(
+                f"Template file {template_name} not found in templates directory"
+            )
+        except KeyError as e:
+            raise ValueError(f"Missing variable {e} for template {template_name}")
 
     def get_file_prefix(self) -> str:
         """Return file prefix for scribe output files.
