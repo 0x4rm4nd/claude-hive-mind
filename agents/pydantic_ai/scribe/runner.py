@@ -68,6 +68,7 @@ class ScribeWorker(BaseWorker):
             )
         else:
             # For synthesis mode, use provided session_id
+            actual_session_id = session_id
             self.worker_config = ScribeAgentConfig.create_worker_config(
                 session_id, task_description
             )
