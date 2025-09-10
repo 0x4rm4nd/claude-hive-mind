@@ -5,23 +5,20 @@ Execution runner for the Designer Worker - provides user experience and visual d
 """
 
 import sys
-import os
 from pathlib import Path
+from typing import Dict, Any
 
 # Minimal path setup to enable shared imports
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
-from typing import Dict, Any
-
 from shared.base_worker import BaseWorker
 from shared.models import WorkerOutput
-from designer.agent import designer_agent, DesignerAgentConfig
 
 
 class DesignerWorker(BaseWorker):
     """
     User experience and visual design analysis worker.
-    
+
     Provides comprehensive UX/UI analysis, design system recommendations,
     accessibility compliance, and visual design guidance.
     """
@@ -31,7 +28,6 @@ class DesignerWorker(BaseWorker):
             worker_type="designer-worker",
             worker_config=None,
         )
-
 
     def get_file_prefix(self) -> str:
         """Return file prefix for designer output files"""
