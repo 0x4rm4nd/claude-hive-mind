@@ -94,7 +94,6 @@ class DesignerWorker(BaseWorker):
         return f"Design analysis completed successfully. Files analyzed: {output.metrics.items_analyzed}, Issues found: {output.metrics.issues_found}"
 
 
-
 def main():
     """CLI entry point for designer worker execution.
 
