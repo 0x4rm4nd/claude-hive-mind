@@ -89,16 +89,16 @@ class ScribeWorker(BaseWorker):
             self._create_session_markdown(
                 session_id, self.worker_config.task_description, model
             )
-            result = self._create_session_completion_result(
+            output = self._create_session_completion_result(
                 session_id, self.worker_config.task_description
             )
         else:
             # For synthesis mode, run synthesis directly
-            result = self._run_synthesis(
+            output = self._run_synthesis(
                 session_id, self.worker_config.task_description, model
             )
 
-        return result.output
+        return output
 
     def _create_session_completion_result(
         self, session_id: str, task_description: str
@@ -127,25 +127,17 @@ class ScribeWorker(BaseWorker):
             "INFO",
         )
 
-        # Use the complexity level calculated during session ID generation
-        complexity_level = self._session_complexity or 1
-
-        # Create mock result to match expected structure
-        class MockResult:
-            def __init__(self, output):
-                self.output = output
-
         output = ScribeOutput(
             mode="create",
             session_id=session_id,
             timestamp=iso_now(),
             status="completed",
             task_description=task_description,
-            complexity_level=complexity_level,
+            complexity_level=self._session_complexity or 1,
             session_path=f"Docs/hive-mind/sessions/{session_id}",
         )
 
-        return MockResult(output)
+        return output
 
     def _run_synthesis(self, session_id: str, task_description: str, model: str) -> Any:
         """Handle synthesis mode"""
@@ -186,11 +178,6 @@ This is a basic synthesis report for the session. The session has been analyzed 
             themes=["Basic session management", "Task coordination"],
         )
 
-        # Create mock result to match expected structure
-        class MockResult:
-            def __init__(self, output):
-                self.output = output
-
         unified_output = ScribeOutput(
             mode="synthesis",
             session_id=session_id,
@@ -201,7 +188,7 @@ This is a basic synthesis report for the session. The session has been analyzed 
             sources={"session_files": "Basic session analysis"},
         )
 
-        return MockResult(unified_output)
+        return unified_output
 
     def _generate_ai_session_id(
         self, task_description: str, model: str
@@ -213,11 +200,9 @@ This is a basic synthesis report for the session. The session has been analyzed 
             if model.startswith("custom:"):
                 scribe_prompt = f"""Using the Scribe Agent, generate a session ID and complexity assessment for this task: "{task_description}" """
 
-                # Use ModelSettings to pass system prompt override via headers
+                # Use ModelSettings to pass outputStyle settings
                 model_settings = ModelSettings(
-                    extra_headers={
-                        "X-System-Prompt-Override": 'CRITICAL: When asked for session ID generation, respond with ONLY raw JSON - no markdown code blocks, no explanations, no formatting. Just the pure JSON object: {"short_description": "task-name", "complexity_level": 1, "focus_areas": ["task-area"]}'
-                    }
+                    extra_headers={"X-Settings": r'{"outputStyle": "scribe-json"}'}
                 )
 
                 temp_agent = Agent(

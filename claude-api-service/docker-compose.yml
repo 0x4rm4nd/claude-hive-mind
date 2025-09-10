@@ -7,6 +7,8 @@ services:
     volumes:
       # Mount Docker-specific agents directory as .claude/agents in container
       - ./docker-agents:/app/.claude/agents:ro
+      # Mount output styles directory for custom Claude output formats
+      - ./docker-output-styles:/home/claudeuser/.claude/output-styles:ro
       # Persist Claude CLI authentication across container restarts
       - claude_auth:/home/claudeuser/.claude
     environment:
