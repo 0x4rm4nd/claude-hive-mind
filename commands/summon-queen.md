@@ -10,18 +10,27 @@ Launch the hive-mind system: Create session → Queen orchestration → Automati
 
 ## Core Two-Phase Workflow
 
+### Phase 0: Project Root Resolution
+Determine absolute paths programmatically:
+```bash
+# Detect project root (where summon-queen is executed from)
+PROJECT_ROOT=$(pwd)
+PYDANTIC_AI_PATH="$PROJECT_ROOT/.claude/agents/pydantic_ai"
+echo "Project Root: $PROJECT_ROOT"
+echo "Pydantic AI Path: $PYDANTIC_AI_PATH"
+```
+
 ### Phase 1: Session Creation
 Use Bash tool with 5-minute timeout:
 ```bash
-cd .claude
-python agents/pydantic_ai/cli.py scribe create --task "$ARGUMENTS" --model custom:max-subscription
+cd "$PYDANTIC_AI_PATH" && python cli.py scribe create --task "$ARGUMENTS" --model custom:max-subscription
 ```
 *Extract `session_id` from JSON response for Phase 2.*
 
 ### Phase 2: Queen Orchestration  
 Use Bash tool with 5-minute timeout:
 ```bash
-python agents/pydantic_ai/cli.py queen --session [SESSION_ID] --task "$ARGUMENTS" --model custom:max-subscription
+cd "$PYDANTIC_AI_PATH" && python cli.py queen --session [SESSION_ID] --task "$ARGUMENTS" --model custom:max-subscription
 ```
 
 ## Queen's Strategic Responsibilities
@@ -66,8 +75,8 @@ SESSION: [SESSION_ID]
 SHARED_CONTRACTS: [PRE_ESTABLISHED_DATA_CONTRACTS]
 
 Your responsibility:
-1. Navigate to .claude/agents/pydantic_ai/
-2. Execute using Bash tool with 5-minute timeout: python cli.py [your-worker-type] --session [SESSION_ID] --task '[YOUR_SPECIFIC_TASK]'
+1. Resolve project root: PROJECT_ROOT=$(pwd) && PYDANTIC_AI_PATH="$PROJECT_ROOT/.claude/agents/pydantic_ai"
+2. Execute using Bash tool with 5-minute timeout: cd "$PYDANTIC_AI_PATH" && python cli.py [your-worker-type] --session [SESSION_ID] --task '[YOUR_SPECIFIC_TASK]'
 3. Use --model custom:max-subscription if defaults fail
 4. Follow the shared contracts established by Queen
 5. Report results back to session coordination system"
@@ -97,14 +106,18 @@ Coordinated Worker Execution → Final Synthesis
 ## Monitoring Commands
 
 ```bash
+# Resolve project paths
+PROJECT_ROOT=$(pwd)
+SESSION_PATH="$PROJECT_ROOT/Docs/hive-mind/sessions/[SESSION_ID]"
+
 # Monitor session progress
-tail -f Docs/hive-mind/sessions/[SESSION_ID]/EVENTS.jsonl
+tail -f "$SESSION_PATH/EVENTS.jsonl"
 
 # Check worker coordination
-grep "coordination\|dependency\|contract" Docs/hive-mind/sessions/[SESSION_ID]/EVENTS.jsonl
+grep "coordination\|dependency\|contract" "$SESSION_PATH/EVENTS.jsonl"
 
 # Review session state
-cat Docs/hive-mind/sessions/[SESSION_ID]/SESSION.md
+cat "$SESSION_PATH/SESSION.md"
 ```
 
 ## Success Criteria
