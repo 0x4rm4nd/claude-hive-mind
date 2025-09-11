@@ -5,12 +5,7 @@ User experience design, visual design, accessibility, and design systems special
 """
 
 from .agent import designer_agent
-from .models import DesignRecommendation, AccessibilityFinding, DesignSystemComponent
 
 __all__ = [
     'designer_agent',
-
-    'DesignRecommendation',
-    'AccessibilityFinding',
-    'DesignSystemComponent'
 ]
