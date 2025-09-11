@@ -5,25 +5,23 @@ Execution runner for the Frontend Worker - provides UI/UX implementation and com
 """
 
 import sys
-import os
 from pathlib import Path
+from typing import Dict, Any
 
 # Minimal path setup to enable shared imports
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
-from typing import Dict, Any
-
 from shared.base_worker import BaseWorker
 from shared.models import WorkerOutput
-from frontend.agent import frontend_agent, FrontendAgentConfig
 
 
 class FrontendWorker(BaseWorker):
     """
     Frontend UI/UX implementation and component architecture worker.
-    
-    Provides comprehensive frontend analysis including component design,
-    state management, performance optimization, and accessibility compliance.
+
+    Analyzes codebases for component architecture, performance optimization,
+    accessibility compliance, and user experience patterns. Provides detailed
+    findings with actionable recommendations and implementation guidance.
     """
 
     def __init__(self):
@@ -34,51 +32,68 @@ class FrontendWorker(BaseWorker):
 
 
     def get_file_prefix(self) -> str:
-        """Return file prefix for frontend output files"""
+        """Return file prefix for analysis output files.
+
+        Returns:
+            File prefix for frontend output files
+        """
         return "frontend"
 
     def get_worker_display_name(self) -> str:
-        """Return human-readable worker name for CLI and logging"""
+        """Return human-readable name for CLI display.
+
+        Returns:
+            Display name for the frontend worker
+        """
         return "Frontend Worker"
 
     def get_worker_description(self) -> str:
-        """Return worker description for CLI help"""
-        return "Frontend Development and User Interfaces"
+        """Return description for CLI help and documentation.
+
+        Returns:
+            Brief description of frontend capabilities
+        """
+        return "Frontend Development and User Experience Analysis"
 
     def get_analysis_event_details(self, task_description: str) -> Dict[str, Any]:
-        """Return worker-specific event details for analysis_started event"""
+        """Return event details when analysis starts.
+
+        Args:
+            task_description: Analysis task description
+
+        Returns:
+            Event details for analysis started logging
+        """
         return {
-            "worker": "frontend-worker",
             "task": task_description,
-            "focus_areas": [
-                "components",
-                "state_management",
-                "performance",
-                "accessibility",
-            ],
+            "analysis_type": "frontend_component_performance_ux",
         }
 
     def get_completion_event_details(self, output: WorkerOutput) -> Dict[str, Any]:
-        """Return worker-specific event details for worker_completed event"""
+        """Return event details when analysis completes.
+
+        Args:
+            output: Analysis output with findings and metrics
+
+        Returns:
+            Event details for analysis completion logging
+        """
         return {
-            "worker": "frontend-worker",
-            "components_count": len(output.component_specifications),
-            "performance_score": output.performance_score,
+            "duration": "calculated",
+            "metrics": output.metrics.model_dump(),
+            "status": output.status,
         }
 
     def get_success_message(self, output: WorkerOutput) -> str:
-        """Return worker-specific CLI success message"""
-        return (
-            f"Frontend analysis completed. Components: {len(output.component_specifications)}, "
-            f"Performance score: {output.performance_score}"
-        )
+        """Return success message with analysis summary.
 
-    def create_worker_specific_files(
-        self, session_id: str, output: WorkerOutput, session_path: Path
-    ) -> None:
-        """Create frontend-specific output files beyond standard notes/JSON"""
-        # Frontend worker uses standard file creation - no additional files needed
-        pass
+        Args:
+            output: Analysis output with scores and findings
+
+        Returns:
+            Success message with key analysis metrics
+        """
+        return f"Frontend analysis completed successfully. Components analyzed: {output.metrics.items_analyzed}, Issues found: {output.metrics.issues_found}"
 
 
 def main():

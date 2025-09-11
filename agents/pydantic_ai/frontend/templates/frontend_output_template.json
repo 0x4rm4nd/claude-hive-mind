@@ -1,0 +1,183 @@
+{
+  "analysis_metadata": {
+    "session_id": "{{SESSION_ID}}",
+    "timestamp": "{{TIMESTAMP}}",
+    "components_analyzed": 0,
+    "analysis_duration": "{{DURATION}}",
+    "worker_type": "frontend"
+  },
+  
+  "scores": {
+    "component_architecture_score": 0,
+    "performance_score": 0,
+    "accessibility_score": 0,
+    "user_experience_score": 0,
+    "overall_score": 0
+  },
+  
+  "component_specifications": [
+    {
+      "id": "COMP-001-TEMPLATE",
+      "component_name": "Template - remove if no components analyzed",
+      "component_type": "functional|class|hook|utility",
+      "file_path": "/path/to/component.tsx",
+      "props_interface": "interface definition",
+      "state_management": "local|redux|zustand|context|none",
+      "styling_approach": "css-modules|styled-components|tailwind|css-in-js",
+      "accessibility_features": ["aria-labels", "keyboard-navigation", "focus-management"],
+      "performance_optimizations": ["memo", "lazy-loading", "code-splitting"],
+      "testing_coverage": "unit|integration|e2e|none",
+      "documentation_quality": "excellent|good|adequate|poor|missing"
+    }
+  ],
+  
+  "performance_issues": [
+    {
+      "id": "PERF-001-TEMPLATE",
+      "issue": "Template - remove if no performance issues",
+      "category": "bundle-size|rendering|memory|network|asset-loading",
+      "severity": "critical|high|medium|low",
+      "component": "ComponentName",
+      "file_path": "/path/to/file.tsx",
+      "current_metric": "Current performance measurement",
+      "target_metric": "Target performance goal",
+      "impact_description": "Description of performance impact",
+      "optimization_suggestion": "Specific optimization recommendations",
+      "estimated_improvement": "Expected performance gain"
+    }
+  ],
+  
+  "accessibility_findings": [
+    {
+      "id": "A11Y-001-TEMPLATE",
+      "issue": "Template - remove if no accessibility issues",
+      "category": "keyboard|screen-reader|color-contrast|focus-management|semantic",
+      "severity": "critical|high|medium|low",
+      "component": "ComponentName",
+      "file_path": "/path/to/file.tsx",
+      "wcag_criterion": "1.1.1|1.3.1|2.1.1|2.4.7|3.1.1|4.1.2",
+      "current_state": "Current accessibility state",
+      "required_fix": "Specific accessibility fix needed",
+      "testing_method": "screen-reader|keyboard|automated|manual",
+      "impact_on_users": "Description of user impact"
+    }
+  ],
+  
+  "user_experience_issues": [
+    {
+      "id": "UX-001-TEMPLATE",
+      "issue": "Template - remove if no UX issues",
+      "category": "navigation|forms|feedback|loading|error-handling|responsiveness",
+      "severity": "critical|high|medium|low",
+      "area": "Specific UI area affected",
+      "user_flow": "User journey step affected",
+      "current_behavior": "Current user experience",
+      "expected_behavior": "Desired user experience",
+      "improvement_suggestion": "Specific UX improvement",
+      "impact_on_conversion": "Potential business impact"
+    }
+  ],
+  
+  "architecture_recommendations": [
+    {
+      "id": "ARCH-001-TEMPLATE",
+      "recommendation": "Template - remove if no architecture recommendations",
+      "category": "state-management|component-structure|data-flow|routing|styling",
+      "priority": "critical|high|medium|low",
+      "current_approach": "Current implementation approach",
+      "recommended_approach": "Recommended implementation approach",
+      "migration_effort": "low|medium|high|critical",
+      "benefits": ["Benefit 1", "Benefit 2", "Benefit 3"],
+      "implementation_steps": ["Step 1", "Step 2", "Step 3"],
+      "affected_components": ["Component1", "Component2"]
+    }
+  ],
+  
+  "development_improvements": [
+    {
+      "id": "DEV-001-TEMPLATE",
+      "improvement": "Template - remove if no development improvements",
+      "category": "tooling|testing|documentation|code-quality|typescript",
+      "priority": "critical|high|medium|low",
+      "current_state": "Current development experience",
+      "improved_state": "Improved development experience",
+      "implementation_effort": "low|medium|high",
+      "developer_productivity_impact": "Productivity improvement estimate",
+      "tools_required": ["Tool 1", "Tool 2"],
+      "setup_steps": ["Setup step 1", "Setup step 2"]
+    }
+  ],
+  
+  "technical_debt": [
+    {
+      "id": "DEBT-001-TEMPLATE",
+      "debt_item": "Template - remove if no technical debt",
+      "category": "legacy-code|outdated-dependencies|deprecated-patterns|browser-support",
+      "severity": "critical|high|medium|low",
+      "affected_areas": ["Area 1", "Area 2"],
+      "current_risk": "Risk assessment of current state",
+      "modernization_approach": "Recommended modernization strategy",
+      "migration_complexity": "low|medium|high|critical",
+      "business_impact": "Impact on business objectives",
+      "timeline_estimate": "Estimated time to address"
+    }
+  ],
+  
+  "testing_analysis": [
+    {
+      "id": "TEST-001-TEMPLATE",
+      "component": "Template - remove if no testing analysis",
+      "test_type": "unit|integration|e2e|visual|accessibility",
+      "coverage_status": "excellent|good|adequate|poor|missing",
+      "current_coverage": "Current test coverage percentage",
+      "missing_scenarios": ["Scenario 1", "Scenario 2"],
+      "testing_tools": ["Jest", "Testing Library", "Cypress"],
+      "improvement_suggestions": ["Suggestion 1", "Suggestion 2"],
+      "priority": "critical|high|medium|low"
+    }
+  ],
+  
+  "implementation_roadmap": {
+    "phase_1_critical": {
+      "duration": "1 week",
+      "items": ["Critical item 1", "Critical item 2"],
+      "success_criteria": ["Criteria 1", "Criteria 2"]
+    },
+    "phase_2_high_priority": {
+      "duration": "2-3 weeks", 
+      "items": ["High priority item 1", "High priority item 2"],
+      "success_criteria": ["Criteria 1", "Criteria 2"]
+    },
+    "phase_3_architecture": {
+      "duration": "4-6 weeks",
+      "items": ["Architecture item 1", "Architecture item 2"],
+      "success_criteria": ["Criteria 1", "Criteria 2"]
+    },
+    "phase_4_enhancement": {
+      "duration": "Ongoing",
+      "items": ["Enhancement item 1", "Enhancement item 2"],
+      "success_criteria": ["Criteria 1", "Criteria 2"]
+    }
+  },
+  
+  "metrics_and_monitoring": {
+    "performance_metrics": {
+      "bundle_size": "Current bundle size",
+      "first_contentful_paint": "FCP measurement",
+      "largest_contentful_paint": "LCP measurement",
+      "cumulative_layout_shift": "CLS measurement",
+      "time_to_interactive": "TTI measurement"
+    },
+    "accessibility_metrics": {
+      "automated_score": "Automated accessibility score",
+      "manual_testing_status": "Manual testing completion",
+      "wcag_compliance_level": "AA|AAA compliance level"
+    },
+    "user_experience_metrics": {
+      "user_satisfaction_score": "User satisfaction rating",
+      "task_completion_rate": "Task completion percentage",
+      "error_rate": "User error frequency",
+      "conversion_impact": "Business metric impact"
+    }
+  }
+}
