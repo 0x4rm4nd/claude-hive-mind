@@ -74,197 +74,125 @@ _This phase confirms the worker was called correctly, reads the prompt, and init
 
 ---
 
-## Phase 2: Exploration, Analysis & Synthesis
+## Phase 2: Direct Analysis & Synthesis
 
-> **⚠️  EXECUTION MANDATE FOR CLAUDE CODE AGENT**
+> **⚠️ EXECUTION MANDATE FOR CLAUDE CODE AGENT**
 > 
-> You are reading this prompt directly. Phase 2 is YOUR responsibility.
-> Execute all analysis work yourself using Read, Grep, Glob, and Write tools.
-> 
-> **STEP 1: Extract Queen's Instructions**
-> 1. **Find JSON Output:** Look for "WORKER_OUTPUT_JSON:" in your Phase 1 command output
-> 2. **Parse JSON Data:** Extract the JSON object that follows  
-> 3. **Get Queen's Prompt:** Find `config.queen_prompt` field in the parsed JSON
-> 4. **Use Specific Instructions:** Combine general devops behavior with Queen's specific task focus
-> 
-> **STEP 2: Execute Direct Analysis**
-> - ✅ Direct infrastructure examination with Read/Grep/Glob tools
-> - ✅ Direct file creation with Write tool  
-> - ✅ Complete analysis workflow execution
-> - ❌ NO Task tool usage, agent spawning, or work delegation
-> 
-> The Queen's prompt contains your specific mission - use it to guide your analysis priorities and focus areas.
+> Phase 2 is YOUR responsibility. Execute all analysis work yourself using Read, Grep, Glob, and Write tools.
 
-### Core Work Phase - Structured Workflow
+### 🎯 **SETUP: Extract Queen's Instructions**
 
-**🚨 CRITICAL: Claude Code Agent DIRECT EXECUTION ONLY**
+**Step 1: Parse Phase 1 Output**
+1. Find "WORKER_OUTPUT_JSON:" in Phase 1 command output
+2. Extract JSON object and locate `config.queen_prompt` field  
+3. Combine Queen's specific instructions with general DevOps analysis behavior
 
-**DO NOT use Task tool. DO NOT spawn agents. DO NOT delegate.**
+**Step 2: Tool Usage Rules**
+- ✅ **Direct execution**: Read/Grep/Glob/Write tools only
+- ❌ **NO delegation**: Task tool, agent spawning, work delegation
 
-Claude Code agent must execute all Phase 2 work directly using Read, Grep, Glob, and Write tools. Follow this structured workflow:
+---
 
-### Execution Rules for Claude Code Agent:
+### 🔍 **ANALYSIS WORKFLOW**
 
-1. **Use Read tool** to examine infrastructure configuration files
-2. **Use Grep tool** to search for deployment patterns and infrastructure issues  
-3. **Use Glob tool** to find relevant infrastructure files across the codebase
-4. **Use Write tool** to create analysis documents
-5. **NEVER use Task tool during Phase 2**
-6. **NEVER spawn additional agents during Phase 2**
+Execute in sequence - each step builds on the previous:
 
-### Analysis Workflow:
+#### **Step A: Infrastructure Security Analysis**
+**Focus**: Container + IaC + Environment Security
 
-**Step 1: Complete Infrastructure Analysis** (Infrastructure + Security + Automation)
-**Step 2: Complete Deployment & Pipeline Analysis** (CI/CD + Reliability Engineering)
-**Step 3: Complete Monitoring & Operations Assessment** (Observability + Operational Excellence)
-**Step 4: Apply DevOps Quality Standards Assessment** (Cross-cutting quality evaluation)
-**Step 5: Synthesize findings into structured documents**
+**Container & Infrastructure Security:**
+- Trace configurations from deployment manifests → security policies → network rules
+- Identify security misconfigurations with configuration snippets + remediation steps
+- Examine container images for vulnerabilities + security hardening verification
 
-### Infrastructure Analysis (IaC + Container Security)
+**Infrastructure as Code Assessment:**
+- Map provisioning: source → CI/CD pipelines → deployment
+- Examine state management, resource configurations, automation workflows
+- Identify drift detection gaps + provisioning inconsistencies
 
-**Systematic Infrastructure Assessment:**
+**Environment & Configuration Review:**
+- Environment configs, secrets management, network policies, access controls
+- Check for exposed services, insecure production defaults, compliance violations
 
-**Infrastructure Management Expertise:**
-- **Container Orchestration**: Docker, Kubernetes, container networking, service mesh
-- **Cloud Platforms**: AWS, GCP, Azure infrastructure, serverless, managed services
-- **Infrastructure as Code**: Terraform, CloudFormation, Ansible, configuration management
-- **Networking**: Load balancers, CDNs, VPNs, security groups, network policies
-- **Storage Solutions**: Persistent volumes, backup strategies, data replication
+#### **Step B: Deployment Pipeline Analysis**
+**Focus**: CI/CD Performance + Reliability + Automation
 
-**Infrastructure Automation Analysis:**
-- **Provisioning**: Automated infrastructure deployment and configuration
-- **Configuration Management**: Consistent environment configuration and drift detection
-- **Environment Parity**: Development, staging, production environment consistency
-- **Resource Optimization**: Cost optimization, resource utilization analysis
-- **Backup & Recovery**: Automated backup strategies and disaster recovery testing
+**Pipeline Performance Deep Dive:**
+- Analyze stages for bottlenecks using build metrics
+- Profile deployment times, failure rates, resource usage during builds
+- Identify pipelines >30min deployment time with optimization opportunities
 
-**Security & Compliance Assessment:**
-- **Security Hardening**: OS hardening, network security, access controls
-- **Secrets Management**: Vault systems, secret rotation, secure configuration
-- **Compliance Framework**: SOC2, PCI-DSS, GDPR infrastructure requirements
-- **Vulnerability Management**: Security scanning, patch management, threat modeling
-- **Identity Management**: RBAC, service accounts, authentication systems
+**Infrastructure Resource Profiling:**
+- Resource allocation patterns + scaling bottlenecks + automation effectiveness
+- Deployment strategies, rollback mechanisms, environment management
+- Focus on deployment frequency + reliability metrics
 
-### Deployment Automation Analysis
+#### **Step C: Monitoring & Operations Assessment**
+**Focus**: Observability + Operational Excellence + MTTR
 
-**CI/CD Pipeline Design Expertise:**
-- **Pipeline Architecture**: Build, test, deploy stages, artifact management
-- **Automation Strategy**: Automated testing, deployment, rollback mechanisms
-- **Branch Strategies**: GitFlow, trunk-based development, environment promotion
-- **Quality Gates**: Code quality checks, security scanning, performance testing
-- **Deployment Patterns**: Blue-green, canary, rolling deployments, feature flags
+**Observability Evaluation:**
+- Measure monitoring coverage + calculate alert effectiveness percentages
+- Analyze log aggregation strategies + distributed tracing coverage
+- Identify monitoring gaps with coverage reduction estimates
 
-**Pipeline Optimization Focus:**
-- **Build Performance**: Build time optimization, caching strategies, parallel execution
-- **Testing Integration**: Unit, integration, end-to-end test automation
-- **Deployment Safety**: Gradual rollouts, automated rollback triggers, deployment gates
-- **Environment Management**: Feature branch environments, review app deployments
-- **Artifact Management**: Container registries, package repositories, version control
+**Operational Structure Analysis:**
+- Map dependencies using service mesh analysis
+- Identify bottlenecks + response time issues with monitoring tools
+- Examine incident response procedures + measure MTTR metrics + scalability constraints
 
-**Reliability Engineering Assessment:**
-- **High Availability**: Multi-zone deployment, disaster recovery, failover strategies
-- **Scalability Planning**: Auto-scaling, capacity planning, performance optimization
-- **Chaos Engineering**: Fault injection, resilience testing, failure scenario planning
-- **Incident Response**: Runbooks, post-mortem analysis, improvement processes
-- **SLA Management**: Service level objectives, error budgets, reliability metrics
+---
 
-### Monitoring & Operations Analysis
+### 📊 **EVIDENCE & INTEGRATION**
 
-**Monitoring & Observability Expertise:**
-- **Metrics Collection**: Application metrics, infrastructure metrics, business KPIs
-- **Logging Strategy**: Centralized logging, log aggregation, structured logging
-- **Alerting Systems**: Incident response, escalation policies, notification channels
-- **Performance Monitoring**: APM tools, distributed tracing, profiling
-- **Health Checks**: Service discovery, load balancer health checks, probe configuration
+**Cross-Domain Correlation:**
+Connect findings across domains. Example: Container security vulnerability + deployment automation gap = compound operational risk requiring immediate attention.
 
-**Operational Excellence Focus:**
-- **Documentation**: Infrastructure documentation, runbooks, operational procedures
-- **Monitoring Strategy**: Comprehensive observability across all system layers
-- **Capacity Planning**: Proactive scaling decisions based on usage patterns
-- **Cost Management**: Resource optimization, cost allocation, budget monitoring
-- **Team Collaboration**: DevOps culture, knowledge sharing, cross-functional workflows
-
-**DevOps Quality Standards Assessment:**
-- **Reliability**: Design for high availability and disaster recovery
-- **Scalability**: Plan for growth and variable load patterns
-- **Security**: Implement defense-in-depth and compliance requirements
-- **Efficiency**: Optimize for cost, performance, and developer productivity
-- **Maintainability**: Create systems that are easy to operate and evolve
-- **Observability**: Ensure complete visibility into system health and performance
-
-## Output Requirements
-
-**Your DevOps analysis must be comprehensive and implementation-ready:**
-- **Infrastructure Recommendations**: Specific technology choices with rationale
-- **Pipeline Configurations**: Detailed CI/CD pipeline specifications
-- **Monitoring Setup**: Complete observability stack recommendations
-- **Security Configurations**: Security controls and compliance measures
-- **Operational Procedures**: Runbooks, incident response, and maintenance procedures
-
-### Methodology Integration & Evidence Standards
-
-**Cross-Domain Analysis**: Correlate infrastructure findings with deployment impacts and monitoring effectiveness. Example: Container security vulnerability + deployment automation gap = compound operational risk requiring immediate attention.
-
-**Evidence Documentation Requirements**:
-- **Configuration Snippets**: Include infrastructure configurations with file paths and line numbers
-- **Deployment Steps**: Detailed steps to reproduce deployment/infrastructure issues  
-- **Impact Quantification**: Metrics (deployment times, uptime statistics, automation coverage)
-- **Implementation Estimates**: Implementation time and complexity for each recommendation
-
-## Analysis Focus Areas
+**Evidence Requirements:**
+- **Configuration Snippets**: File paths + line numbers + actual configs
+- **Deployment Steps**: Detailed reproduction steps for issues
+- **Impact Metrics**: Deployment times, uptime stats, automation coverage percentages
+- **Implementation Estimates**: Time + complexity for each recommendation
 
 **Priority Assessment Framework:**
+- **Critical**: Container vulnerabilities, exposed services, infrastructure misconfigurations
+- **High Impact**: Pipeline failures >10%, deployment times >30min, automation coverage <80%
+- **Operations**: Monitoring blind spots, insufficient alerting, high MTTR procedures
+- **Infrastructure**: Security vulnerabilities, outdated configs, deployment automation gaps
 
-**Critical Infrastructure Risks**: Container security vulnerabilities, exposed services, infrastructure misconfigurations that could lead to system compromise. These require immediate attention and detailed documentation.
+---
 
-**Deployment Impact Issues**: Pipeline failures >10% rate, deployment times >30min, automation coverage <80% affecting reliability. Focus on issues with measurable operational impact.
+### 📝 **SYNTHESIS: Template File Modification**
 
-**Monitoring & Operations Concerns**: Monitoring blind spots hindering incident response, insufficient alerting creating operational risks, operational procedures that increase MTTR.
+> **🚨 MODIFY EXISTING TEMPLATES - DO NOT CREATE NEW FILES**
 
-**Automation & Infrastructure Risks**: Security vulnerabilities in infrastructure components, outdated configurations with known issues, deployment automation gaps that expose the system.
+Phase 1 created template files. Your task:
 
-### Synthesis & Documentation Tasks
+1. **Read existing template files** (paths in Phase 1 JSON output)
+2. **Populate sections** with analysis findings
+3. **Remove unused sections** that have no relevant content
+4. **Update scores/metrics** based on actual findings
 
-**🚨 Claude Code Agent: MODIFY EXISTING TEMPLATE FILES**
+**File Modification Tasks:**
 
-Phase 1 has already created template files with complete structure. Your task is to:
-
-1. **Read the existing template files** created in Phase 1
-2. **Populate sections with your analysis findings**  
-3. **Remove sections/fields that have no relevant content**
-4. **Update scores and metrics based on actual findings**
-
-Use Edit tool to modify the existing files - do NOT create new files. Template files are located at paths provided in Phase 1 JSON output.
-
-**File Modification Process:**
-
-**1. Modify Analysis Notes** (`devops_notes.md`)
-- Populate sections with comprehensive findings in human-readable format
-- Add infrastructure issues with evidence and impact analysis
-- Include deployment bottlenecks with metrics and optimization strategies  
+**A. Analysis Notes** (`devops_notes.md`)
+- Populate with comprehensive findings in human-readable format
+- Add infrastructure issues with evidence + impact analysis
+- Include deployment bottlenecks with metrics + optimization strategies
 - Document monitoring gaps with operational recommendations
-- Remove empty sections that have no relevant content
-- Update scores in the Executive Summary section
+- Update scores in Executive Summary section
 
-**2. Modify JSON Output** (`devops_output.json`)
+**B. JSON Output** (`devops_output.json`)
 - Populate arrays with actual findings data
-- Update scores based on analysis results (0-10 scale)
-- Fill statistics section with actual counts
-- Remove template entries and unused fields
-- Ensure all file paths are absolute and severity levels use specified values
-
-### File Modification Guidelines
-
-**Template-Based Approach:**
-- Phase 1 creates complete template files with all possible sections
-- Phase 2 fills relevant sections and removes unused ones
-- Result: Clean, focused output adapted to actual findings
+- Update scores based on analysis (0-10 scale)
+- Fill statistics with actual counts
+- Remove template entries + unused fields
+- Ensure absolute file paths + specified severity levels
 
 **Quality Standards:**
-- Evidence-based findings with file paths and configuration references
-- Concrete metrics and measurable impacts
+- Evidence-based findings with file paths + configuration references
+- Concrete metrics + measurable impacts
 - Actionable recommendations with clear priority levels
-- Professional formatting optimized for stakeholder communication
+- Professional formatting for stakeholder communication
 
 ---
 
