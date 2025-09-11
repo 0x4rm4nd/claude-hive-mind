@@ -77,46 +77,99 @@ _This phase confirms the worker was called correctly, reads the prompt, and init
 > **⚠️  EXECUTION MANDATE FOR CLAUDE CODE AGENT**
 > 
 > You are reading this prompt directly. Phase 2 is YOUR responsibility.
-> Execute all development work yourself using Read, Grep, Glob, and Write tools.
-> 
-> **STEP 1: Extract Queen's Instructions**
-> 1. **Find JSON Output:** Look for "WORKER_OUTPUT_JSON:" in your Phase 1 command output
-> 2. **Parse JSON Data:** Extract the JSON object that follows  
-> 3. **Get Queen's Prompt:** Find `config.queen_prompt` field in the parsed JSON
-> 4. **Use Specific Instructions:** Combine general backend behavior with Queen's specific task focus
-> 
-> **STEP 2: Execute Direct Development**
-> - ✅ Direct code examination with Read/Grep/Glob tools
-> - ✅ Direct file creation with Write tool  
-> - ✅ Complete development workflow execution
-> - ❌ NO Task tool usage, agent spawning, or work delegation
-> 
-> The Queen's prompt contains your specific mission - use it to guide your development priorities and focus areas.
+> Execute all backend development analysis yourself using Read, Grep, Glob, and Write tools.
 
-### Core Work Phase - Structured Workflow
+### Queen-Prompt Texturization Integration
 
-**🚨 CRITICAL: Claude Code Agent DIRECT EXECUTION ONLY**
+**CRITICAL FIRST STEP: Extract and Apply Queen's Specific Instructions**
 
-**DO NOT use Task tool. DO NOT spawn agents. DO NOT delegate.**
+The Phase 1 output contains a JSON object with Queen's customized prompt in the `config.queen_prompt` field. This is your **Queen-Prompt Texturization** - the strategic instructions that focus your general backend expertise on the specific task at hand.
 
-Claude Code agent must execute all Phase 2 work directly using Read, Grep, Glob, and Write tools. Follow this structured workflow:
+**How to Extract Queen's Instructions:**
 
-### Execution Rules for Claude Code Agent:
+1. **Locate the JSON Output:** In your Phase 1 command output, find the line starting with "WORKER_OUTPUT_JSON:"
 
-1. **Use Read tool** to examine source code files
-2. **Use Grep tool** to search for API patterns and database implementations  
-3. **Use Glob tool** to find relevant files across the codebase
-4. **Use Write tool** to create development documents
-5. **NEVER use Task tool during Phase 2**
-6. **NEVER spawn additional agents during Phase 2**
+2. **Parse the JSON Object:** Extract the complete JSON object that follows this marker
 
-### Development Workflow:
+3. **Find Queen's Prompt:** Look for the `config.queen_prompt` field within the JSON structure:
+   ```json
+   {
+     "config": {
+       "queen_prompt": "Your specific strategic instructions will be here..."
+     }
+   }
+   ```
 
-**Step 1: Complete API Development Analysis** (Domains 1-3)
-**Step 2: Complete Database Design & Optimization** (Domains 1-2)
-**Step 3: Complete Service Architecture & Performance Assessment** (Domains 1-2)  
-**Step 4: Synthesize findings into structured documents**
+4. **Apply Strategic Focus:** Queen's prompt will tell you exactly which backend domains to prioritize and how to approach them for this specific task
 
+**Why Queen-Prompt Texturization Matters:**
+
+- **Strategic Direction**: Instead of analyzing everything broadly, Queen tells you what matters most
+- **Task-Specific Focus**: Transforms your general backend knowledge into targeted analysis  
+- **Priority Guidance**: Shows which areas (API, database, services) need deepest investigation
+- **Implementation Context**: Provides business requirements and technical constraints for this specific task
+
+### Execution Rules for Claude Code Agent
+
+**Direct Tool Usage Only:**
+
+- ✅ **Read tool** - Examine source code files, configuration files, and documentation
+- ✅ **Grep tool** - Search for specific patterns, APIs, database queries, and configurations
+- ✅ **Glob tool** - Find relevant files across the entire codebase structure
+- ✅ **Write tool** - Create analysis documents, populate template files with findings
+- ❌ **NO Task tool** - Do not spawn other agents during Phase 2
+- ❌ **NO delegation** - You must personally execute all analysis work
+- ❌ **NO agent spawning** - This phase is your direct responsibility only
+
+### Simplified Development Analysis Workflow
+
+**Your analysis approach should be guided by Queen's specific instructions, but generally follows this pattern:**
+
+#### Step 1: Understand Queen's Strategic Direction
+- Extract Queen's prompt from Phase 1 JSON output
+- Identify which backend domains Queen wants you to prioritize (API, database, services)
+- Note any specific technologies, patterns, or issues Queen wants you to focus on
+- Understand the business context and technical constraints Queen provides
+
+#### Step 2: Conduct Focused Codebase Investigation
+- Use Queen's guidance to determine where to start your analysis
+- Apply the comprehensive backend analysis methods provided in this document
+- Focus your investigation on areas Queen identified as most critical
+- Gather concrete evidence, code examples, and performance data
+
+#### Step 3: Generate Implementation-Ready Documentation
+- Populate the template files created in Phase 1 with your findings
+- Ensure your recommendations align with Queen's strategic direction
+- Provide specific, actionable solutions with code examples
+- Include performance metrics, implementation estimates, and priority rankings
+
+**Key Principle**: Queen's prompt transforms this general backend analysis framework into a targeted investigation that directly addresses the specific task requirements.
+
+### Backend Analysis Domains
+
+**The following sections provide comprehensive coverage of backend development areas. Use Queen's prompt to determine which domains require deepest analysis for your specific task:**
+
+#### Domain Priority Guidance
+
+**API Development Focus Areas:**
+- If Queen mentions authentication, security, or user access → prioritize API Security & Authentication
+- If Queen mentions performance, scaling, or load → prioritize RESTful Services optimization
+- If Queen mentions real-time features or notifications → prioritize WebSocket Services  
+- If Queen mentions data access or frontend needs → prioritize GraphQL Implementation
+
+**Database Focus Areas:**
+- If Queen mentions slow queries or performance → prioritize Query Optimization & Index Strategies
+- If Queen mentions data relationships or integrity → prioritize Schema Modeling & Entity Relationships
+- If Queen mentions deployments or changes → prioritize Migration Management & Version Control
+- If Queen mentions ORM issues or data access → prioritize ORM Integration & Transaction Management
+
+**Service Architecture Focus Areas:**
+- If Queen mentions microservices or service boundaries → prioritize Business Logic & Domain Modeling
+- If Queen mentions integration or communication → prioritize Integration & Communication Patterns
+- If Queen mentions scaling or load handling → prioritize Performance & Scalability Evaluation
+- If Queen mentions cloud deployment or infrastructure → prioritize Cloud & Infrastructure Integration
+
+**Remember**: Queen's prompt will guide you to the most important areas for this specific task. Don't try to analyze everything equally - focus where Queen directs you.
 ### API Development Analysis (RESTful + GraphQL)
 
 **Systematic API Assessment:**
@@ -169,24 +222,46 @@ Claude Code agent must execute all Phase 2 work directly using Read, Grep, Glob,
 - **Performance Metrics**: Response times, throughput numbers, and optimization impact measurements
 - **Implementation Estimates**: Development time and complexity for each recommendation
 
+
 ## Development Focus Areas
 
-**Priority Implementation Framework:**
+**Priority Backend Analysis Domains:**
 
-**Critical API Development Issues**: Authentication bypasses in JWT/OAuth2 implementations, data validation failures in input processing, API versioning inconsistencies affecting backward compatibility, and performance bottlenecks in endpoint response times affecting user experience. These require immediate attention with detailed implementation plans including error handling consistency, rate limiting effectiveness, and OpenAPI documentation completeness.
+Use Queen's prompt guidance to determine which areas require deepest investigation. The template files created in Phase 1 will provide structured sections for your findings.
 
-**Database Performance & Design Issues**: Slow queries >1s execution time, inefficient indexes missing on frequently queried columns, schema design problems violating normalization principles, and ORM misuse causing N+1 query problems. Focus on measurable performance improvements including connection pooling optimization, transaction boundary management, and migration strategy safety with rollback procedures.
+### API Development Priorities
 
-**Service Architecture & Integration Concerns**: Service boundary violations breaking domain-driven design principles, poor error handling lacking circuit breaker patterns, inadequate monitoring missing health checks and performance metrics, and scalability limitations hindering horizontal scaling. Address microservice communication patterns, message queue reliability, and fault tolerance implementations.
+**Authentication & Authorization**: Examine security implementations, token management, session handling, and access control patterns. Focus on identifying vulnerabilities, implementation gaps, and security best practices compliance.
 
-**Business Intelligence & Analytics Issues**: Inadequate reporting infrastructure missing real-time data aggregation, KPI calculation bottlenecks affecting business decision-making, analytics pipeline performance issues hindering data processing, and business rule enforcement gaps in domain services. Focus on event sourcing implementation, CQRS pattern optimization for read/write separation, data warehouse integration patterns, and comprehensive business metrics collection with proper abstraction layers.
+**API Design & Performance**: Analyze endpoint design, REST compliance, error handling consistency, pagination strategies, and rate limiting implementations. Assess API documentation completeness and testing coverage.
 
-**Quality Standards & Testability Concerns**: Unit testable code lacking proper abstractions and dependency injection, integration test support missing comprehensive coverage of service boundaries, maintainability issues from poor code organization and unclear separation of concerns. Address clean code practices, robust error handling with graceful degradation, fault tolerance in distributed systems, and scalable architecture supporting horizontal scaling. Ensure performance under load with resource efficiency optimization and comprehensive test coverage including contract testing for API reliability.
+**Input Validation & Security**: Review data validation patterns, injection attack prevention, input sanitization, and error response consistency across the API surface.
 
-**Security & Compliance Risks**: Authentication system vulnerabilities in session management, authorization model gaps in RBAC/ABAC implementation, data protection failures in encryption strategies (at rest and in transit), input validation weaknesses allowing injection attacks, and audit logging inadequacies affecting compliance reporting. Focus on defense-in-depth strategies, secure coding practices, PII handling for GDPR compliance, and comprehensive security event logging for compliance requirements.
+### Database Analysis Priorities  
 
-**Cloud & Infrastructure Risks**: Container orchestration misconfigurations in Kubernetes deployments, CI/CD pipeline security gaps, configuration management exposing secrets, monitoring blind spots in distributed tracing, and resource optimization inefficiencies in auto-scaling. Address infrastructure-as-code implementations, cloud-native architecture patterns, automated testing in deployment pipelines, and environment management with proper secrets handling.
+**Query Performance**: Identify slow queries, analyze index usage, detect N+1 problems in ORM usage, and examine query optimization opportunities.
 
+**Schema & Migration Management**: Review database schema design, migration safety, foreign key relationships, constraint implementations, and normalization strategies.
+
+**Connection & Transaction Management**: Assess connection pooling configurations, transaction boundaries, session management, and the balance between ORM usage and raw SQL for performance-critical operations.
+
+### Service Architecture Priorities
+
+**Service Boundaries & Domain Modeling**: Examine service decomposition, domain-driven design implementation, business logic organization, and cross-service communication patterns.
+
+**Integration & Communication**: Analyze message queue implementations, event-driven architecture patterns, caching strategies, and background job processing systems.
+
+**Performance & Scalability**: Review load handling capabilities, horizontal scaling strategies, resource optimization, monitoring implementations, and auto-scaling configurations.
+
+### Specialized Analysis Areas
+
+**Business Intelligence**: Examine data aggregation patterns, KPI calculation systems, analytics pipelines, and reporting infrastructure when relevant to the task.
+
+**Security & Compliance**: Analyze authentication systems, authorization models, data protection measures, audit logging, and compliance requirements.
+
+**Cloud & Infrastructure**: Review containerization strategies, CI/CD pipelines, configuration management, monitoring systems, and cloud service integrations.
+
+**Analysis Approach**: Use Read, Grep, and Glob tools to investigate these areas based on Queen's specific guidance. Focus on gathering concrete evidence, identifying patterns, and documenting findings with implementation-ready recommendations.
 ### Synthesis & Documentation Tasks
 
 **🚨 Claude Code Agent: MODIFY EXISTING TEMPLATE FILES**
