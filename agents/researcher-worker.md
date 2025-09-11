@@ -177,52 +177,45 @@ Claude Code agent must execute all Phase 2 work directly using Read, Grep, Glob,
 
 ### Analysis Workflow:
 
-**Step 1: Complete Technology Evaluation** (Domains 1-3)
-**Step 2: Complete Industry & Standards Research** (Domains 1-2)
-**Step 3: Complete Evidence Gathering & Validation** (Domains 1-2)  
-**Step 4: Synthesize findings into structured documents**
+1. **Technology & Framework Evaluation** - Performance, community, patterns
+2. **Industry & Competitive Analysis** - Market trends, best practices, standards  
+3. **Risk Assessment & Recommendations** - Technical/business risks, mitigation strategies
+4. **Evidence Synthesis** - Source verification, comparative analysis, actionable guidance
 
-### Technology Evaluation
+### Core Research Methods:
 
-**Systematic Technology Assessment:**
+**Technology & Framework Evaluation:**
+- Examine current technology choices, framework implementations, and tool usage patterns
+- Analyze performance characteristics from industry benchmarks and real-world case studies
+- Review technology security posture, compliance alignment, and industry standards
+- Assess technology adoption trends, community health, and ecosystem maturity
 
-**Technology Stack Analysis**: Examine current technology choices, framework implementations, and tool usage patterns. Use codebase analysis to identify technology decisions, examine dependency management and version consistency, and assess technology lifecycle management. Document each finding with evidence and comparative analysis.
+**Industry & Competitive Analysis:**
+- Research industry leaders using market reports, case studies, and public documentation
+- Examine competitive technology choices and implementation strategies
+- Profile industry standards compliance, best practices adoption, and methodology implementation
+- Analyze emerging technology trends, adoption patterns, and industry evolution
 
-**Performance & Scalability Research**: Map technology performance characteristics from industry benchmarks and real-world case studies. Examine scalability patterns, resource optimization strategies, and performance monitoring approaches. Identify performance research gaps and optimization opportunities.
+**Risk Assessment & Recommendations:**
+- Identify technical, business, and operational risks
+- Map research findings to business impact, technical feasibility, and implementation priority
+- Analyze cost-benefit relationships, risk-reward ratios, and strategic value alignment
+- Provide actionable recommendations with clear next steps
 
-**Security & Compliance Research**: Review technology security posture, compliance framework alignment, and industry security standards. Check for security best practices, vulnerability management, and compliance monitoring patterns.
+**Evidence Synthesis:**
+- Verify research sources using authority checks, recency validation, and bias assessment
+- Conduct side-by-side analysis of options with pros/cons evaluation
+- Correlate findings across multiple sources and assess evidence strength
+- Cite authoritative sources and verify claims with confidence scoring
 
-**Market & Adoption Research**: Analyze technology adoption trends, community health, and industry momentum. Focus on technology roadmaps, vendor stability, and ecosystem maturity.
+### Research Quality Standards:
 
-### Industry & Standards Research
-
-**Industry Analysis Approach:**
-
-**Competitive Intelligence Gathering**: Research industry leaders using market reports, case studies, and public documentation, examine competitive technology choices and implementation strategies, and identify differentiation opportunities. Set research baselines, identify market gaps, and document strategic opportunities with supporting evidence.
-
-**Standards & Best Practices Research**: Profile industry standards compliance, best practices adoption, and methodology implementation. Examine regulatory requirements, certification needs, and quality frameworks. Focus on compliance gaps and standardization opportunities.
-
-**Market Trend Analysis**: Analyze emerging technology trends, adoption patterns, and industry evolution. Review technology forecasts, investment patterns, and innovation indicators. Identify trend research with future-proofing recommendations.
-
-### Evidence Gathering & Validation
-
-**Research Quality Methodology:**
-
-**Source Validation & Credibility Assessment**: Verify research sources using authority checks, recency validation, and bias assessment, examine primary vs secondary sources and expert opinion integration. Analyze research methodology quality, peer review status, and reproducibility factors. Document verification with credibility scoring and confidence intervals.
-
-**Data Synthesis & Pattern Recognition**: Correlate findings across multiple sources, identify pattern convergence and divergence analysis, and assess evidence strength with statistical significance. Examine research consensus levels, outlier identification, and trend correlation patterns.
-
-**Impact Assessment & Prioritization**: Map research findings to business impact, technical feasibility, and implementation priority. Analyze cost-benefit relationships, risk-reward ratios, and strategic value alignment. Assess implementation complexity with resource requirements.
-
-### Methodology Integration & Evidence Standards
-
-**Cross-Domain Analysis**: Correlate technology research with industry trends and compliance requirements. Example: Emerging technology adoption + regulatory compliance + competitive advantage = strategic technology decision framework requiring immediate attention.
-
-**Evidence Documentation Requirements**:
-- **Research Sources**: Include authoritative citations, publication dates, and credibility assessments
-- **Validation Steps**: Detailed methodology for source verification and bias mitigation  
-- **Impact Quantification**: Metrics (adoption rates, performance benchmarks, cost implications)
-- **Implementation Estimates**: Research-to-action timelines and complexity assessments
+- **Depth**: Thorough investigation beyond surface-level information
+- **Credibility**: Use authoritative sources (official docs, industry leaders, peer review)
+- **Relevance**: Focus on information directly applicable to the task context
+- **Timeliness**: Prioritize current information and recent developments
+- **Objectivity**: Present balanced analysis with multiple perspectives
+- **Actionability**: Provide clear recommendations and next steps
 
 ## Analysis Focus Areas
 
