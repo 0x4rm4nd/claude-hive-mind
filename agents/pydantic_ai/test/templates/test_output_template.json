@@ -1,0 +1,196 @@
+{
+  "analysis_metadata": {
+    "session_id": "{{SESSION_ID}}",
+    "timestamp": "{{TIMESTAMP}}",
+    "files_analyzed": 0,
+    "analysis_duration": "{{DURATION}}",
+    "worker_type": "test-worker"
+  },
+  
+  "scores": {
+    "test_coverage_score": 0,
+    "automation_score": 0,
+    "quality_score": 0,
+    "overall_score": 0
+  },
+  
+  "test_coverage_findings": [
+    {
+      "id": "TEST-001-TEMPLATE",
+      "finding": "Template - remove if no coverage gaps",
+      "category": "unit_testing|integration_testing|e2e_testing|performance_testing|security_testing",
+      "severity": "critical|high|medium|low",
+      "file_path": "/path/to/test.ext",
+      "line_number": 0,
+      "coverage_percentage": 0,
+      "description": "Detailed description of the test coverage gap",
+      "impact": "Impact on quality assurance and system reliability",
+      "recommendation": "Specific steps to improve test coverage",
+      "effort_estimate": "Time/complexity estimate for implementation"
+    }
+  ],
+  
+  "quality_framework_issues": [
+    {
+      "id": "QUAL-001-TEMPLATE",
+      "issue": "Template - remove if no framework issues",
+      "category": "automation|ci_cd|test_data|reliability|quality_gates|maintenance",
+      "severity": "critical|high|medium|low",
+      "location": "/path/to/config.ext:line_number",
+      "current_state": "Current framework state measurement",
+      "target_state": "Target framework goal",
+      "impact_description": "Description of quality framework impact",
+      "improvement_suggestion": "Specific framework optimization recommendations",
+      "estimated_improvement": "Expected efficiency/reliability gain"
+    }
+  ],
+  
+  "automation_metrics": [
+    {
+      "id": "AUTO-001-TEMPLATE",
+      "metric": "Template - remove if no automation issues",
+      "category": "test_execution|parallel_testing|ci_cd_integration|framework_architecture|tool_integration",
+      "current_value": "Current automation measurement",
+      "target_value": "Target automation goal",
+      "severity": "critical|high|medium|low",
+      "file_path": "/path/to/automation.ext",
+      "description": "Description of automation deficiency",
+      "improvement_action": "Specific action to enhance automation",
+      "priority": "immediate|next_sprint|backlog"
+    }
+  ],
+  
+  "priority_actions": [
+    {
+      "id": "ACTION-001-TEMPLATE",
+      "action": "Template - remove if no priority actions",
+      "category": "test_coverage|quality_framework|automation",
+      "priority": "immediate|next_sprint|backlog",
+      "effort_estimate": "Time/complexity estimate",
+      "description": "Detailed action description",
+      "related_findings": ["TEST-001", "QUAL-001", "AUTO-001"]
+    }
+  ],
+  
+  "critical_issues": [
+    {
+      "id": "CRIT-001-TEMPLATE",
+      "issue": "Template - remove if no critical issues",
+      "type": "test_coverage|quality_framework|automation",
+      "severity": "critical",
+      "immediate_action_required": true,
+      "description": "Critical testing issue requiring immediate attention",
+      "business_impact": "Potential impact on system reliability and deployment confidence"
+    }
+  ],
+  
+  "recommendations": {
+    "test_coverage_recommendations": [
+      "Template - remove section if no coverage recommendations"
+    ],
+    "quality_framework_recommendations": [
+      "Template - remove section if no framework recommendations"  
+    ],
+    "automation_recommendations": [
+      "Template - remove section if no automation recommendations"
+    ]
+  },
+  
+  "implementation_roadmap": {
+    "phase_1_critical_coverage": [
+      "Template - remove phase if empty"
+    ],
+    "phase_2_automation_improvements": [
+      "Template - remove phase if empty"
+    ],
+    "phase_3_quality_enhancements": [
+      "Template - remove phase if empty"
+    ]
+  },
+  
+  "detailed_coverage_analysis": {
+    "unit_test_coverage": {
+      "statement_coverage": 0,
+      "branch_coverage": 0,
+      "function_coverage": 0,
+      "coverage_gaps": [],
+      "quality_assessment": "Template - coverage quality evaluation"
+    },
+    "integration_test_coverage": {
+      "api_contract_coverage": 0,
+      "service_integration_coverage": 0,
+      "database_integration_coverage": 0,
+      "coverage_gaps": [],
+      "quality_assessment": "Template - integration testing evaluation"
+    },
+    "e2e_test_coverage": {
+      "user_journey_coverage": 0,
+      "cross_browser_coverage": 0,
+      "mobile_coverage": 0,
+      "coverage_gaps": [],
+      "quality_assessment": "Template - e2e testing evaluation"
+    },
+    "performance_test_coverage": {
+      "load_testing_coverage": 0,
+      "stress_testing_coverage": 0,
+      "scalability_testing_coverage": 0,
+      "coverage_gaps": [],
+      "quality_assessment": "Template - performance testing evaluation"
+    },
+    "security_test_coverage": {
+      "vulnerability_testing_coverage": 0,
+      "penetration_testing_coverage": 0,
+      "compliance_testing_coverage": 0,
+      "coverage_gaps": [],
+      "quality_assessment": "Template - security testing evaluation"
+    }
+  },
+  
+  "automation_framework_analysis": {
+    "test_automation_percentage": 0,
+    "ci_cd_integration": {
+      "pipeline_integration": false,
+      "automated_execution": false,
+      "parallel_execution": false,
+      "feedback_mechanisms": []
+    },
+    "framework_maturity": {
+      "architecture_quality": 0,
+      "maintainability_score": 0,
+      "scalability_assessment": "Template - framework scalability evaluation"
+    },
+    "tool_integration": {
+      "testing_tools": [],
+      "reporting_tools": [],
+      "integration_quality": "Template - tool integration assessment"
+    }
+  },
+  
+  "quality_metrics": {
+    "test_execution_efficiency": {
+      "unit_test_execution_time": "0s",
+      "integration_test_execution_time": "0s",
+      "e2e_test_execution_time": "0s",
+      "parallel_execution_efficiency": 0
+    },
+    "test_reliability": {
+      "flaky_test_percentage": 0,
+      "test_stability_score": 0,
+      "failure_rate": 0
+    },
+    "maintenance_metrics": {
+      "test_maintenance_overhead": 0,
+      "test_code_quality": 0,
+      "refactoring_needs": []
+    }
+  },
+  
+  "statistics": {
+    "total_test_files_analyzed": 0,
+    "total_test_cases_counted": 0,
+    "coverage_findings_count": 0,
+    "framework_issues_count": 0,
+    "automation_issues_count": 0,
+    "critical_issues_count": 0
+  }
+}
