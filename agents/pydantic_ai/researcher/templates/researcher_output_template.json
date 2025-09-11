@@ -1,0 +1,188 @@
+{
+  "analysis_metadata": {
+    "session_id": "{{SESSION_ID}}",
+    "timestamp": "{{TIMESTAMP}}",
+    "research_areas_analyzed": 0,
+    "analysis_duration": "{{DURATION}}",
+    "worker_type": "researcher"
+  },
+  
+  "scores": {
+    "research_depth_score": 0,
+    "source_credibility_score": 0,
+    "relevance_score": 0,
+    "actionability_score": 0,
+    "overall_score": 0
+  },
+  
+  "technology_evaluations": [
+    {
+      "id": "TECH-001-TEMPLATE",
+      "technology_name": "Template - remove if no technologies evaluated",
+      "category": "framework|library|database|infrastructure|tool",
+      "evaluation_criteria": ["performance", "maintainability", "community", "cost"],
+      "current_version": "version",
+      "recommended_version": "version",
+      "adoption_status": "recommended|acceptable|deprecated|avoid",
+      "comparative_analysis": "Comparison with alternatives",
+      "implementation_effort": "low|medium|high|critical",
+      "risk_assessment": "Risk evaluation",
+      "cost_benefit_analysis": "Cost vs benefit analysis"
+    }
+  ],
+  
+  "research_findings": [
+    {
+      "id": "FIND-001-TEMPLATE",
+      "finding": "Template - remove if no research findings",
+      "category": "technology|market|compliance|security|performance",
+      "severity": "critical|high|medium|low",
+      "source_type": "primary|secondary|expert|empirical",
+      "credibility_score": 0,
+      "evidence": "Supporting evidence and data",
+      "implications": "Business and technical implications",
+      "recommendations": "Actionable recommendations",
+      "confidence_level": "high|medium|low",
+      "follow_up_required": true
+    }
+  ],
+  
+  "industry_analysis": [
+    {
+      "id": "IND-001-TEMPLATE",
+      "analysis_area": "Template - remove if no industry analysis",
+      "category": "trends|competition|adoption|regulation|market",
+      "current_state": "Current industry state",
+      "trend_direction": "growing|stable|declining|emerging",
+      "key_players": ["Player 1", "Player 2"],
+      "market_size": "Market size information",
+      "growth_rate": "Growth rate data",
+      "opportunities": ["Opportunity 1", "Opportunity 2"],
+      "threats": ["Threat 1", "Threat 2"],
+      "strategic_implications": "Strategic business implications"
+    }
+  ],
+  
+  "best_practices": [
+    {
+      "id": "BP-001-TEMPLATE",
+      "practice": "Template - remove if no best practices",
+      "category": "development|security|performance|operations|design",
+      "industry_adoption": "widespread|common|emerging|experimental",
+      "implementation_complexity": "low|medium|high",
+      "business_impact": "high|medium|low",
+      "current_compliance": "full|partial|none",
+      "implementation_steps": ["Step 1", "Step 2", "Step 3"],
+      "success_metrics": ["Metric 1", "Metric 2"],
+      "case_studies": ["Case study reference"]
+    }
+  ],
+  
+  "competitive_analysis": [
+    {
+      "id": "COMP-001-TEMPLATE",
+      "competitor": "Template - remove if no competitive analysis",
+      "market_position": "leader|challenger|follower|niche",
+      "strengths": ["Strength 1", "Strength 2"],
+      "weaknesses": ["Weakness 1", "Weakness 2"],
+      "technology_stack": ["Tech 1", "Tech 2"],
+      "pricing_model": "Pricing approach",
+      "differentiation": "Key differentiators",
+      "market_share": "Market share data",
+      "strategic_moves": ["Recent strategic actions"]
+    }
+  ],
+  
+  "compliance_research": [
+    {
+      "id": "COMP-001-TEMPLATE",
+      "regulation": "Template - remove if no compliance research",
+      "jurisdiction": "Geographic scope",
+      "compliance_level": "full|partial|non-compliant|not-applicable",
+      "requirements": ["Requirement 1", "Requirement 2"],
+      "current_gaps": ["Gap 1", "Gap 2"],
+      "implementation_effort": "low|medium|high|critical",
+      "penalties": "Non-compliance penalties",
+      "timeline": "Implementation timeline",
+      "monitoring_requirements": "Ongoing compliance monitoring"
+    }
+  ],
+  
+  "risk_assessments": [
+    {
+      "id": "RISK-001-TEMPLATE",
+      "risk": "Template - remove if no risk assessments",
+      "category": "technology|market|regulatory|operational|financial",
+      "probability": "high|medium|low",
+      "impact": "critical|high|medium|low",
+      "risk_score": 0,
+      "current_mitigation": "Existing mitigation measures",
+      "additional_mitigation": "Recommended additional measures",
+      "monitoring_strategy": "Risk monitoring approach",
+      "contingency_plan": "Contingency planning"
+    }
+  ],
+  
+  "source_analysis": [
+    {
+      "id": "SRC-001-TEMPLATE",
+      "source": "Template - remove if no source analysis",
+      "type": "academic|industry|government|expert|internal",
+      "credibility_rating": "excellent|good|adequate|poor",
+      "publication_date": "Date of publication",
+      "relevance_score": 0,
+      "key_insights": ["Insight 1", "Insight 2"],
+      "limitations": ["Limitation 1", "Limitation 2"],
+      "citation": "Full citation information",
+      "verification_status": "verified|pending|unverified"
+    }
+  ],
+  
+  "implementation_roadmap": {
+    "phase_1_immediate": {
+      "duration": "1 week",
+      "items": ["Immediate research item 1", "Immediate research item 2"],
+      "success_criteria": ["Criteria 1", "Criteria 2"]
+    },
+    "phase_2_short_term": {
+      "duration": "2-4 weeks", 
+      "items": ["Short term research item 1", "Short term research item 2"],
+      "success_criteria": ["Criteria 1", "Criteria 2"]
+    },
+    "phase_3_medium_term": {
+      "duration": "1-3 months",
+      "items": ["Medium term research item 1", "Medium term research item 2"],
+      "success_criteria": ["Criteria 1", "Criteria 2"]
+    },
+    "phase_4_long_term": {
+      "duration": "3-12 months",
+      "items": ["Long term research item 1", "Long term research item 2"],
+      "success_criteria": ["Criteria 1", "Criteria 2"]
+    }
+  },
+  
+  "research_methodology": {
+    "primary_sources": {
+      "count": 0,
+      "types": ["documentation", "surveys", "interviews"],
+      "credibility_assessment": "Methodology for assessing source credibility"
+    },
+    "secondary_sources": {
+      "count": 0,
+      "types": ["industry reports", "academic papers", "market analysis"],
+      "validation_approach": "Approach to validating secondary sources"
+    },
+    "analysis_framework": {
+      "methodology": "Research analysis methodology used",
+      "bias_mitigation": "Steps taken to reduce research bias",
+      "quality_assurance": "Quality assurance measures"
+    }
+  },
+  
+  "gaps_and_limitations": {
+    "data_gaps": ["Data gap 1", "Data gap 2"],
+    "research_limitations": ["Limitation 1", "Limitation 2"],
+    "confidence_qualifiers": ["Qualifier 1", "Qualifier 2"],
+    "future_research_needs": ["Future research area 1", "Future research area 2"]
+  }
+}

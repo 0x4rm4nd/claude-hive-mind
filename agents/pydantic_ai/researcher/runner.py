@@ -13,15 +13,15 @@ sys.path.insert(0, str(Path(__file__).parent.parent))
 
 from shared.base_worker import BaseWorker
 from shared.models import WorkerOutput
-from researcher.agent import researcher_agent, ResearcherAgentConfig
 
 
 class ResearcherWorker(BaseWorker):
     """
     Technical research and industry standards analysis worker.
 
-    Provides comprehensive research including technology evaluation,
-    best practices analysis, competitive research, and trend assessment.
+    Analyzes codebases for technology evaluation, best practices compliance,
+    competitive research, and industry trend assessment. Provides detailed
+    findings with actionable recommendations and evidence-based insights.
     """
 
     def __init__(self):
@@ -30,52 +30,77 @@ class ResearcherWorker(BaseWorker):
             worker_config=None,
         )
 
-
     def get_file_prefix(self) -> str:
-        """Return file prefix for researcher output files"""
+        """Return file prefix for analysis output files.
+
+        Returns:
+            File prefix for researcher output files
+        """
         return "researcher"
 
     def get_worker_display_name(self) -> str:
-        """Return human-readable worker name for CLI and logging"""
+        """Return human-readable name for CLI display.
+
+        Returns:
+            Display name for the researcher worker
+        """
         return "Researcher Worker"
 
     def get_worker_description(self) -> str:
-        """Return worker description for CLI help"""
-        return "Research and Information Gathering"
+        """Return description for CLI help and documentation.
+
+        Returns:
+            Brief description of researcher capabilities
+        """
+        return "Technical Research and Industry Analysis"
 
     def get_analysis_event_details(self, task_description: str) -> Dict[str, Any]:
-        """Return worker-specific event details for analysis_started event"""
+        """Return event details when analysis starts.
+
+        Args:
+            task_description: Analysis task description
+
+        Returns:
+            Event details for analysis started logging
+        """
         return {
-            "worker": "researcher-worker",
             "task": task_description,
-            "focus_areas": ["research", "analysis", "documentation", "insights"],
+            "analysis_type": "research_technology_industry_trends",
         }
 
     def get_completion_event_details(self, output: WorkerOutput) -> Dict[str, Any]:
-        """Return worker-specific event details for worker_completed event"""
+        """Return event details when analysis completes.
+
+        Args:
+            output: Analysis output with findings and metrics
+
+        Returns:
+            Event details for analysis completion logging
+        """
         return {
-            "worker": "researcher-worker",
-            "research_findings": len(output.research_findings),
-            "confidence_score": output.confidence_score,
+            "duration": "calculated",
+            "metrics": output.metrics.model_dump(),
+            "status": output.status,
         }
 
     def get_success_message(self, output: WorkerOutput) -> str:
-        """Return worker-specific CLI success message"""
-        return (
-            f"Research analysis completed. Research findings: {len(output.research_findings)}, "
-            f"Confidence score: {output.confidence_score}"
-        )
+        """Return success message with analysis summary.
 
-    def create_worker_specific_files(
-        self, session_id: str, output: WorkerOutput, session_path: Path
-    ) -> None:
-        """Create researcher-specific output files beyond standard notes/JSON"""
-        # Researcher worker uses standard file creation - no additional files needed
-        pass
+        Args:
+            output: Analysis output with scores and findings
+
+        Returns:
+            Success message with key analysis metrics
+        """
+        return f"Research analysis completed successfully. Research areas analyzed: {output.metrics.items_analyzed}, Issues found: {output.metrics.issues_found}"
 
 
 def main():
-    """CLI entry point for researcher worker"""
+    """CLI entry point for researcher worker execution.
+
+    Returns:
+        Exit code from worker execution
+    """
     worker = ResearcherWorker()
     return worker.run_cli_main()
 
