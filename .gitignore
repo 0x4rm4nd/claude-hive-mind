@@ -6,4 +6,5 @@ hooks
 scripts
 workflows
 
-__pycache__commands/github/
+__pycache__/
+commands/github/
