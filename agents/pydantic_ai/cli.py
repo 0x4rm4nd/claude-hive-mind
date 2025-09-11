@@ -44,41 +44,54 @@ def run_queen(args):
 
 
 def run_scribe(args):
-    """Run Scribe agent using BaseWorker pattern consistently"""
+    """Run Scribe agent with proper argument handling"""
     from scribe.runner import ScribeWorker
 
-    # Convert mode to task description format
-    if args.mode == "create":
-        if not args.task:
-            print("❌ Error: --task required for create mode")
-            return 1
-        if args.session:
-            print(
-                "❌ Error: --session should not be provided for create mode (session ID will be auto-generated)"
-            )
-            return 1
-        task_desc = args.task
-        session_id = None  # None for session creation - will be generated
-    elif args.mode == "synthesis":
-        if not args.session:
-            print("❌ Error: --session required for synthesis mode")
-            return 1
-        task_desc = f"synthesis for session {args.session}"
-        session_id = args.session
-    else:
-        print(f"❌ Error: Unknown mode {args.mode}")
-        return 1
-
-    # Use BaseWorker pattern consistently
     worker = ScribeWorker()
+    
     try:
-        output = worker.run(
-            session_id, task_desc, args.model or "custom:max-subscription"
-        )
-        print(f"✅ Scribe operation completed: {worker.get_success_message(output)}")
+        # Handle session creation mode
+        if hasattr(args, 'create') and args.create:
+            if not args.task:
+                print("❌ Error: --task required for session creation")
+                return 1
+            if args.session:
+                print("❌ Error: --session should not be provided for create mode")
+                return 1
+            output = worker.run("", args.task, args.model or "custom:max-subscription")
+            success_message = worker.get_success_message(output)
+            
+        # Handle synthesis setup phase
+        elif hasattr(args, 'setup') and args.setup:
+            if not args.session:
+                print("❌ Error: --session required for synthesis setup")
+                return 1
+            output = worker.run_setup_phase(args.session, args.model or "custom:max-subscription")
+            success_message = "Phase 1 setup completed - Claude Code can now perform creative synthesis"
+            
+        # Handle synthesis output phase  
+        elif hasattr(args, 'output') and args.output:
+            if not args.session:
+                print("❌ Error: --session required for synthesis output")
+                return 1
+            output = worker.run_output_phase(args.session, args.model or "custom:max-subscription") 
+            success_message = "Phase 3 validation completed - Creative synthesis finalized"
+            
+        else:
+            print("❌ Error: Must specify --create, --setup, or --output")
+            return 1
+
+        print(f"✅ Scribe operation completed: {success_message}")
+
+        # Print output as JSON for CC Agent to parse (like other workers)
+        print("WORKER_OUTPUT_JSON:")
+        print(output.model_dump_json(indent=2))
+
         return 0
     except Exception as e:
-        print(f"❌ Scribe operation failed: {e}")
+        print(f"❌ Scribe failed: {e}")
+        import traceback
+        traceback.print_exc()
         return 1
 
 
@@ -137,14 +150,33 @@ Examples:
     queen_parser.add_argument("--task", required=True, help="Task description")
     queen_parser.add_argument("--model", help="AI model to use")
 
-    # Scribe agent
-    scribe_parser = subparsers.add_parser("scribe", help="Scribe agent")
-    scribe_parser.add_argument(
-        "mode", choices=["create", "synthesis"], help="Scribe mode"
+    # Scribe agent - follows BaseWorker pattern
+    scribe_parser = subparsers.add_parser(
+        "scribe", help="Session lifecycle management and creative synthesis"
     )
-    scribe_parser.add_argument("--session", help="Session ID (required for synthesis)")
-    scribe_parser.add_argument("--task", help="Task description (required for create)")
+    scribe_parser.add_argument("--session", help="Session ID")
+    scribe_parser.add_argument("--task", help="Task description")
     scribe_parser.add_argument("--model", help="AI model to use")
+
+    # Add mutually exclusive phase flags for synthesis workflow
+    scribe_phase_group = scribe_parser.add_mutually_exclusive_group()
+    scribe_phase_group.add_argument(
+        "--setup",
+        action="store_true",
+        help="Execute Phase 1: Creative Synthesis Setup & Data Collection",
+    )
+    scribe_phase_group.add_argument(
+        "--output",
+        action="store_true",
+        help="Execute Phase 3: Synthesis Validation & File Creation",
+    )
+
+    # Session creation mode (legacy compatibility)
+    scribe_parser.add_argument(
+        "--create",
+        action="store_true",
+        help="Create new session (requires --task)",
+    )
 
     # Worker agents - all follow same pattern
     workers = [
