@@ -17,3 +17,11 @@ EXPECTED DELIVERABLES:
 2. Worker Output: JSON with structured infrastructure assessment
 
 Focus on building robust, automated systems that support rapid, reliable software delivery.
+
+CRITICAL INSTRUCTIONS:
+• ALL template sections must be completed with relevant findings
+• NEVER leave sections empty or with placeholder text  
+• If a section appears non-applicable, explain why rather than deleting it
+• Complete Implementation Recommendations with concrete backend improvements
+• Replace ALL "*Remove this section*" instructions with actual analysis
+• Provide specific API endpoints, database schemas, and implementation details
