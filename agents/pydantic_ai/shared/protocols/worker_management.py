@@ -8,15 +8,14 @@ Consolidates prompt generation and reading into single source of truth.
 
 import os
 import re
-import yaml
 import json
 from typing import Dict, List, Any
 from dataclasses import dataclass, field
-from .session_management import SessionManagement, iso_now
+from .session_management import SessionManagement
 from .protocol_loader import BaseProtocol
 from .protocol_interface import ProtocolMetadata
-from .worker_templates import load_template, format_template
-from .worker_templates.worker_configs import WORKER_CONFIGS
+from .worker_prompt_templates import load_template, format_template
+from .worker_prompt_templates.worker_configs import WORKER_CONFIGS
 
 
 @dataclass
@@ -215,10 +214,14 @@ class WorkerManager(BaseProtocol):
             # Log successful prompt reading with relative path
             try:
                 project_root = SessionManagement.detect_project_root()
-                relative_path = prompt_file_path.replace(f"{project_root}/", "") if prompt_file_path.startswith(project_root) else prompt_file_path
+                relative_path = (
+                    prompt_file_path.replace(f"{project_root}/", "")
+                    if prompt_file_path.startswith(project_root)
+                    else prompt_file_path
+                )
             except:
                 relative_path = prompt_file_path
-                
+
             self.log_event(
                 "prompt_file_read",
                 {
@@ -434,7 +437,6 @@ Focus on actionable insights within your area of expertise."""
         else:
             # Default: return as string
             return content
-
 
 
 def create_worker_prompts_from_plan(
