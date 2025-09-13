@@ -54,24 +54,40 @@ class ScribeSynthesisOutput(BaseModel):
 
 
 class ScribeOutput(BaseModel):
-    """Unified Scribe worker output for both create and synthesis modes"""
-    
-    mode: Literal["create", "synthesis"] = Field(description="Scribe operation mode")
+    """Unified Scribe worker output for create, synthesis_setup, and synthesis modes"""
+
+    mode: Literal["create", "synthesis_setup", "synthesis"] = Field(
+        description="Scribe operation mode"
+    )
     session_id: str = Field(description="Session identifier")
     timestamp: str = Field(description="ISO timestamp")
     status: str = Field(description="Operation status")
-    
+
     # Session creation fields
     task_description: Optional[str] = Field(default=None, description="Original task")
     complexity_level: Optional[int] = Field(default=None, description="Task complexity")
-    session_path: Optional[str] = Field(default=None, description="Session directory path")
-    
-    # Synthesis fields  
-    synthesis_markdown: Optional[str] = Field(default=None, description="Synthesis content")
-    synthesis_overview: Optional[SynthesisOverview] = Field(default=None, description="Synthesis overview")
-    sources: Dict[str, Any] = Field(default_factory=dict, description="Synthesis sources")
-    
+    session_path: Optional[str] = Field(
+        default=None, description="Session directory path"
+    )
+
+    worker_file_paths: Optional[List[str]] = Field(
+        default=None, description="List of worker output files to analyze"
+    )
+
+    # Synthesis completion fields (Phase 3)
+    synthesis_markdown: Optional[str] = Field(
+        default=None, description="Final synthesis content"
+    )
+    synthesis_overview: Optional[SynthesisOverview] = Field(
+        default=None, description="Synthesis overview"
+    )
+    sources: Dict[str, Any] = Field(
+        default_factory=dict, description="Synthesis sources"
+    )
+
     # Standard worker fields
     worker: Optional[str] = Field(default=None, description="Worker type")
-    config: Optional[Dict[str, Any]] = Field(default=None, description="Worker configuration")
+    config: Optional[Dict[str, Any]] = Field(
+        default=None, description="Worker configuration"
+    )
     notes_markdown: Optional[str] = Field(default=None, description="Additional notes")

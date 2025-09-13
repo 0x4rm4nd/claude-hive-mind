@@ -58,7 +58,9 @@ def run_scribe(args):
             if args.session:
                 print("❌ Error: --session should not be provided for create mode")
                 return 1
-            output = worker.run("", args.task, args.model or "custom:max-subscription")
+            output = worker.run_creation(
+                "", args.task, args.model or "custom:max-subscription"
+            )
             success_message = worker.get_success_message(output)
 
         # Handle synthesis setup phase
