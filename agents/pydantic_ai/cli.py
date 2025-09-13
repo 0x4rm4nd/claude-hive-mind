@@ -48,10 +48,10 @@ def run_scribe(args):
     from scribe.runner import ScribeWorker
 
     worker = ScribeWorker()
-    
+
     try:
         # Handle session creation mode
-        if hasattr(args, 'create') and args.create:
+        if hasattr(args, "create") and args.create:
             if not args.task:
                 print("❌ Error: --task required for session creation")
                 return 1
@@ -60,23 +60,27 @@ def run_scribe(args):
                 return 1
             output = worker.run("", args.task, args.model or "custom:max-subscription")
             success_message = worker.get_success_message(output)
-            
+
         # Handle synthesis setup phase
-        elif hasattr(args, 'setup') and args.setup:
+        elif hasattr(args, "setup") and args.setup:
             if not args.session:
                 print("❌ Error: --session required for synthesis setup")
                 return 1
-            output = worker.run_setup_phase(args.session, args.model or "custom:max-subscription")
-            success_message = "Phase 1 setup completed - Claude Code can now perform creative synthesis"
-            
-        # Handle synthesis output phase  
-        elif hasattr(args, 'output') and args.output:
+            output = worker.run_setup_phase(
+                args.session, args.model or "custom:max-subscription"
+            )
+            success_message = worker.get_success_message(output)
+
+        # Handle synthesis output phase
+        elif hasattr(args, "output") and args.output:
             if not args.session:
                 print("❌ Error: --session required for synthesis output")
                 return 1
-            output = worker.run_output_phase(args.session, args.model or "custom:max-subscription") 
-            success_message = "Phase 3 validation completed - Creative synthesis finalized"
-            
+            output = worker.run_output_phase(
+                args.session, args.model or "custom:max-subscription"
+            )
+            success_message = worker.get_success_message(output)
+
         else:
             print("❌ Error: Must specify --create, --setup, or --output")
             return 1
@@ -91,6 +95,7 @@ def run_scribe(args):
     except Exception as e:
         print(f"❌ Scribe failed: {e}")
         import traceback
+
         traceback.print_exc()
         return 1
 
@@ -158,24 +163,22 @@ Examples:
     scribe_parser.add_argument("--task", help="Task description")
     scribe_parser.add_argument("--model", help="AI model to use")
 
-    # Add mutually exclusive phase flags for synthesis workflow
-    scribe_phase_group = scribe_parser.add_mutually_exclusive_group()
-    scribe_phase_group.add_argument(
+    # Add mutually exclusive mode flags for scribe operations
+    scribe_mode_group = scribe_parser.add_mutually_exclusive_group(required=True)
+    scribe_mode_group.add_argument(
+        "--create",
+        action="store_true",
+        help="Create new session (requires --task)",
+    )
+    scribe_mode_group.add_argument(
         "--setup",
         action="store_true",
         help="Execute Phase 1: Creative Synthesis Setup & Data Collection",
     )
-    scribe_phase_group.add_argument(
+    scribe_mode_group.add_argument(
         "--output",
         action="store_true",
         help="Execute Phase 3: Synthesis Validation & File Creation",
-    )
-
-    # Session creation mode (legacy compatibility)
-    scribe_parser.add_argument(
-        "--create",
-        action="store_true",
-        help="Create new session (requires --task)",
     )
 
     # Worker agents - all follow same pattern
