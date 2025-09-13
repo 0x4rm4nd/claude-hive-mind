@@ -8,7 +8,7 @@ arguments: $ARGUMENTS
 
 Launch the hive-mind system: Create session → Queen orchestration → Automatic worker coordination.
 
-## Core Two-Phase Workflow
+## Complete Hive-Mind Orchestration Flow
 
 ### Phase 0: Project Root Resolution
 Determine absolute paths programmatically:
@@ -20,18 +20,24 @@ echo "Project Root: $PROJECT_ROOT"
 echo "Pydantic AI Path: $PYDANTIC_AI_PATH"
 ```
 
-### Phase 1: Session Creation
+### Phase 1: Session Creation (Scribe Initialization)
 Use Bash tool with 5-minute timeout:
 ```bash
-cd "$PYDANTIC_AI_PATH" && python cli.py scribe create --task "$ARGUMENTS" --model custom:max-subscription
+cd "$PYDANTIC_AI_PATH" && python cli.py scribe --create --task "$ARGUMENTS" --model custom:max-subscription
 ```
-*Extract `session_id` from JSON response for Phase 2.*
+*Extract `session_id` from JSON response for Queen orchestration.*
 
-### Phase 2: Queen Orchestration  
+### Phase 2: Strategic Planning (Queen Orchestration)
 Use Bash tool with 5-minute timeout:
 ```bash
 cd "$PYDANTIC_AI_PATH" && python cli.py queen --session [SESSION_ID] --task "$ARGUMENTS" --model custom:max-subscription
 ```
+
+### Phase 3: Worker Deployment & Analysis (Claude Code Coordination)
+**After Queen completes orchestration, Claude Code spawns specialized workers using Task tool for cross-domain analysis**
+
+### Phase 4: Creative Synthesis (Scribe Integration)
+**Spawn the scribe for creative synthesis of all worker outputs into strategic implementation roadmap**
 
 ## Queen's Strategic Responsibilities
 
@@ -54,9 +60,11 @@ cd "$PYDANTIC_AI_PATH" && python cli.py queen --session [SESSION_ID] --task "$AR
 - Establish coordination checkpoints
 - Monitor progress and resolve conflicts
 
-## Phase 3: Claude Code Worker Deployment
+## Detailed Phase 3-4 Execution
 
-**After Queen completes orchestration, YOU (Claude Code) regain control to spawn workers:**
+### Phase 3: Claude Code Worker Deployment & Analysis
+
+**After Queen completes orchestration, Claude Code regains control to spawn workers:**
 
 1. **Parse Queen's Orchestration Plan**: Extract worker assignments from session files
 2. **Spawn Workers via Task Tool**: Use Claude Code Task tool with appropriate subagent types
@@ -92,16 +100,35 @@ Your responsibility:
 - `researcher-worker` → calls `python cli.py researcher` - Technical research, standards
 - `test-worker` → calls `python cli.py test` - Testing strategy, quality assurance
 
-## Complete Workflow Success Pattern
+### Phase 4: Creative Synthesis (Scribe Integration)
+
+**Phase 4a: Setup Scribe for Creative Synthesis:**
+
+```bash
+cd "$PYDANTIC_AI_PATH" && python cli.py scribe --setup --session [SESSION_ID] --model custom:max-subscription
+```
+
+**Phase 4b: Generate Final Strategic Implementation Roadmap:**
+
+```bash
+cd "$PYDANTIC_AI_PATH" && python cli.py scribe --output --session [SESSION_ID] --model custom:max-subscription
+```
+
+**After workers complete, scribe performs multi-phase creative synthesis of all outputs into strategic implementation roadmap with final consolidated report generation.**
+
+## Complete Hive-Mind Workflow Success Pattern
 
 ```
-Task Input → Session Creation → Queen Analysis → 
-Dependency Mapping → Shared Contract Creation → 
-[Claude Code Regains Control] → Worker Spawning via Task Tool → 
-Coordinated Worker Execution → Final Synthesis
+Phase 0: Project Root Resolution →
+Phase 1: Session Creation (Scribe) →
+Phase 2: Strategic Planning (Queen) →
+Phase 3: Worker Deployment & Analysis (Claude Code) →
+Phase 4a: Creative Synthesis Setup (Scribe --setup) →
+Phase 4b: Final Report Generation (Scribe --output) →
+Strategic Implementation Roadmap
 ```
 
-**Key Innovation**: Queen creates shared agreements upfront + Claude Code orchestrates worker deployment.
+**Key Innovation**: Complete hive-mind orchestration with Queen creating shared agreements, Claude Code coordinating worker deployment, and Scribe providing creative synthesis beyond pattern matching.
 
 ## Monitoring Commands
 

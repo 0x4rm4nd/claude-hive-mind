@@ -11,8 +11,7 @@ from datetime import datetime
 from typing import Dict, Any
 from pydantic_ai import Agent
 from pydantic_ai.models import ModelSettings
-from pydantic_ai.output import PromptedOutput
-
+from typing import List
 from scribe.models import TaskSummaryOutput
 from shared.base_worker import BaseWorker
 from shared.tools import iso_now
@@ -20,6 +19,7 @@ from shared.protocols import SessionManagement
 from scribe.models import ScribeOutput, SynthesisOverview
 from scribe.agent import ScribeAgentConfig
 
+from shared.protocols.worker_prompt_templates import format_scribe_prompt
 
 # Ensure imports work when run directly or from CLI
 current_dir = Path(__file__).parent
@@ -41,71 +41,35 @@ class ScribeWorker(BaseWorker):
             worker_type="scribe",
             worker_config=None,
         )
-        self._session_complexity = None
 
-    def run(self, session_id: str, task_description: str, model: str) -> ScribeOutput:
-        """Execute scribe analysis with session lifecycle management.
+        # Initialize path attributes
+        self.project_root_path = Path(SessionManagement.detect_project_root())
+        self.sessions_dir = self.project_root_path / "Docs" / "hive-mind" / "sessions"
 
-        Args:
-            session_id: Session identifier for tracking (empty for session creation)
-            task_description: Task description (determines mode - create vs synthesis)
-            model: AI model to use for analysis execution
-
-        Returns:
-            ScribeOutput: Unified scribe output for both modes
-        """
-        # Check if this is session creation mode
-        is_create_mode = not session_id
-
-        if is_create_mode:
-            # For create mode, generate session_id first, then create config
-            actual_session_id, complexity_level = self._generate_ai_session_id(
-                task_description, model
-            )
-            self._session_complexity = complexity_level
-            self.worker_config = ScribeAgentConfig.create_worker_config(
-                actual_session_id, task_description
-            )
-        else:
-            # For synthesis mode, use provided session_id
-            actual_session_id = session_id
-            self.worker_config = ScribeAgentConfig.create_worker_config(
-                session_id, task_description
-            )
-
-        return self.run_mode(actual_session_id, is_create_mode, model)
-
-    def run_mode(
-        self, session_id: str, is_create_mode: bool, model: str
+    def run_creation(
+        self, session_id: str, task_description: str, model: str
     ) -> ScribeOutput:
-        """
-        Handle session creation and synthesis modes directly.
-        """
-        # Update session config first
-        self.update_session_config(session_id)
+        """Execute session creation (called only by CLI --create mode)."""
+        actual_session_id, complexity_level = self._generate_ai_session_id(
+            task_description, model
+        )
+        self.worker_config = ScribeAgentConfig.create_worker_config(
+            actual_session_id, task_description
+        )
+        self._create_session_directory(actual_session_id)
+        self._create_session_markdown(
+            actual_session_id, self.worker_config.task_description, model
+        )
 
-        if is_create_mode:
-            # For create mode, create session directory and return completion result
-            self._create_session_directory(session_id)
-            self._create_session_markdown(
-                session_id, self.worker_config.task_description, model
-            )
-            output = self._create_session_completion_result(
-                session_id, self.worker_config.task_description
-            )
-        else:
-            # For synthesis mode, run synthesis directly
-            output = self._run_synthesis(
-                session_id, self.worker_config.task_description, model
-            )
-
-        return output
+        return self._create_session_completion_result(
+            actual_session_id, self.worker_config.task_description, complexity_level
+        )
 
     def _create_session_completion_result(
-        self, session_id: str, task_description: str
-    ) -> Any:
+        self, session_id: str, task_description: str, complexity_level: int
+    ) -> ScribeOutput:
         """Create completion result for session creation"""
-        # Log scribe spawn event
+        self.update_session_config(session_id)
         self.log_event(
             "worker_spawned",
             {
@@ -116,32 +80,37 @@ class ScribeWorker(BaseWorker):
             "INFO",
         )
 
+        session_full_path = Path(SessionManagement.get_session_path(session_id))
+        relative_session_path = str(
+            session_full_path.relative_to(self.project_root_path)
+        )
+
         # Log session creation event
         self.log_event(
             "session_created",
             {
                 "session_id": session_id,
                 "task_description": task_description,
-                "session_path": f"Docs/hive-mind/sessions/{session_id}",
+                "session_path": relative_session_path,
                 "generated_by": "scribe",
             },
             "INFO",
         )
 
-        output = ScribeOutput(
+        return ScribeOutput(
             mode="create",
             session_id=session_id,
             timestamp=iso_now(),
             status="completed",
             task_description=task_description,
-            complexity_level=self._session_complexity or 1,
-            session_path=f"Docs/hive-mind/sessions/{session_id}",
+            complexity_level=complexity_level,
+            session_path=relative_session_path,
         )
 
-        return output
+    def run_setup_phase(self, session_id: str, model: str) -> ScribeOutput:
+        """Phase 1: Setup & Data Collection for creative synthesis"""
+        self.update_session_config(session_id)
 
-    def _run_synthesis(self, session_id: str, task_description: str, model: str) -> Any:
-        """Handle synthesis mode"""
         # Validate session exists
         project_root_path = Path(__file__).parent.parent.parent.parent.parent
         sessions_dir = project_root_path / "Docs" / "hive-mind" / "sessions"
@@ -150,29 +119,241 @@ class ScribeWorker(BaseWorker):
         if not session_path.exists():
             raise FileNotFoundError(f"Session {session_id} not found")
 
-        # Load synthesis template
-        synthesis_content = self._load_template(
-            "synthesis_report.md", {"session_id": session_id, "timestamp": iso_now()}
+        # Collect worker file paths for Claude Code
+        worker_inventory = self._collect_worker_file_inventory(session_path)
+
+        self._create_synthesis_prompt_file(session_id, session_path, worker_inventory)
+        self._create_synthesis_template_file(session_id, session_path, worker_inventory)
+
+        # Return setup output with file paths
+        return ScribeOutput(
+            mode="synthesis_setup",
+            session_id=session_id,
+            session_path=str(session_path),
+            timestamp=iso_now(),
+            status="setup_completed",
+            worker_file_paths=worker_inventory["file_paths"],
+            sources=worker_inventory["sources"],
         )
 
-        # Create synthesis overview
+    def run_output_phase(self, session_id: str, model: str) -> ScribeOutput:
+        """Phase 3: Validation & File Creation after Claude Code creative synthesis"""
+        self.update_session_config(session_id)
+
+        # Validate that synthesis files exist (created by Claude Code in Phase 2)
+        session_path = self.sessions_dir / session_id
+        synthesis_file = session_path / "SYNTHESIS.md"
+
+        if not synthesis_file.exists():
+            raise FileNotFoundError(
+                f"Creative synthesis file not found: {synthesis_file}"
+            )
+
+        # Read the synthesis content created by Claude Code
+        synthesis_content = synthesis_file.read_text()
+        validation_result = self._validate_synthesis_completeness(synthesis_content)
+
+        if not validation_result["valid"]:
+            raise ValueError(
+                f"Synthesis validation failed: {validation_result['errors']}"
+            )
+
+        # Create final synthesis overview
         synthesis_overview = SynthesisOverview(
-            consensus=["Session completed successfully"],
-            conflicts=["No conflicts identified"],
-            themes=["Basic session management", "Task coordination"],
+            consensus=["Creative synthesis completed by Claude Code"],
+            conflicts=validation_result.get("conflicts", []),
+            themes=validation_result.get("themes", ["Creative architectural analysis"]),
         )
 
-        unified_output = ScribeOutput(
+        # Create output files for synthesis mode
+        try:
+            self.create_output_files_base(
+                session_id,
+                ScribeOutput(
+                    mode="synthesis",
+                    session_id=session_id,
+                    timestamp=iso_now(),
+                    status="completed",
+                    synthesis_markdown=synthesis_content,
+                    synthesis_overview=synthesis_overview,
+                    sources={
+                        "synthesis_file": str(
+                            synthesis_file.relative_to(self.project_root_path)
+                        )
+                    },
+                ),
+                self.get_file_prefix(),
+            )
+        except Exception as e:
+            self.log_debug(
+                f"File creation failed during output phase: {e}", level="ERROR"
+            )
+
+        # Return completed synthesis output
+        return ScribeOutput(
             mode="synthesis",
             session_id=session_id,
             timestamp=iso_now(),
             status="completed",
             synthesis_markdown=synthesis_content,
             synthesis_overview=synthesis_overview,
-            sources={"session_files": "Basic session analysis"},
+            sources={
+                "synthesis_file": str(
+                    synthesis_file.relative_to(self.project_root_path)
+                )
+            },
         )
 
-        return unified_output
+    def _collect_worker_file_inventory(self, session_path: Path) -> Dict[str, Any]:
+        """Collect file paths for Claude Code creative analysis"""
+
+        workers_dir = session_path / "workers"
+        notes_dir = workers_dir / "notes"
+        json_dir = workers_dir / "json"
+
+        print(notes_dir, json_dir)
+
+        file_paths = []
+        sources = {}
+        worker_count = 0
+
+        # Collect notes files
+        if notes_dir.exists():
+            for notes_file in notes_dir.glob("*_notes.md"):
+                worker_type = notes_file.stem.replace("_notes", "")
+                file_paths.append(str(notes_file))
+                sources[f"{worker_type}_notes"] = str(notes_file)
+                worker_count += 1
+
+        # Collect JSON files
+        if json_dir.exists():
+            for json_file in json_dir.glob("*_output.json"):
+                worker_type = json_file.stem.replace("_output", "")
+                file_paths.append(str(json_file))
+                sources[f"{worker_type}_json"] = str(json_file)
+
+        return {
+            "file_paths": file_paths,
+            "sources": sources,
+            "worker_count": worker_count,
+            "session_path": str(session_path),
+        }
+
+    def _validate_synthesis_completeness(
+        self, synthesis_content: str
+    ) -> Dict[str, Any]:
+        """Validate that Claude Code synthesis is complete and has no placeholders"""
+
+        errors = []
+
+        # Validate placeholder patterns
+        placeholder_errors = self._check_placeholder_patterns(synthesis_content)
+        errors.extend(placeholder_errors)
+
+        # Validate content completeness
+        completeness_errors = self._check_content_completeness(synthesis_content)
+        errors.extend(completeness_errors)
+
+        # Extract content analysis
+        themes = self._extract_content_themes(synthesis_content)
+        conflicts = self._extract_content_conflicts(synthesis_content)
+
+        return {
+            "valid": len(errors) == 0,
+            "errors": errors,
+            "themes": themes,
+            "conflicts": conflicts,
+        }
+
+    def _check_placeholder_patterns(self, content: str) -> List[str]:
+        """Check for remaining placeholder patterns"""
+        errors = []
+        content_lower = content.lower()
+
+        # Template variable patterns
+        if "{" in content and "}" in content:
+            errors.append("Found template variable placeholders")
+
+        # Common placeholder keywords
+        placeholder_keywords = [
+            "todo",
+            "fixme",
+            "placeholder",
+            "analysis needed",
+            "content here",
+        ]
+        for keyword in placeholder_keywords:
+            if keyword in content_lower:
+                errors.append(f"Found placeholder keyword: {keyword}")
+
+        # Markdown placeholder sections
+        placeholder_sections = ["## [", "### ["]
+        for section in placeholder_sections:
+            if section in content:
+                errors.append("Found incomplete markdown sections")
+
+        return errors
+
+    def _check_content_completeness(self, content: str) -> List[str]:
+        """Check content completeness and quality"""
+        errors = []
+
+        # Minimum length check
+        min_length = 1000
+        if len(content) < min_length:
+            errors.append(
+                f"Content too short ({len(content)} chars, minimum {min_length})"
+            )
+
+        # Section completeness check
+        required_sections = ["executive summary", "critical issues", "recommendations"]
+        content_lower = content.lower()
+
+        missing_sections = [
+            section for section in required_sections if section not in content_lower
+        ]
+
+        if missing_sections:
+            errors.append(f"Missing required sections: {', '.join(missing_sections)}")
+
+        return errors
+
+    def _extract_content_themes(self, content: str) -> List[str]:
+        """Extract themes based on content analysis"""
+        content_lower = content.lower()
+        themes = []
+
+        theme_mapping = {
+            "security": "Security Analysis",
+            "performance": "Performance Optimization",
+            "architecture": "Architecture Assessment",
+            "devops": "Infrastructure & DevOps",
+            "infrastructure": "Infrastructure & DevOps",
+        }
+
+        for keyword, theme in theme_mapping.items():
+            if keyword in content_lower and theme not in themes:
+                themes.append(theme)
+
+        return themes if themes else ["Comprehensive Analysis"]
+
+    def _extract_content_conflicts(self, content: str) -> List[str]:
+        """Extract conflicts and priority indicators"""
+        content_lower = content.lower()
+        conflicts = []
+
+        conflict_indicators = {
+            "conflict": "Cross-domain conflicts identified",
+            "priority": "Prioritization required",
+            "tradeoff": "Technical tradeoffs identified",
+            "dependency": "Implementation dependencies mapped",
+        }
+
+        for indicator, description in conflict_indicators.items():
+            if indicator in content_lower and description not in conflicts:
+                conflicts.append(description)
+
+        return conflicts if conflicts else ["No major conflicts"]
 
     def _generate_ai_session_id(
         self, task_description: str, model: str
@@ -225,9 +406,7 @@ class ScribeWorker(BaseWorker):
 
     def _create_session_directory(self, session_id: str):
         """Create session directory structure"""
-        project_root_path = Path(__file__).parent.parent.parent.parent.parent
-        sessions_dir = project_root_path / "Docs" / "hive-mind" / "sessions"
-        session_path = sessions_dir / session_id
+        session_path = self.sessions_dir / session_id
 
         session_path.mkdir(parents=True, exist_ok=True)
         (session_path / "workers").mkdir(exist_ok=True)
@@ -247,9 +426,7 @@ class ScribeWorker(BaseWorker):
         self, session_id: str, task_description: str, model: str
     ):
         """Create SESSION.md file"""
-        project_root_path = Path(__file__).parent.parent.parent.parent.parent
-        sessions_dir = project_root_path / "Docs" / "hive-mind" / "sessions"
-        session_path = sessions_dir / session_id
+        session_path = self.sessions_dir / session_id
 
         session_md_content = self._load_template(
             "session.md",
@@ -263,6 +440,74 @@ class ScribeWorker(BaseWorker):
 
         with open(session_path / "SESSION.md", "w") as f:
             f.write(session_md_content)
+
+    def _create_synthesis_prompt_file(
+        self, session_id: str, session_path: Path, worker_inventory: Dict[str, Any]
+    ) -> None:
+        """Create synthesis prompt file for Claude Code Phase 2 analysis"""
+
+        # Generate the synthesis prompt
+        synthesis_prompt = format_scribe_prompt(session_id, worker_inventory)
+
+        # Write prompt to session's workers/prompts directory
+        prompts_dir = session_path / "workers" / "prompts"
+        prompts_dir.mkdir(parents=True, exist_ok=True)
+
+        prompt_file = prompts_dir / "scribe-synthesis.prompt"
+        with open(prompt_file, "w") as f:
+            f.write(synthesis_prompt)
+
+        # Log prompt file creation
+        project_root = Path(SessionManagement.detect_project_root())
+        relative_path = prompt_file.relative_to(project_root)
+        log_path = str(relative_path)
+
+        self.log_debug(
+            "Created synthesis prompt file for Claude Code",
+            {
+                "path": log_path,
+                "worker_files_count": len(worker_inventory["file_paths"]),
+            },
+        )
+
+    def _create_synthesis_template_file(
+        self, session_id: str, session_path: Path, worker_inventory: Dict[str, Any]
+    ) -> None:
+        """Create SYNTHESIS.md template file for Claude Code to fill in during Phase 2"""
+
+        template_variables = {
+            "session_id": session_id,
+            "timestamp": iso_now(),
+            "workers_count": str(worker_inventory["worker_count"]),
+        }
+
+        # Load and populate template using proper template engine
+        synthesis_content = self._load_template(
+            "synthesis_report.md", template_variables
+        )
+
+        # Write template to session directory
+        synthesis_file = session_path / "SYNTHESIS.md"
+        with open(synthesis_file, "w") as f:
+            f.write(synthesis_content)
+
+        # Log template creation
+        try:
+            from shared.protocols import SessionManagement
+
+            project_root = Path(SessionManagement.detect_project_root())
+            relative_path = synthesis_file.relative_to(project_root)
+            log_path = str(relative_path)
+        except Exception:
+            log_path = str(synthesis_file)
+
+        self.log_debug(
+            "Created synthesis template file for Claude Code",
+            {
+                "path": log_path,
+                "ready_for_creative_analysis": True,
+            },
+        )
 
     def _load_template(self, template_name: str, variables: Dict[str, str]) -> str:
         """Load template file and substitute variables.
@@ -374,6 +619,12 @@ class ScribeWorker(BaseWorker):
                 f"Session created successfully. Session ID: {output.session_id}, "
                 f"Complexity: {output.complexity_level}, Path: {output.session_path}"
             )
+        elif output.mode == "synthesis_setup":
+            return (
+                f"Phase 1 setup completed for session {output.session_id}. "
+                f"Worker files: {len(output.worker_file_paths or [])}, "
+                f"Ready for Claude Code creative synthesis"
+            )
         elif output.mode == "synthesis":
             return (
                 f"Synthesis completed for session {output.session_id}. "
@@ -387,7 +638,6 @@ class ScribeWorker(BaseWorker):
         self, session_id: str, output: ScribeOutput, file_prefix: str
     ) -> None:
         """Override to skip file creation for session creation mode"""
-        # For create mode, don't create any worker output files
         if output.mode == "create":
             # Only create worker-specific files (SESSION.md, etc.) but no JSON/notes output
             session_path = Path(SessionManagement.get_session_path(session_id))
@@ -402,14 +652,11 @@ class ScribeWorker(BaseWorker):
             notes_dir.mkdir(parents=True, exist_ok=True)
             json_dir.mkdir(parents=True, exist_ok=True)
 
-            # Get project root for relative paths
-            project_root = Path(SessionManagement.detect_project_root())
-
             # Create notes file if content provided
             if hasattr(output, "notes_markdown") and output.notes_markdown:
                 notes_file = notes_dir / f"{file_prefix}_notes.md"
                 notes_file.write_text(output.notes_markdown)
-                relative_path = notes_file.relative_to(project_root)
+                relative_path = notes_file.relative_to(self.project_root_path)
                 self.log_debug(
                     f"Created {file_prefix} notes file",
                     {"path": str(relative_path)},
@@ -418,7 +665,7 @@ class ScribeWorker(BaseWorker):
             # Create structured output JSON
             output_file = json_dir / f"{file_prefix}_output.json"
             output_file.write_text(output.model_dump_json(indent=2))
-            relative_path = output_file.relative_to(project_root)
+            relative_path = output_file.relative_to(self.project_root_path)
             self.log_debug(
                 f"Created {file_prefix} output JSON",
                 {"path": str(relative_path)},
@@ -451,10 +698,12 @@ class ScribeWorker(BaseWorker):
             with open(synthesis_file, "w") as f:
                 f.write(output.synthesis_markdown)
 
+            relative_path = synthesis_file.relative_to(self.project_root_path)
+
             self.log_debug(
                 "Created synthesis markdown file",
                 {
-                    "path": f"Docs/hive-mind/sessions/{session_id}/SYNTHESIS.md",
+                    "path": str(relative_path),
                 },
             )
 

@@ -42,7 +42,7 @@ python cli.py scribe --setup --session SESSION_ID --model custom:max-subscriptio
 
 ### Phase 2: Creative Analysis & Synthesis (Claude Code)
 
-**First Step:** Read the synthesis prompt file at `workers/prompts/scribe-synthesis.prompt` for detailed instructions and context.
+**First Step:** Read the synthesis prompt file at `Docs/hive-mind/sessions/{SESSION_ID}/workers/prompts/scribe-synthesis.prompt` for detailed instructions and context.
 
 **Mission:** Perform semantic analysis that goes beyond programmatic pattern matching to create strategic architectural insights.
 
